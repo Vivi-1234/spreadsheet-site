@@ -224,10 +224,7 @@
             productListEl.innerHTML = ''; 
             
             const { data, error } = await db.from('products').select('*').order('display_order');
-            if (error) {
-                console.error("Error fetching products:", error);
-                return;
-            }
+            if (error) { console.error("Error fetching products:", error); return; }
             productsCache = data || [];
             
             productsCache.forEach(p => {
@@ -254,16 +251,22 @@
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
-                    const updates = reorderedIds.map((id, index) => ({ id, display_order: index }));
+                    const updates = reorderedIds.map((id, index) => {
+                        const product = productsCache.find(p => p.id === id);
+                        return { 
+                           ...product,
+                           display_order: index 
+                        };
+                    });
                     
                     showLoading(true);
-                    const { error } = await db.from('products').upsert(updates, { onConflict: 'id' });
+                    const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
 
                     if (error) {
                         alert('排序失败: ' + error.message);
                     }
-                    // Refresh local cache order after successful db update
+                    // Refresh local cache order to match UI
                     reorderedIds.forEach((id, index) => {
                        const product = productsCache.find(p => p.id === id);
                        if(product) product.display_order = index;
@@ -477,7 +480,7 @@
             const originalProduct = productsCache.find(p => p.id == productId);
 
             const updates = {
-                ...originalProduct, // Start with the full original object
+                ...originalProduct,
                 name: document.getElementById('edit-product-name').value,
                 price: document.getElementById('edit-product-price').value,
                 target_url: document.getElementById('edit-product-target-url').value,
@@ -486,7 +489,6 @@
                 discount_expires_at: expiresAt,
                 image_url: uploadedImageUrl,
             };
-            delete updates.created_at; // Supabase manages this
 
             await db.from('products').upsert(updates);
             showLoading(false);
