@@ -239,8 +239,27 @@
                 ghostClass: 'sortable-ghost',
                 handle: '.cursor-move',
                 onEnd: async (evt) => {
-                    const newOrder = Array.from(evt.to.children).map(item => item.dataset.id);
-                    const updates = newOrder.map((id, index) => ({ id: parseInt(id), display_order: index }));
+                    const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
+                    
+                    const updates = reorderedIds.map((id, index) => {
+                        // Find the full product object from cache
+                        const product = productsCache.find(p => p.id === id);
+                        if (!product) {
+                            console.error(`Product with ID ${id} not found in cache.`);
+                            return null;
+                        }
+                        // Return the full object, only changing the display_order
+                        return { 
+                            ...product, // Include all original data
+                            display_order: index // Update only the order
+                        };
+                    }).filter(Boolean); // Filter out any nulls if a product wasn't found
+
+                    if (updates.length !== reorderedIds.length) {
+                         alert('排序失败: 无法找到所有产品信息。');
+                         return;
+                    }
+
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
