@@ -45,7 +45,7 @@
     <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p>点击选择或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1"></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣价</label><input type="number" id="edit-product-discount-price" class="input mt-1"></div><div><label class="label">折扣有效期(天)</label><input type="number" id="edit-product-discount-days" class="input mt-1" placeholder="例如: 3"></div><div class="flex items-center pt-6"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣价</label><input type="number" id="edit-product-discount-price" class="input mt-1"></div><div><label class="label">折扣有效期(天)</label><input type="number" id="edit-product-discount-days" class="input mt-1" placeholder="例如: 3"></div><div class="flex items-center pt-6"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
     
     <!-- 加载遮罩 -->
     <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
@@ -241,11 +241,9 @@
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
-                    // Construct full objects for upsert to avoid not-null violations
                     const updates = reorderedIds.map((id, index) => {
-                        const product = productsCache.find(p => p.id === id);
                         return { 
-                            ...product,
+                            id: id,
                             display_order: index 
                         };
                     });
@@ -257,7 +255,6 @@
                     if (error) {
                         alert('排序失败: ' + error.message);
                     }
-                    // No need to reload, local cache is already correct for UI
                 }
             });
             setupProductEventListeners();
@@ -386,7 +383,7 @@
             if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
             
             showLoading(true);
-            const { data: maxOrderData } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
+            const { data: maxOrderData, error: countError } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
             newProduct.display_order = (maxOrderData?.display_order || 0) + 1;
 
             const { error } = await db.from('products').insert(newProduct);
@@ -412,8 +409,18 @@
             
             currentEditImageUrl = product.image_url;
             const preview = document.getElementById('edit-preview-image');
-            preview.src = product.image_url;
-            preview.classList.remove('hidden');
+            const deleteBtn = document.getElementById('delete-image-btn');
+            
+            if (product.image_url) {
+                preview.src = product.image_url;
+                preview.classList.remove('hidden');
+                deleteBtn.classList.remove('hidden');
+                document.getElementById('edit-image-placeholder').classList.add('hidden');
+            } else {
+                 preview.classList.add('hidden');
+                 deleteBtn.classList.add('hidden');
+                 document.getElementById('edit-image-placeholder').classList.remove('hidden');
+            }
 
             if (product.discount_expires_at) {
                 const now = new Date();
@@ -512,7 +519,7 @@
                     }
 
                     showLoading(true);
-                    const { data: maxOrderData } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
+                    const { data: maxOrderData, error: countError } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
                     let currentOrder = (maxOrderData?.display_order || 0);
 
                     const productsToUpload = json.map(row => ({
@@ -577,14 +584,37 @@
         // Modal close button
         document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
         document.getElementById('save-product-changes-btn').addEventListener('click', saveProductChanges);
-        document.getElementById('edit-image-paste-box').addEventListener('click', () => document.getElementById('edit-image-input').click());
-        document.getElementById('edit-image-paste-box').addEventListener('paste', (e) => handleImagePaste(e, document.getElementById('edit-preview-image'), file => currentEditFile = file));
-        document.getElementById('edit-image-input').addEventListener('change', (e) => {
+        
+        const imagePasteBox = document.getElementById('edit-image-paste-box');
+        const imageInput = document.getElementById('edit-image-input');
+        const deleteImageBtn = document.getElementById('delete-image-btn');
+        const previewImage = document.getElementById('edit-preview-image');
+        const imagePlaceholder = document.getElementById('edit-image-placeholder');
+
+        imagePasteBox.addEventListener('click', () => imageInput.click());
+        imagePasteBox.addEventListener('paste', (e) => handleImagePaste(e, previewImage, file => {
+            currentEditFile = file;
+            deleteImageBtn.classList.remove('hidden');
+            imagePlaceholder.classList.add('hidden');
+        }));
+        imageInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
                 currentEditFile = e.target.files[0];
-                document.getElementById('edit-preview-image').src = URL.createObjectURL(currentEditFile);
-                document.getElementById('edit-preview-image').classList.remove('hidden');
+                previewImage.src = URL.createObjectURL(currentEditFile);
+                previewImage.classList.remove('hidden');
+                deleteImageBtn.classList.remove('hidden');
+                imagePlaceholder.classList.add('hidden');
             }
+        });
+        deleteImageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentEditFile = null;
+            currentEditImageUrl = null;
+            previewImage.src = '';
+            previewImage.classList.add('hidden');
+            deleteImageBtn.classList.add('hidden');
+            imagePlaceholder.classList.remove('hidden');
+            imageInput.value = '';
         });
 
         // Initial Load
