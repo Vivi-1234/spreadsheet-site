@@ -223,7 +223,11 @@
             if (!productListEl) return;
             productListEl.innerHTML = ''; 
             
-            const { data } = await db.from('products').select('*').order('display_order');
+            const { data, error } = await db.from('products').select('*').order('display_order');
+            if (error) {
+                console.error("Error fetching products:", error);
+                return;
+            }
             productsCache = data || [];
             
             productsCache.forEach(p => {
@@ -274,7 +278,6 @@
         function setupProductEventListeners() {
             const productPanel = document.getElementById('main-content');
             if(!productPanel) return;
-
             productPanel.querySelector('#download-template-btn')?.addEventListener('click', downloadTemplate);
             productPanel.querySelector('#bulk-upload-btn')?.addEventListener('click', bulkUpload);
             productPanel.querySelector('#add-product-btn')?.addEventListener('click', addSingleProduct);
