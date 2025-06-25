@@ -26,13 +26,20 @@
         .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .btn-primary { background-color: #2563eb; }
         .btn-primary:hover:not(:disabled) { background-color: #1d4ed8; }
-        .btn-secondary { background-color: #4b5563; color: white; }
-        .btn-secondary:hover:not(:disabled) { background-color: #374151; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-secondary:hover:not(:disabled) { background-color: #4b5563; }
         .btn-danger { background-color: #ef4444; }
         .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
         .sortable-ghost { background: #dbeafe; opacity: 0.5; }
         .sortable-chosen { cursor: grabbing; }
         .stat-card { background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); }
+        /* Toggle Switch Styles */
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #2563eb; }
+        input:checked + .toggle-slider:before { transform: translateX(16px); }
     </style>
 </head>
 <body>
@@ -119,8 +126,14 @@
                             </div>
                         </div>
                     </div>
-                    <h3 class="font-semibold mb-2 text-lg">产品列表 <span class="text-sm font-normal text-gray-500">(可拖拽排序)</span></h3>
-                    <div id="product-list" class="space-y-2"></div>
+                    <div id="bulk-actions-bar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+                         <div><span id="selected-count">0</span> 个产品已选中</div>
+                         <div class="flex items-center gap-2">
+                             <button id="bulk-toggle-discount-btn" class="btn btn-secondary text-xs"><i data-lucide="power" class="mr-1 h-4 w-4"></i>切换折扣状态</button>
+                             <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
+                         </div>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理</h2>
@@ -208,29 +221,25 @@
         async function loadProducts() {
             const productListEl = mainContent.querySelector('#product-list');
             if (!productListEl) return;
-            productListEl.innerHTML = ''; // Clear before loading
+            productListEl.innerHTML = ''; 
             
             const { data } = await db.from('products').select('*').order('display_order');
             productsCache = data || [];
             
             productsCache.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'flex items-center bg-white border p-2 rounded-lg gap-4 shadow-sm';
-                item.dataset.id = p.id;
-                const discountActiveHTML = p.discount_is_active ? `<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">开启</span>` : `<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">关闭</span>`;
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white border-b product-row';
+                tr.dataset.id = p.id;
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleDateString() : '—';
-                item.innerHTML = `
-                    <i data-lucide="grip-vertical" class="cursor-move text-gray-400 hover:text-gray-600"></i>
-                    <img src="${p.image_url}" class="w-12 h-12 object-cover rounded-md">
-                    <div class="flex-grow font-semibold text-gray-800">${p.name}</div>
-                    <div><span class="text-xs text-gray-500">折扣:</span> ${discountActiveHTML}</div>
-                    <div><span class="text-xs text-gray-500">到期:</span> ${expiryDate}</div>
-                    <div class="flex gap-2">
-                        <button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button>
-                        <button data-id="${p.id}" class="delete-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
-                    </div>
+                tr.innerHTML = `
+                    <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
+                    <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
+                    <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
+                    <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
+                    <td class="p-3">${expiryDate}</td>
+                    <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button></td>
                 `;
-                productListEl.appendChild(item);
+                productListEl.appendChild(tr);
             });
             lucide.createIcons();
             if (sortableInstance) sortableInstance.destroy();
@@ -247,7 +256,7 @@
                             display_order: index 
                         };
                     });
-
+                    
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
@@ -255,6 +264,12 @@
                     if (error) {
                         alert('排序失败: ' + error.message);
                     }
+                    // Refresh local cache order after successful db update
+                    reorderedIds.forEach((id, index) => {
+                       const product = productsCache.find(p => p.id === id);
+                       if(product) product.display_order = index;
+                    });
+                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -265,25 +280,31 @@
             const productPanel = document.getElementById('main-content');
             if(!productPanel) return;
 
-            const downloadBtn = productPanel.querySelector('#download-template-btn');
-            if(downloadBtn) downloadBtn.addEventListener('click', downloadTemplate);
-
-            const bulkUploadBtn = productPanel.querySelector('#bulk-upload-btn');
-            if(bulkUploadBtn) bulkUploadBtn.addEventListener('click', bulkUpload);
-
-            const addProductBtn = productPanel.querySelector('#add-product-btn');
-            if(addProductBtn) addProductBtn.addEventListener('click', addSingleProduct);
-
-            const productList = productPanel.querySelector('#product-list');
-            if(productList) productList.addEventListener('click', (e) => {
-                const button = e.target.closest('button');
-                if (!button) return;
-                if (button.classList.contains('edit-product-btn')) openEditModal(button.dataset.id);
-                if (button.classList.contains('delete-product-btn')) deleteProduct(button.dataset.id);
-            });
+            productPanel.querySelector('#download-template-btn')?.addEventListener('click', downloadTemplate);
+            productPanel.querySelector('#bulk-upload-btn')?.addEventListener('click', bulkUpload);
+            productPanel.querySelector('#add-product-btn')?.addEventListener('click', addSingleProduct);
+            productPanel.querySelector('#product-list')?.addEventListener('click', handleProductListClicks);
+            productPanel.querySelector('#select-all-products')?.addEventListener('change', handleSelectAll);
+            productPanel.querySelector('#bulk-delete-btn')?.addEventListener('click', bulkDelete);
+            productPanel.querySelector('#bulk-toggle-discount-btn')?.addEventListener('click', bulkToggleDiscount);
+        }
+        
+        function handleProductListClicks(e) {
+            const target = e.target;
+            const button = target.closest('button');
+            const row = target.closest('tr');
+            const id = row?.dataset.id || button?.dataset.id || target.dataset.id;
+            
+            if (target.classList.contains('product-checkbox')) {
+                updateBulkActionBar();
+            } else if (target.classList.contains('discount-toggle')) {
+                toggleDiscount(id, target.checked);
+            } else if (button?.classList.contains('edit-product-btn')) {
+                openEditModal(id);
+            }
         }
 
-        // --- 数据保存 ---
+        // --- 数据保存与操作 ---
         async function saveSettings(e) {
             e.target.disabled = true; e.target.textContent = '保存中...';
             const updates = {
@@ -348,7 +369,6 @@
             e.target.disabled = false; e.target.textContent = '保存社媒链接变更';
         }
 
-        // --- 图片处理 ---
         async function uploadImage(file) {
             if (!file) return null;
             const fileName = `public/${Date.now()}-${file.name}`;
@@ -373,7 +393,6 @@
             }
         }
         
-        // --- 产品操作 ---
         async function addSingleProduct(e) {
             const button = e.target;
             button.disabled = true;
@@ -383,8 +402,8 @@
             if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
             
             showLoading(true);
-            const { data: maxOrderData, error: countError } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
-            newProduct.display_order = (maxOrderData?.display_order || 0) + 1;
+            const { count } = await db.from('products').select('*', { count: 'exact', head: true });
+            newProduct.display_order = count || 0;
 
             const { error } = await db.from('products').insert(newProduct);
             showLoading(false);
@@ -456,8 +475,11 @@
                 expiresAt.setDate(expiresAt.getDate() + parseInt(discountDays));
             }
 
+            const productId = document.getElementById('edit-product-id').value;
+            const originalProduct = productsCache.find(p => p.id == productId);
+
             const updates = {
-                id: document.getElementById('edit-product-id').value,
+                ...originalProduct, // Start with the full original object
                 name: document.getElementById('edit-product-name').value,
                 price: document.getElementById('edit-product-price').value,
                 target_url: document.getElementById('edit-product-target-url').value,
@@ -466,6 +488,8 @@
                 discount_expires_at: expiresAt,
                 image_url: uploadedImageUrl,
             };
+            delete updates.created_at; // Supabase manages this
+
             await db.from('products').upsert(updates);
             showLoading(false);
 
@@ -475,8 +499,8 @@
             button.disabled = false; button.textContent = '保存更改';
         }
 
-        async function deleteProduct(id) {
-            if (confirm('您确定要删除这个产品吗？')) {
+        async function deleteProduct(id, skipConfirm = false) {
+            if (skipConfirm || confirm('您确定要删除这个产品吗？')) {
                 showLoading(true);
                 await db.from('products').delete().eq('id', id);
                 await loadProducts();
@@ -484,6 +508,56 @@
             }
         }
         
+        async function toggleDiscount(id, isActive) {
+            await db.from('products').update({ discount_is_active: isActive }).eq('id', id);
+        }
+
+        // --- 批量操作 ---
+        function updateBulkActionBar() {
+             const checkboxes = mainContent.querySelectorAll('.product-checkbox:checked');
+            const actionBar = mainContent.querySelector('#bulk-actions-bar');
+            const countEl = mainContent.querySelector('#selected-count');
+            if (checkboxes.length > 0) {
+                actionBar.classList.remove('hidden');
+                countEl.textContent = checkboxes.length;
+            } else {
+                actionBar.classList.add('hidden');
+            }
+        }
+        
+        function handleSelectAll(e) {
+            const isChecked = e.target.checked;
+            mainContent.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = isChecked);
+            updateBulkActionBar();
+        }
+
+        async function bulkDelete() {
+            const selectedIds = Array.from(mainContent.querySelectorAll('.product-checkbox:checked')).map(cb => cb.dataset.id);
+            if (selectedIds.length === 0) { alert('请先选择要删除的产品。'); return; }
+            if (confirm(`您确定要删除选中的 ${selectedIds.length} 个产品吗？`)) {
+                showLoading(true);
+                await db.from('products').delete().in('id', selectedIds);
+                await loadProducts();
+                showLoading(false);
+                updateBulkActionBar();
+            }
+        }
+
+        async function bulkToggleDiscount() {
+            const selectedIds = Array.from(mainContent.querySelectorAll('.product-checkbox:checked')).map(cb => parseInt(cb.dataset.id));
+            if (selectedIds.length === 0) { alert('请先选择要操作的产品。'); return; }
+            
+            const productsToUpdate = productsCache.filter(p => selectedIds.includes(p.id));
+            const turnOn = productsToUpdate.some(p => !p.discount_is_active);
+
+            if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
+                showLoading(true);
+                await db.from('products').update({ discount_is_active: turnOn }).in('id', selectedIds);
+                await loadProducts();
+                showLoading(false);
+            }
+        }
+
         // --- 批量上传和模板 ---
         function downloadTemplate() {
             const data = [{ name: '示例鞋子', price: 500, discount_price: 450, image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
@@ -519,8 +593,8 @@
                     }
 
                     showLoading(true);
-                    const { data: maxOrderData, error: countError } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
-                    let currentOrder = (maxOrderData?.display_order || 0);
+                    const { count } = await db.from('products').select('*', { count: 'exact', head: true });
+                    let currentOrder = count || 0;
 
                     const productsToUpload = json.map(row => ({
                         name: row.name, price: row.price, discount_price: row.discount_price || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder
