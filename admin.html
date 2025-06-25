@@ -250,15 +250,10 @@
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
-                    const updates = reorderedIds.map((id, index) => {
-                        return { 
-                            id: id,
-                            display_order: index 
-                        };
-                    });
+                    const updates = reorderedIds.map((id, index) => ({ id, display_order: index }));
                     
                     showLoading(true);
-                    const { error } = await db.from('products').upsert(updates);
+                    const { error } = await db.from('products').upsert(updates, { onConflict: 'id' });
                     showLoading(false);
 
                     if (error) {
