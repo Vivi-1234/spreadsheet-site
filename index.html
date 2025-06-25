@@ -18,8 +18,16 @@
         .nav-link:hover:after { width: 100%; left: 0; }
         .product-card { background-color: #ffffff; border: 1px solid #f0f0f0; transition: all 0.3s ease-in-out; }
         .product-card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px -5px #1118271a; border-color: #e5e7eb; }
-        .product-card .img-wrapper { overflow: hidden; }
-        .product-card img { transition: transform 0.4s ease; }
+        .product-card .img-wrapper { 
+            overflow: hidden;
+            aspect-ratio: 1 / 1; /* 确保图片容器是正方形 */
+        }
+        .product-card img { 
+            transition: transform 0.4s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 确保图片覆盖整个容器，不变形 */
+        }
         .product-card:hover img { transform: scale(1.05); }
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 1rem; background-color: #e5e7eb; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -72,6 +80,15 @@
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // --- 辅助函数：修复URL ---
+        function formatUrl(url) {
+            if (!url) return '#';
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            return `https://${url}`;
+        }
+
         // --- 数据加载和渲染 ---
         async function loadAndRender() {
             const [settingsRes, navRes, socialRes, productsRes] = await Promise.all([
@@ -95,14 +112,14 @@
             const navigation = navRes.data;
             const navContainer = document.getElementById('navigation-container');
             navContainer.innerHTML = '';
-            if(navigation) navigation.forEach(link => navContainer.innerHTML += `<a href="${link.link_url}" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">${link.link_text}</a>`);
+            if(navigation) navigation.forEach(link => navContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">${link.link_text}</a>`);
 
             // 渲染社交图标
             const socialLinks = socialRes.data;
             const socialContainer = document.getElementById('social-icons-container');
             socialContainer.innerHTML = '';
             if(socialLinks) socialLinks.forEach(link => {
-                 socialContainer.innerHTML += `<a href="${link.link_url}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}"><i data-lucide="${link.icon_svg_name || 'link'}" class="w-5 h-5 text-white"></i></a>`
+                 socialContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}"><i data-lucide="${link.icon_svg_name || 'link'}" class="w-5 h-5 text-white"></i></a>`
             });
 
             // 渲染产品列表
@@ -120,8 +137,8 @@
                 }
                 
                 productContainer.innerHTML += `
-                    <a href="${p.target_url}" target="_blank" class="group block rounded-xl product-card relative">
-                        <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-64 object-cover"></div>
+                    <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
+                        <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
                         <div class="p-4">
                             <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
                             ${priceHTML}
