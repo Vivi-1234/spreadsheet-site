@@ -140,6 +140,7 @@
         // --- 核心模块 ---
         function renderPanel(panelName) {
             mainContent.innerHTML = templates[panelName];
+            lucide.createIcons();
             switch (panelName) {
                 case 'dashboard': loadDashboardStats(); break;
                 case 'settings': loadSettings(); break;
@@ -147,7 +148,6 @@
                 case 'navigation': loadNavigation(); break;
                 case 'social': loadSocialLinks(); break;
             }
-            lucide.createIcons();
         }
 
         function showLoading(show) { loadingOverlay.classList.toggle('hidden', !show); }
@@ -238,7 +238,7 @@
                     const newOrder = Array.from(evt.to.children).map(item => item.dataset.id);
                     const updates = newOrder.map((id, index) => ({ id: parseInt(id, 10), display_order: index }));
                     showLoading(true);
-                    const { error } = await db.from('products').upsert(updates).select();
+                    const { error } = await db.from('products').upsert(updates);
                     if(error) alert('排序失败: ' + error.message);
                     await loadProducts();
                     showLoading(false);
@@ -371,7 +371,7 @@
             if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
             
             showLoading(true);
-            const { data: maxOrderData } = await db.from('products').select('display_order').order('display_order', { ascending: false }).limit(1).single();
+            const { data: maxOrderData } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
             newProduct.display_order = (maxOrderData?.display_order || 0) + 1;
 
             const { error } = await db.from('products').insert(newProduct);
@@ -429,7 +429,7 @@
             
             const discountDays = document.getElementById('edit-product-discount-days').value;
             let expiresAt = null;
-            if (discountDays && !isNaN(discountDays)) {
+            if (discountDays && !isNaN(discountDays) && parseInt(discountDays) >= 0) {
                 expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + parseInt(discountDays));
             }
@@ -497,7 +497,7 @@
                     }
 
                     showLoading(true);
-                    const { data: maxOrderData } = await db.from('products').select('display_order').order('display_order', { ascending: false }).limit(1).single();
+                    const { data: maxOrderData } = await db.from('products').select('display_order', {count: 'exact', head: true}).order('display_order', { ascending: false }).limit(1).single();
                     let currentOrder = (maxOrderData?.display_order || 0);
 
                     const productsToUpload = json.map(row => ({
