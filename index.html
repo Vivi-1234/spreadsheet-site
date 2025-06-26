@@ -95,8 +95,8 @@
         // 官方社交图标 SVG (简化版)
         const socialIcons = {
             'telegram': `<svg class="telegram-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.65 7.85l-6.5 6.5c-.2.2-.45.29-.71.29s-.51-.1-.71-.29l-3.5-3.5c-.39-.39-.39-1.02 0-1.41s1.02-.39 1.41 0l2.29 2.29 5.29-5.29c.39-.39 1.02-.39 1.41 0s.4 1.02 0 1.41z"/></svg>`,
-            'reddit': `<svg class="reddit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" /><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v2h-2zm0 3h2v5h-2zm-1 7h4v2h-4z" fill="#fff"/></svg>`,
-            'discord': `<svg class="discord-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.885-1.5152.0741.0741 0 00-.0783.0371c-.2119.3755-.4791.7342-.7882 1.0606a18.7506 18.7506 0 00-5.6936 0 12.7212 12.7212 0 00-.7882-1.0606.0776.0776 0 00-.0783-.0372 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.3203 13.5799.0992 18.0578a.0778.0778 0 00.0365.0457c.9066 1.1176 2.3072 1.8277 3.875 2.1534a.0853.0853 0 00.0906-.1454c-.3765-.2523-.7172-.5318-1.0138-.8408a.0745.0745 0 01-.0155-.0897 11.5816 11.5816 0 016.9456-2.0136.0778.0778 0 01.0783.038c.4971.8357 1.04 1.607 1.6281 2.3058a.0749.0749 0 00.1125.0266c1.616-1.156 2.8913-2.4058 3.7923-3.7107a.077.077 0 01.0848-.0298c1.0853.4068 2.1882.7148 3.2972.931a.0745.0745 0 00.0866-.0583 12.1038 12.1038 0 00.6726-3.2973.0778.0778 0 00-.0305-.0638 19.6552 19.6552 0 00-1.7186-1.3886 12.6841 12.6841 0 01-4.0968-.5985.0776.0776 0 00-.0783-.0371c-.8126.1676-1.6159.298-2.4216.3815a.0778.0778 0 00-.0583.041c-.5138.6812-1.0696 1.3082-1.6431 1.8867a.0739.0739 0 01-.1066.0128c-1.3128-.9096-2.43-1.9556-3.3037-3.1198a.076.076 0 01.0266-.1066c1.2022-1.1746 2.1883-2.5488 2.917-4.0746a.0778.0778 0 00-.0186-.0947 18.1882 18.1882 0 011.9475-1.6592.0745.0745 0 00.0321-.0277zM9.5663 15.3438c-1.0133 0-1.8428.8205-1.8428 1.8281s.8295 1.8281 1.8428 1.8281 1.8428-.8205 1.8428-1.8281-.8295-1.8281-1.8428-1.8281zm5.8672 0c-1.0133 0-1.8428.8205-1.8428 1.8281s.8295 1.8281 1.8428 1.8281 1.8428-.8205 1.8428-1.8281-.8294-1.8281-1.8428-1.8281z" /></svg>`
+            'reddit': `<svg class="reddit-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v2h-2zm0 3h2v5h-2zm-1 7h4v2h-4z" fill="#fff"/></svg>`,
+            'discord': `<svg class="discord-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.885-1.5152.0741.0741 0 00-.0783.0371c-.2119.3755-.4791.7342-.7882 1.0606a18.7506 18.7506 0 00-5.6936 0 12.7212 12.7212 0 00-.7882-1.0606.0776.0776 0 00-.0783-.0372 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.3203 13.5799.0992 18.0578a.0778.0778 0 00.0365.0457c.9066 1.1176 2.3072 1.8277 3.875 2.1534a.0853.0853 0 00.0906-.1454c-.3765-.2523-.7172-.5318-1.0138-.8408a.0745.0745 0 01-.0155-.0897 11.5816 11.5816 0 016.9456-2.0136.0778.0778 0 01.0783.038c.4971.8357 1.04 1.607 1.6281 2.3058a.0749.0749 0 00.1125.0266c1.616-1.156 2.8913-2.4058 3.7923-3.7107a.077.077 0 01.0848-.0298c1.0853.4068 2.1882.7148 3.2972.931a.0745.0745 0 00.0866-.0583 12.1038 12.1038 0 00.6726-3.2973.0778.0778 0 00-.0305-.0638 19.6552 19.6552 0 00-1.7186-1.3886 12.6841 12.6841 0 01-4.0968-.5985.0776.0776 0 00-.0783-.0371c-.8126.1676-1.6159.298-2.4216.3815a.0778.0778 0 00-.0583.041c-.5138.6812-1.0696 1.3082-1.6431 1.8867a.0739.0739 0 01-.1066.0128c-1.3128-.9096-2.43-1.9556-3.3037-3.1198a.076.076 0 01.0266-.1066c1.2022-1.1746 2.1883-2.5488 2.917-4.0746a.0778.0778 0 00-.0186-.0947 18.1882 18.1882 0 011.9475-1.6592.0745.0745 0 00.0321-.0277zM9.5663 15.3438c-1.0133 0-1.8428.8205-1.8428 1.8281s.8295 1.8281 1.8428 1.8281 1.8428-.8205 1.8428-1.8281-.8295-1.8281-1.8428-1.8281zm5.8672 0c-1.0133 0-1.8428.8205-1.8428 1.8281s.8295 1.8281 1.8428 1.8281 1.8428-.8205 1.8428-1.8281-.8294-1.8281-1.8428-1.8281z"/></svg>`
         };
 
         // --- 数据加载和渲染 ---
@@ -109,6 +109,11 @@
                     db.from('products').select('*').eq('is_active', true).order('display_order')
                 ]);
 
+                console.log('Settings data:', settingsRes.data); // 调试
+                console.log('Navigation data:', navRes.data); // 调试
+                console.log('Social data:', socialRes.data); // 调试
+                console.log('Products data:', productsRes.data); // 调试
+
                 // 渲染全局设置
                 const settings = settingsRes.data;
                 const siteTitle = document.getElementById('site-title');
@@ -117,11 +122,11 @@
                 const videoWrapper = document.getElementById('video-wrapper');
                 const categoryTitle = document.getElementById('category-title');
                 if (settings) {
-                    document.title = settings.site_title;
-                    if (siteTitle) siteTitle.innerHTML = settings.site_title.replace('Next', '<br>Next');
-                    if (siteSubtitle) siteSubtitle.textContent = settings.site_subtitle;
-                    if (productSectionTitle) productSectionTitle.textContent = settings.product_section_title;
-                    if (videoWrapper) videoWrapper.innerHTML = `<iframe src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    document.title = settings.site_title || 'SpreadSheet';
+                    if (siteTitle) siteTitle.innerHTML = (settings.site_title || 'SpreadSheet').replace('Next', '<br>Next');
+                    if (siteSubtitle) siteSubtitle.textContent = settings.site_subtitle || 'Discover great products';
+                    if (productSectionTitle) productSectionTitle.textContent = settings.product_section_title || 'Featured Products';
+                    if (videoWrapper) videoWrapper.innerHTML = settings.video_url ? `<iframe src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : '';
                 }
 
                 // 渲染导航栏
@@ -135,6 +140,8 @@
                                 navContainer.innerHTML += `<a href="${formatUrl(link.link_text.toLowerCase())}" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">${link.link_text}</a>`;
                             }
                         });
+                    } else {
+                        console.warn('No navigation data available');
                     }
                 }
 
@@ -143,15 +150,17 @@
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer) {
                     socialContainer.innerHTML = '';
-                    if (socialLinks) {
+                    if (socialLinks && socialLinks.length > 0) {
                         socialLinks.forEach(link => {
                             const platform = link.platform_name.toLowerCase();
-                            const icon = socialIcons[platform] || `<i data-lucide="link" class="w-5 h-5 text-white"></i>`; // 备用图标
+                            const icon = socialIcons[platform] || `<i data-lucide="link" class="w-5 h-5 text-white"></i>`;
                             socialContainer.innerHTML += `
-                                <a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}">
+                                <a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}">
                                     <div class="w-5 h-5">${icon}</div>
-                                </div>`;
+                                </a>`;
                         });
+                    } else {
+                        console.warn('No social links data available');
                     }
                 }
 
@@ -163,8 +172,8 @@
                     productContainer.innerHTML = '';
                     categoryProductList.innerHTML = '';
                     const path = window.location.pathname.replace(/^\//, '').toLowerCase() || 'index.html';
-                    console.log('Current path:', path); // 调试日志
-                    if (products) {
+                    console.log('Current path:', path);
+                    if (products && products.length > 0) {
                         products.forEach(p => {
                             const now = new Date();
                             const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
@@ -177,24 +186,22 @@
 
                             const productCard = `
                                 <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
-                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
+                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url || 'https://via.placeholder.com/150'}" alt="${p.name}" class="w-full h-full object-cover"></div>
                                     <div class="p-4">
-                                        <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
+                                        <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name || 'Unnamed Product'}</h3>
                                         ${priceHTML}
                                     </div>
                                     ${showDiscount ? '<div class="discount-badge">折扣</div>' : ''}
                                 </a>
                             `;
 
-                            // 首页显示所有产品
                             if (path === 'index.html' || path === '') {
                                 productContainer.innerHTML += productCard;
                             }
-                            // 分类页面显示匹配的分类产品
                             const categories = p.category ? p.category.split(',').map(cat => cat.trim().toLowerCase()) : [];
-                            console.log('Product:', p.name, 'Categories:', categories); // 调试日志
+                            console.log('Product:', p.name, 'Categories:', categories);
                             const navCategories = navigation ? navigation.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text.toLowerCase()) : [];
-                            console.log('Nav Categories:', navCategories); // 调试日志
+                            console.log('Nav Categories:', navCategories);
                             if (navCategories.includes(path)) {
                                 if (categories.some(cat => navCategories.includes(cat))) {
                                     categoryProductList.innerHTML += productCard;
@@ -202,30 +209,31 @@
                                 }
                             }
                         });
+                    } else {
+                        console.warn('No products data available');
+                        productContainer.innerHTML = '<p class="text-center text-gray-500">No products available.</p>';
+                    }
 
-                        // 显示对应部分
-                        const heroSection = document.getElementById('hero-section');
-                        const productSection = document.getElementById('product-section');
-                        const categorySection = document.getElementById('category-section');
-                        if (heroSection && productSection && categorySection) {
-                            if (path === 'index.html' || path === '') {
-                                heroSection.classList.remove('hidden');
-                                productSection.classList.remove('hidden');
-                                categorySection.classList.add('hidden');
-                            } else {
-                                heroSection.classList.add('hidden');
-                                productSection.classList.add('hidden');
-                                categorySection.classList.remove('hidden');
-                            }
+                    const heroSection = document.getElementById('hero-section');
+                    const productSection = document.getElementById('product-section');
+                    const categorySection = document.getElementById('category-section');
+                    if (heroSection && productSection && categorySection) {
+                        if (path === 'index.html' || path === '') {
+                            heroSection.classList.remove('hidden');
+                            productSection.classList.remove('hidden');
+                            categorySection.classList.add('hidden');
+                        } else {
+                            heroSection.classList.add('hidden');
+                            productSection.classList.add('hidden');
+                            categorySection.classList.remove('hidden');
                         }
                     }
                 }
             } catch (error) {
-                console.error('Error in loadAndRender:', error); // 错误处理
+                console.error('Error in loadAndRender:', error);
             }
 
             lucide.createIcons();
-            // 渲染淡入动画
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
