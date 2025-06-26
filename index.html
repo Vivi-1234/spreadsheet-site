@@ -177,9 +177,13 @@
                             </a>
                         `;
 
+                        // 首页显示所有产品
                         if (path === 'index.html' || path === '') {
                             productContainer.innerHTML += productCard;
-                        } else if (p.category.toLowerCase() === path) {
+                        }
+                        // 分类页面显示匹配的分类产品
+                        const categories = p.category ? p.category.split(',').map(cat => cat.trim().toLowerCase()) : [];
+                        if (categories.includes(path)) {
                             categoryProductList.innerHTML += productCard;
                             if (categoryTitle) categoryTitle.textContent = path.charAt(0).toUpperCase() + path.slice(1); // 首字母大写
                         }
