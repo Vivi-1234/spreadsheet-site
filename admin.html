@@ -52,13 +52,6 @@
         .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
         .nav-item-row .nav-url { pointer-events: none; background-color: #f3f4f6; }
         .home-nav-item { background-color: #e5e7eb; pointer-events: none; }
-        .custom-dropdown { position: relative; width: 100%; }
-        .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; }
-        .dropdown-menu.active { display: block; }
-        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; }
-        .dropdown-item:hover { background-color: #f3f4f6; }
-        .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
     </style>
 </head>
 <body>
@@ -153,7 +146,8 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">社交媒体管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md max-w-2xl">
                     <div id="social-links-list" class="space-y-3 mb-4"></div>
-                    <div class="text-right"><button id="save-social-btn" class="btn btn-primary">保存社媒链接变更</button></div>
+                    <div class="mt-4"><button id="add-social-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加社交媒体</button></div>
+                    <div class="text-right mt-4"><button id="save-social-btn" class="btn btn-primary">保存全部变更</button></div>
                 </div>`
         };
 
@@ -255,11 +249,82 @@
         async function loadSocialLinks() {
             const socialList = document.getElementById('social-links-list');
             if (!socialList) return;
-            const { data } = await db.from('social_links').select('*').order('display_order');
             socialList.innerHTML = '';
-            if (data) data.forEach(item => socialList.innerHTML += `<div class="grid grid-cols-4 gap-2"><input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform col-span-1" placeholder="平台名称"><input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url col-span-3" placeholder="主页链接"></div>`);
-            const saveBtn = document.getElementById('save-social-btn');
-            if (saveBtn) saveBtn.addEventListener('click', saveSocialLinks);
+            const { data, error } = await db.from('social_links').select('*').order('display_order');
+            if (error) { console.error("Error fetching social links:", error); return; }
+            if (data) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 social-item-row';
+                    div.dataset.id = item.id;
+                    div.innerHTML = `
+                        <input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform w-1/4" placeholder="平台名称">
+                        <input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url w-1/4" placeholder="主页链接">
+                        <div class="w-1/4"><input type="file" data-id="${item.id}" class="input social-icon-input" accept="image/*" style="display:none;"><img src="${item.icon_url || ''}" alt="${item.platform_name} Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();"><button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${item.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div>
+                        <input type="color" data-id="${item.id}" value="${item.icon_color || '#333333'}" class="input w-1/6 social-color-input">
+                    `;
+                    div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
+                    div.querySelector('.social-icon-input').addEventListener('change', async (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            showLoading(true);
+                            const fileName = `social-icons/${Date.now()}-${file.name}`;
+                            const { data: uploadData, error: uploadError } = await db.storage.from('social-icons').upload(fileName, file);
+                            if (uploadError) {
+                                console.error('Upload error:', uploadError);
+                                showLoading(false);
+                                return;
+                            }
+                            const { data: { publicUrl } } = db.storage.from('social-icons').getPublicUrl(fileName);
+                            div.querySelector('img').src = publicUrl;
+                            showLoading(false);
+                        }
+                    });
+                    socialList.appendChild(div);
+                });
+            }
+            new Sortable(socialList, {
+                animation: 150,
+                onEnd: updateSocialOrder
+            });
+        }
+
+        async function updateSocialOrder(evt) {
+            const items = evt.to.querySelectorAll('.social-item-row');
+            const updates = Array.from(items).map((item, index) => ({
+                id: parseInt(item.dataset.id),
+                display_order: index + 1
+            }));
+            showLoading(true);
+            const { error } = await db.from('social_links').upsert(updates);
+            showLoading(false);
+            if (error) console.error('Order update error:', error);
+        }
+
+        async function saveSocialLinks(e) {
+            const button = e.target;
+            if (!button) return;
+            button.disabled = true; button.textContent = '保存中...';
+            const socialRows = document.querySelectorAll('#social-links-list .social-item-row');
+            const updates = Array.from(socialRows).map(row => {
+                const id = parseInt(row.dataset.id);
+                const platformName = row.querySelector('.social-platform').value;
+                const linkUrl = row.querySelector('.social-url').value;
+                const iconColor = row.querySelector('.social-color-input').value;
+                return { id, platform_name: platformName, link_url: linkUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 };
+            });
+
+            showLoading(true);
+            const { error } = await db.from('social_links').upsert(updates);
+            showLoading(false);
+
+            if (error) {
+                alert('社交链接保存失败: ' + error.message);
+            } else {
+                alert('社交链接已更新！');
+                await loadSocialLinks();
+            }
+            button.disabled = false; button.textContent = '保存全部变更';
         }
 
         async function loadProducts() {
@@ -283,11 +348,13 @@
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
                 const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
-                const dropdownTrigger = `<div class="custom-dropdown"><div class="dropdown-trigger flex items-center justify-between" data-id="${p.id}">${selectedCategories.length > 0 ? selectedCategories.join(', ') : '选择分类'} <i data-lucide="chevron-down" class="w-4 h-4"></i></div><div class="dropdown-menu" data-id="${p.id}"></div></div>`;
+                const categorySelect = `<select multiple class="category-select" data-id="${p.id}">` +
+                    categories.map(cat => `<option value="${cat}" ${selectedCategories.includes(cat) ? 'selected' : ''}>${cat}</option>`).join('') +
+                    '</select>';
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
-                    <td class="p-3">${dropdownTrigger}</td>
+                    <td class="p-3">${categorySelect}</td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
                     <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
                     <td class="p-3">${p.target_url || '—'}</td>
@@ -299,58 +366,21 @@
                 productListEl.appendChild(tr);
             });
 
-            // 初始化自定义下拉菜单
-            productListEl.querySelectorAll('.custom-dropdown').forEach(dropdown => {
-                const trigger = dropdown.querySelector('.dropdown-trigger');
-                const menu = dropdown.querySelector('.dropdown-menu');
-                const productId = trigger.dataset.id;
-                const selectedCategories = productsCache.find(p => p.id == productId)?.category?.split(',').map(cat => cat.trim()) || [];
-
-                menu.innerHTML = categories.map(cat => `
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="cat-${productId}-${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''} value="${cat}">
-                        <label for="cat-${productId}-${cat}">${cat}</label>
-                    </div>
-                `).join('');
-
-                trigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const isActive = menu.classList.contains('active');
-                    document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active'));
-                    if (!isActive) menu.classList.add('active');
-                    document.addEventListener('click', closeDropdown);
-                });
-
-                menu.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const checkbox = e.target.closest('input[type="checkbox"]');
-                    if (checkbox) {
-                        const selected = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
-                        const product = productsCache.find(p => p.id == productId);
-                        if (product) {
-                            product.category = selected;
-                            trigger.firstChild.textContent = selected.length > 0 ? selected : '选择分类';
-                            showLoading(true);
-                            db.from('products').update({ category: selected }).eq('id', productId).then(() => {
-                                showLoading(false);
-                            }).catch(err => {
-                                alert('分类更新失败: ' + err.message);
-                                showLoading(false);
-                            });
-                        }
+            // 添加分类选择事件
+            productListEl.querySelectorAll('.category-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const productId = e.target.dataset.id;
+                    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value).join(',');
+                    const product = productsCache.find(p => p.id == productId);
+                    if (product) {
+                        product.category = selectedOptions;
+                        showLoading(true);
+                        const { error } = await db.from('products').update({ category: selectedOptions }).eq('id', productId);
+                        showLoading(false);
+                        if (error) alert('分类更新失败: ' + error.message);
                     }
                 });
             });
-
-            function closeDropdown(e) {
-                const dropdowns = productListEl.querySelectorAll('.dropdown-menu.active');
-                dropdowns.forEach(menu => {
-                    if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
-                        menu.classList.remove('active');
-                        document.removeEventListener('click', closeDropdown);
-                    }
-                });
-            }
 
             lucide.createIcons();
             if (sortableInstance) sortableInstance.destroy();
@@ -489,21 +519,28 @@
             const button = e.target;
             if (!button) return;
             button.disabled = true; button.textContent = '保存中...';
-            const platformInputs = document.querySelectorAll('#social-links-list .social-platform');
-            const urlInputs = document.querySelectorAll('#social-links-list .social-url');
+            const socialRows = document.querySelectorAll('#social-links-list .social-item-row');
             const updates = [];
-            for (let i = 0; i < platformInputs.length; i++) {
-                updates.push({
-                    id: platformInputs[i].dataset.id,
-                    platform_name: platformInputs[i].value,
-                    link_url: urlInputs[i].value,
-                    display_order: i + 1,
-                });
+            for (let row of socialRows) {
+                const id = parseInt(row.dataset.id);
+                const platformName = row.querySelector('.social-platform').value;
+                const linkUrl = row.querySelector('.social-url').value;
+                const iconUrl = row.querySelector('img').src || null;
+                const iconColor = row.querySelector('.social-color-input').value;
+                updates.push({ id, platform_name: platformName, link_url: linkUrl, icon_url: iconUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 });
             }
+
+            showLoading(true);
             const { error } = await db.from('social_links').upsert(updates);
-            if (error) alert('社交链接保存失败: ' + error.message);
-            else alert('社交链接已更新！');
-            button.disabled = false; button.textContent = '保存社媒链接变更';
+            showLoading(false);
+
+            if (error) {
+                alert('社交链接保存失败: ' + error.message);
+            } else {
+                alert('社交链接已更新！');
+                await loadSocialLinks();
+            }
+            button.disabled = false; button.textContent = '保存全部变更';
         }
 
         async function uploadImage(file) {
@@ -944,6 +981,45 @@
                 deleteImageBtn.classList.add('hidden');
                 imagePlaceholder.classList.remove('hidden');
                 imageInput.value = '';
+            });
+        }
+
+        // 添加社交媒体条目
+        const addSocialBtn = document.getElementById('add-social-btn');
+        if (addSocialBtn) {
+            addSocialBtn.addEventListener('click', () => {
+                const socialList = document.getElementById('social-links-list');
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 social-item-row';
+                div.dataset.id = `new_${Date.now()}`;
+                div.innerHTML = `
+                    <input type="text" class="input social-platform w-1/4" placeholder="平台名称">
+                    <input type="text" class="input social-url w-1/4" placeholder="主页链接">
+                    <div class="w-1/4"><input type="file" class="input social-icon-input" accept="image/*" style="display:none;"><img src="" alt="Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();"><button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div>
+                    <input type="color" class="input w-1/6 social-color-input" value="#333333">
+                `;
+                div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
+                div.querySelector('.social-icon-input').addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        showLoading(true);
+                        const fileName = `social-icons/${Date.now()}-${file.name}`;
+                        const { data: uploadData, error: uploadError } = await db.storage.from('social-icons').upload(fileName, file);
+                        if (uploadError) {
+                            console.error('Upload error:', uploadError);
+                            showLoading(false);
+                            return;
+                        }
+                        const { data: { publicUrl } } = db.storage.from('social-icons').getPublicUrl(fileName);
+                        div.querySelector('img').src = publicUrl;
+                        showLoading(false);
+                    }
+                });
+                socialList.appendChild(div);
+                new Sortable(socialList, {
+                    animation: 150,
+                    onEnd: updateSocialOrder
+                });
             });
         }
 
