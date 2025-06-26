@@ -103,7 +103,7 @@
             products: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">产品管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                     <div class="mb-6 border-b pb-6">
+                    <div class="mb-6 border-b pb-6">
                         <h3 class="font-semibold mb-2 text-lg">添加新产品</h3>
                         <div id="add-product-forms-container" class="space-y-4">
                            <!-- 新产品表单将在这里动态添加 -->
@@ -566,7 +566,7 @@
             const container = document.getElementById('add-product-forms-container');
             const formId = `new-form-${Date.now()}`;
             const div = document.createElement('div');
-            div.className = 'grid grid-cols-1 md:grid-cols-5 gap-3 bg-gray-50 p-4 rounded-lg border relative add-form-row items-center';
+            div.className = 'grid grid-cols-1 md:grid-cols-6 gap-3 bg-gray-50 p-4 rounded-lg border relative add-form-row items-center';
             div.id = formId;
 
             div.innerHTML = `
@@ -575,10 +575,11 @@
                     <img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-md add-preview-image">
                 </div>
                 <input type="file" class="hidden add-image-input" accept="image/*">
-                <input type="text" placeholder="产品名称" class="input new-product-name">
-                <input type="text" placeholder="跳转链接" class="input new-product-target-url">
+                <input type="text" placeholder="产品名称" class="input new-product-name col-span-2">
+                <input type="text" placeholder="跳转链接" class="input new-product-target-url col-span-2">
                 <input type="number" placeholder="原价" class="input new-product-price">
                 <input type="number" placeholder="折扣率" class="input new-product-discount-factor" step="0.01" min="0" max="1">
+                <input type="datetime-local" class="input new-product-discount-expires col-span-5">
                 <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
@@ -627,7 +628,7 @@
                 if (imageFile) {
                     imageUrl = await uploadImage(imageFile);
                     if (!imageUrl) {
-                        alert(`表单 #${form.id} 的图片上传失败，已终止操作。`);
+                        alert(`有产品的图片上传失败，已终止操作。`);
                         showLoading(false);
                         return;
                     }
@@ -637,6 +638,7 @@
                 const price = parseFloat(form.querySelector('.new-product-price').value);
                 const target_url = form.querySelector('.new-product-target-url').value;
                 const discount_factor = form.querySelector('.new-product-discount-factor').value || null;
+                const expires_at = form.querySelector('.new-product-discount-expires').value || null;
                 
                 if (!name || isNaN(price) || !target_url) {
                     alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
@@ -650,7 +652,7 @@
                 }
 
                 productsToUpload.push({
-                    name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor: discount_factor, display_order: currentOrder++
+                    name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor,
                 });
             }
             
