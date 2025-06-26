@@ -52,22 +52,97 @@
         .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
         .nav-item-row .nav-url { pointer-events: none; background-color: #f3f4f6; }
         .home-nav-item { background-color: #e5e7eb; pointer-events: none; }
+        .social-item-row img { cursor: pointer; }
     </style>
 </head>
 <body>
     <!-- 登录界面 -->
     <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg"><h1 class="text-2xl font-bold text-center text-gray-800 mb-6">后台登录</h1><div class="space-y-4"><div><label for="password" class="label block mb-1">请输入密码:</label><input type="password" id="password" class="input" placeholder="••••••••"></div><button id="login-btn" class="w-full btn btn-primary">登录</button></div><p id="auth-error" class="text-red-500 text-sm text-center mt-4"></p></div>
+        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">后台登录</h1>
+            <div class="space-y-4">
+                <div>
+                    <label for="password" class="label block mb-1">请输入密码:</label>
+                    <input type="password" id="password" class="input" placeholder="••••••••">
+                </div>
+                <button id="login-btn" class="w-full btn btn-primary">登录</button>
+            </div>
+            <p id="auth-error" class="text-red-500 text-sm text-center mt-4"></p>
+        </div>
     </div>
 
     <!-- 管理后台主界面 -->
-    <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
+    <div id="admin-panel" class="hidden">
+        <div class="flex h-screen bg-gray-100">
+            <aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1>
+                <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow">
+                    <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
+                    <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
+                    <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
+                    <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
+                    <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
+                </nav>
+                <div class="pt-4 border-t">
+                    <button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center">
+                        <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录
+                    </button>
+                </div>
+            </aside>
+            <main class="flex-1 p-8 overflow-y-auto" id="main-content"></main>
+        </div>
+    </div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-lg font-semibold">编辑产品</h3>
+                <button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300">
+                    <p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p>
+                    <img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2">
+                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    </button>
+                </div>
+                <input type="file" id="edit-image-input" class="hidden" accept="image/*">
+                <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
+                    <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
+                </div>
+                <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                    <p class="font-semibold mb-2">折扣设置</p>
+                    <div class="grid grid-cols-3 gap-4 items-center">
+                        <div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
+                        <div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded">
+                            <label for="edit-product-discount-active" class="ml-2">开启折扣</label>
+                        </div>
+                        <div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 bg-gray-50 rounded-b-xl text-right">
+                <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
+            </div>
+        </div>
+    </div>
     
     <!-- 加载遮罩 -->
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+        <div class="flex items-center">
+            <i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i>
+            <p class="ml-4 text-lg font-semibold">处理中...</p>
+        </div>
+    </div>
 
     <script type="module">
         // --- 配置 ---
@@ -260,7 +335,11 @@
                     div.innerHTML = `
                         <input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform w-1/4" placeholder="平台名称">
                         <input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url w-1/4" placeholder="主页链接">
-                        <div class="w-1/4"><input type="file" data-id="${item.id}" class="input social-icon-input" accept="image/*" style="display:none;"><img src="${item.icon_url || ''}" alt="${item.platform_name} Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();"><button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${item.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div>
+                        <div class="w-1/4">
+                            <input type="file" data-id="${item.id}" class="input social-icon-input" accept="image/*" style="display:none;">
+                            <img src="${item.icon_url || ''}" alt="${item.platform_name} Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();">
+                            <button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${item.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                        </div>
                         <input type="color" data-id="${item.id}" value="${item.icon_color || '#333333'}" class="input w-1/6 social-color-input">
                     `;
                     div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
@@ -306,13 +385,15 @@
             if (!button) return;
             button.disabled = true; button.textContent = '保存中...';
             const socialRows = document.querySelectorAll('#social-links-list .social-item-row');
-            const updates = Array.from(socialRows).map(row => {
+            const updates = [];
+            for (let row of socialRows) {
                 const id = parseInt(row.dataset.id);
                 const platformName = row.querySelector('.social-platform').value;
                 const linkUrl = row.querySelector('.social-url').value;
+                const iconUrl = row.querySelector('img').src || null;
                 const iconColor = row.querySelector('.social-color-input').value;
-                return { id, platform_name: platformName, link_url: linkUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 };
-            });
+                updates.push({ id, platform_name: platformName, link_url: linkUrl, icon_url: iconUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 });
+            }
 
             showLoading(true);
             const { error } = await db.from('social_links').upsert(updates);
@@ -323,6 +404,61 @@
             } else {
                 alert('社交链接已更新！');
                 await loadSocialLinks();
+            }
+            button.disabled = false; button.textContent = '保存全部变更';
+        }
+
+        async function saveSettings(e) {
+            const button = e.target;
+            if (!button) return;
+            button.disabled = true; button.textContent = '保存中...';
+            const updates = {
+                id: 1,
+                site_title: document.getElementById('siteTitle')?.value,
+                site_subtitle: document.getElementById('siteSubtitle')?.value,
+                video_url: document.getElementById('videoUrl')?.value,
+                product_section_title: document.getElementById('productSectionTitle')?.value,
+            };
+            const { error } = await db.from('settings').upsert(updates);
+            if (error) alert('保存失败: ' + error.message);
+            else alert('网站设置已保存！');
+            button.disabled = false; button.textContent = '保存设置';
+        }
+
+        async function saveNavigation(e) {
+            const button = e.target;
+            if (!button) return;
+            button.disabled = true; button.textContent = '保存中...';
+            const navRows = document.querySelectorAll('#navigation-list .nav-item-row');
+            const navItems = Array.from(navRows).map((row, index) => {
+                const linkText = row.querySelector('.nav-text')?.value.trim();
+                return {
+                    id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
+                    link_text: linkText,
+                    link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
+                    display_order: index + 1
+                };
+            });
+
+            const { data: existingNavs } = await db.from('navigation').select('id');
+            const existingIds = existingNavs.map(n => n.id);
+            const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
+
+            showLoading(true);
+            if (idsToDelete.length > 0) {
+                await db.from('navigation').delete().in('id', idsToDelete);
+            }
+            const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
+            const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
+            const { error } = await db.from('navigation').upsert(finalItems);
+            showLoading(false);
+
+            if (error) alert('导航栏保存失败: ' + error.message);
+            else {
+                alert('导航栏已更新！');
+                await loadNavigation();
+                await loadProducts();
             }
             button.disabled = false; button.textContent = '保存全部变更';
         }
@@ -366,7 +502,6 @@
                 productListEl.appendChild(tr);
             });
 
-            // 添加分类选择事件
             productListEl.querySelectorAll('.category-select').forEach(select => {
                 select.addEventListener('change', async (e) => {
                     const productId = e.target.dataset.id;
@@ -390,44 +525,35 @@
                 handle: '.cursor-move',
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
-                    
                     const updates = reorderedIds.map((id, index) => {
                         const product = productsCache.find(p => p.id === id);
-                        return { 
-                           ...product,
-                           display_order: index 
-                        };
+                        return { ...product, display_order: index };
                     });
-                    
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
-
                     if (error) {
                         alert('排序失败: ' + error.message);
-                        await loadProducts(); // Revert UI if error
+                        await loadProducts();
                     } else {
                         reorderedIds.forEach((id, index) => {
-                           const product = productsCache.find(p => p.id === id);
-                           if(product) product.display_order = index;
+                            const product = productsCache.find(p => p.id === id);
+                            if (product) product.display_order = index;
                         });
-                        productsCache.sort((a,b) => a.display_order - b.display_order);
+                        productsCache.sort((a, b) => a.display_order - b.display_order);
                     }
                 }
             });
             setupProductEventListeners();
         }
 
-        // --- 事件监听设置 ---
         function setupProductEventListeners() {
             const productPanel = document.getElementById('main-content');
             if (!productPanel) return;
-            
             const addBtn = productPanel.querySelector('#add-product-form-row-btn');
             if (addBtn) addBtn.addEventListener('click', addProductFormRow);
             const submitBtn = productPanel.querySelector('#submit-all-new-products-btn');
             if (submitBtn) submitBtn.addEventListener('click', submitAllNewProducts);
-            
             const productList = productPanel.querySelector('#product-list');
             if (productList) productList.addEventListener('click', handleProductListClicks);
             const selectAll = productPanel.querySelector('#select-all-products');
@@ -436,19 +562,16 @@
             if (bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', bulkDelete);
             const bulkToggleBtn = productPanel.querySelector('#bulk-toggle-discount-btn');
             if (bulkToggleBtn) bulkToggleBtn.addEventListener('click', bulkToggleDiscount);
-
-            // Initial add form row
             if (productPanel.querySelector('#add-product-forms-container').children.length === 0) {
                 addProductFormRow();
             }
         }
-        
+
         function handleProductListClicks(e) {
             const target = e.target;
             const button = target.closest('button');
             const row = target.closest('tr');
             const id = row?.dataset.id || button?.dataset.id || target.dataset.id;
-            
             if (target.classList.contains('product-checkbox')) {
                 updateBulkActionBar();
             } else if (target.classList.contains('discount-toggle')) {
@@ -458,7 +581,6 @@
             }
         }
 
-        // --- 数据保存与操作 ---
         async function saveSettings(e) {
             const button = e.target;
             if (!button) return;
@@ -487,20 +609,19 @@
                     id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
                     link_text: linkText,
                     link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
-                    display_order: index + 1 // Home 固定在 0，动态项从 1 开始
+                    display_order: index + 1
                 };
             });
 
             const { data: existingNavs } = await db.from('navigation').select('id');
             const existingIds = existingNavs.map(n => n.id);
             const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
-            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1); // 假设 Home ID 为 1
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
 
             showLoading(true);
             if (idsToDelete.length > 0) {
                 await db.from('navigation').delete().in('id', idsToDelete);
             }
-            // 确保 Home 项始终存在
             const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
             const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
             const { error } = await db.from('navigation').upsert(finalItems);
@@ -510,35 +631,7 @@
             else {
                 alert('导航栏已更新！');
                 await loadNavigation();
-                await loadProducts(); // 更新产品分类选项
-            }
-            button.disabled = false; button.textContent = '保存全部变更';
-        }
-
-        async function saveSocialLinks(e) {
-            const button = e.target;
-            if (!button) return;
-            button.disabled = true; button.textContent = '保存中...';
-            const socialRows = document.querySelectorAll('#social-links-list .social-item-row');
-            const updates = [];
-            for (let row of socialRows) {
-                const id = parseInt(row.dataset.id);
-                const platformName = row.querySelector('.social-platform').value;
-                const linkUrl = row.querySelector('.social-url').value;
-                const iconUrl = row.querySelector('img').src || null;
-                const iconColor = row.querySelector('.social-color-input').value;
-                updates.push({ id, platform_name: platformName, link_url: linkUrl, icon_url: iconUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 });
-            }
-
-            showLoading(true);
-            const { error } = await db.from('social_links').upsert(updates);
-            showLoading(false);
-
-            if (error) {
-                alert('社交链接保存失败: ' + error.message);
-            } else {
-                alert('社交链接已更新！');
-                await loadSocialLinks();
+                await loadProducts();
             }
             button.disabled = false; button.textContent = '保存全部变更';
         }
@@ -995,7 +1088,11 @@
                 div.innerHTML = `
                     <input type="text" class="input social-platform w-1/4" placeholder="平台名称">
                     <input type="text" class="input social-url w-1/4" placeholder="主页链接">
-                    <div class="w-1/4"><input type="file" class="input social-icon-input" accept="image/*" style="display:none;"><img src="" alt="Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();"><button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div>
+                    <div class="w-1/4">
+                        <input type="file" class="input social-icon-input" accept="image/*" style="display:none;">
+                        <img src="" alt="Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();">
+                        <button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${div.dataset.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                    </div>
                     <input type="color" class="input w-1/6 social-color-input" value="#333333">
                 `;
                 div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
