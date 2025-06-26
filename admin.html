@@ -103,7 +103,7 @@
             products: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">产品管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                    <div class="mb-6 border-b pb-6">
+                     <div class="mb-6 border-b pb-6">
                         <h3 class="font-semibold mb-2 text-lg">添加新产品</h3>
                         <div id="add-product-forms-container" class="space-y-4">
                            <!-- 新产品表单将在这里动态添加 -->
@@ -242,9 +242,10 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
+                        const product = productsCache.find(p => p.id === id);
                         return { 
-                            id: id,
-                            display_order: index 
+                           ...product,
+                           display_order: index 
                         };
                     });
                     
@@ -254,13 +255,14 @@
 
                     if (error) {
                         alert('排序失败: ' + error.message);
+                        await loadProducts(); // Revert UI if error
+                    } else {
+                        reorderedIds.forEach((id, index) => {
+                           const product = productsCache.find(p => p.id === id);
+                           if(product) product.display_order = index;
+                        });
+                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
-                    // Refresh local cache order to match UI
-                    reorderedIds.forEach((id, index) => {
-                       const product = productsCache.find(p => p.id === id);
-                       if(product) product.display_order = index;
-                    });
-                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -579,7 +581,7 @@
                 <input type="text" placeholder="跳转链接" class="input new-product-target-url col-span-2">
                 <input type="number" placeholder="原价" class="input new-product-price">
                 <input type="number" placeholder="折扣率" class="input new-product-discount-factor" step="0.01" min="0" max="1">
-                <input type="datetime-local" class="input new-product-discount-expires col-span-5">
+                <div class="col-span-6"><input type="datetime-local" class="input new-product-discount-expires" title="折扣到期时间"></div>
                 <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
@@ -638,7 +640,7 @@
                 const price = parseFloat(form.querySelector('.new-product-price').value);
                 const target_url = form.querySelector('.new-product-target-url').value;
                 const discount_factor = form.querySelector('.new-product-discount-factor').value || null;
-                const expires_at = form.querySelector('.new-product-discount-expires').value || null;
+                const expires_at = form.querySelector('.new-product-discount-expires').value ? new Date(form.querySelector('.new-product-discount-expires').value).toISOString() : null;
                 
                 if (!name || isNaN(price) || !target_url) {
                     alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
