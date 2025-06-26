@@ -7,9 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入 SheetJS 用于解析 Excel 文件 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- 引入 SortableJS 用于拖拽排序 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,14 +31,11 @@
         .sortable-ghost { background: #dbeafe; opacity: 0.5; }
         .sortable-chosen { cursor: grabbing; }
         .stat-card { background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); }
-        /* Toggle Switch Styles */
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .toggle-slider { background-color: #2563eb; }
         input:checked + .toggle-slider:before { transform: translateX(16px); }
-        /* 自定义样式 */
         .modal-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; }
         .modal-row .flex-1 { flex: 1 0 auto; min-width: 0; }
         .discount-section { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
@@ -59,6 +54,8 @@
         .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; }
         .dropdown-item:hover { background-color: #f3f4f6; }
         .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
+        .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.25rem; }
+        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -88,6 +85,7 @@
         let productsCache = [];
         let sortableInstance = null;
         let newProductFiles = new Map();
+        let newSocialFiles = new Map();
         
         // --- DOM 元素 ---
         const authScreen = document.getElementById('auth-screen');
@@ -153,7 +151,8 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">社交媒体管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md max-w-2xl">
                     <div id="social-links-list" class="space-y-3 mb-4"></div>
-                    <div class="text-right"><button id="save-social-btn" class="btn btn-primary">保存社媒链接变更</button></div>
+                    <div class="mt-4"><button id="add-social-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加社交媒体</button></div>
+                    <div class="text-right mt-4"><button id="save-social-btn" class="btn btn-primary">保存社媒链接变更</button></div>
                 </div>`
         };
 
@@ -202,7 +201,6 @@
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
             navList.innerHTML = '';
-            // 固定 Home 导航项
             const homeDiv = document.createElement('div');
             homeDiv.className = 'flex items-center gap-2 nav-item-row home-nav-item';
             homeDiv.innerHTML = `
@@ -211,23 +209,22 @@
             `;
             navList.appendChild(homeDiv);
 
-            // 动态加载其他导航项
             const { data, error } = await db.from('navigation').select('*').order('display_order');
             if (error) { console.error("Error fetching navigation:", error); return; }
             if (data) {
-                data.forEach(item => {
-                    if (item.link_text.toLowerCase() !== 'home') { // 排除 Home
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center gap-2 nav-item-row';
-                        div.dataset.id = item.id;
-                        div.innerHTML = `
-                            <input type="text" value="${item.link_text}" class="input nav-text w-1/3" placeholder="链接文字">
-                            <input type="text" value="${item.link_url}" class="input nav-url w-2/3" placeholder="跳转位置 (URL)" disabled>
-                            <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
-                        `;
-                        div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
-                        navList.appendChild(div);
-                    }
+                // 过滤无效或重复的导航条目，只保留有效的分类
+                const validItems = data.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home');
+                validItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 nav-item-row';
+                    div.dataset.id = item.id;
+                    div.innerHTML = `
+                        <input type="text" value="${item.link_text}" class="input nav-text w-1/3" placeholder="链接文字">
+                        <input type="text" value="${item.link_url}" class="input nav-url w-2/3" placeholder="跳转位置 (URL)" disabled>
+                        <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
+                    `;
+                    div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
+                    navList.appendChild(div);
                 });
             }
             const addBtn = document.getElementById('add-nav-btn');
@@ -255,11 +252,190 @@
         async function loadSocialLinks() {
             const socialList = document.getElementById('social-links-list');
             if (!socialList) return;
-            const { data } = await db.from('social_links').select('*').order('display_order');
+            const { data, error } = await db.from('social_links').select('*').order('display_order');
+            if (error) { console.error("Error fetching social links:", error); return; }
             socialList.innerHTML = '';
-            if (data) data.forEach(item => socialList.innerHTML += `<div class="grid grid-cols-4 gap-2"><input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform col-span-1" placeholder="平台名称"><input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url col-span-3" placeholder="主页链接"></div>`);
+            if (data) {
+                data.forEach(item => {
+                    const rowId = item.id || `new_${Date.now()}`;
+                    socialList.innerHTML += `
+                        <div class="flex items-center gap-2 social-row" data-id="${rowId}">
+                            <div class="social-logo-box relative p-2 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300">
+                                <p class="text-xs social-logo-placeholder ${item.icon_url ? 'hidden' : ''}">上传 Logo</p>
+                                <img src="${item.icon_url || ''}" class="social-logo-preview ${item.icon_url ? '' : 'hidden'}">
+                            </div>
+                            <input type="file" class="hidden social-logo-input" accept="image/*">
+                            <input type="text" data-id="${rowId}" value="${item.platform_name}" class="input social-platform flex-1" placeholder="平台名称">
+                            <input type="text" data-id="${rowId}" value="${item.link_url}" class="input social-url flex-1" placeholder="主页链接">
+                            <button class="delete-social-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
+                        </div>`;
+                });
+            }
+            const addBtn = document.getElementById('add-social-btn');
+            if (addBtn) addBtn.addEventListener('click', addSocialRow);
             const saveBtn = document.getElementById('save-social-btn');
             if (saveBtn) saveBtn.addEventListener('click', saveSocialLinks);
+            setupSocialEventListeners();
+            lucide.createIcons();
+        }
+
+        function addSocialRow() {
+            const socialList = document.getElementById('social-links-list');
+            if (!socialList) return;
+            const rowId = `new_${Date.now()}`;
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 social-row';
+            div.dataset.id = rowId;
+            div.innerHTML = `
+                <div class="social-logo-box relative p-2 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300">
+                    <p class="text-xs social-logo-placeholder">上传 Logo</p>
+                    <img src="" class="social-logo-preview hidden">
+                </div>
+                <input type="file" class="hidden social-logo-input" accept="image/*">
+                <input type="text" data-id="${rowId}" class="input social-platform flex-1" placeholder="平台名称">
+                <input type="text" data-id="${rowId}" class="input social-url flex-1" placeholder="主页链接">
+                <button class="delete-social-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
+            `;
+            socialList.appendChild(div);
+            setupSocialRowListeners(div);
+            lucide.createIcons();
+        }
+
+        function setupSocialRowListeners(row) {
+            const logoBox = row.querySelector('.social-logo-box');
+            const logoInput = row.querySelector('.social-logo-input');
+            const previewImage = row.querySelector('.social-logo-preview');
+            const placeholder = row.querySelector('.social-logo-placeholder');
+            const deleteBtn = row.querySelector('.delete-social-btn');
+            const rowId = row.dataset.id;
+
+            if (logoBox && logoInput && previewImage && placeholder) {
+                logoBox.addEventListener('click', () => logoInput.click());
+                logoInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        newSocialFiles.set(rowId, e.target.files[0]);
+                        previewImage.src = URL.createObjectURL(e.target.files[0]);
+                        previewImage.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    }
+                });
+                logoBox.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    logoBox.classList.add('bg-gray-300');
+                });
+                logoBox.addEventListener('dragleave', () => logoBox.classList.remove('bg-gray-300'));
+                logoBox.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    logoBox.classList.remove('bg-gray-300');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        newSocialFiles.set(rowId, e.dataTransfer.files[0]);
+                        previewImage.src = URL.createObjectURL(e.dataTransfer.files[0]);
+                        previewImage.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    }
+                });
+            }
+            if (deleteBtn) deleteBtn.addEventListener('click', () => {
+                newSocialFiles.delete(rowId);
+                row.remove();
+            });
+        }
+
+        function setupSocialEventListeners() {
+            const socialList = document.getElementById('social-links-list');
+            if (!socialList) return;
+            socialList.querySelectorAll('.social-row').forEach(row => setupSocialRowListeners(row));
+        }
+
+        async function saveSocialLinks(e) {
+            const button = e.target;
+            if (!button) return;
+            button.disabled = true;
+            button.textContent = '保存中...';
+            const socialRows = document.querySelectorAll('#social-links-list .social-row');
+            const newRecords = [];
+            const updatedRecords = [];
+            showLoading(true);
+
+            for (const row of socialRows) {
+                const rowId = row.dataset.id;
+                const platformInput = row.querySelector('.social-platform');
+                const urlInput = row.querySelector('.social-url');
+                const logoFile = newSocialFiles.get(rowId);
+                let iconUrl = row.querySelector('.social-logo-preview')?.src;
+
+                if (!platformInput.value.trim() || !urlInput.value.trim()) {
+                    console.warn(`Skipping row ${rowId}: Missing platform name or URL`);
+                    continue;
+                }
+
+                if (logoFile) {
+                    const fileName = `public/${Date.now()}-${logoFile.name}`;
+                    const { error: uploadError } = await db.storage.from('social-media-images').upload(fileName, logoFile);
+                    if (uploadError) {
+                        console.error(`Logo upload failed for ${rowId}:`, uploadError.message);
+                        alert(`Logo 上传失败 (${platformInput.value.trim()}): ${uploadError.message}`);
+                        continue;
+                    }
+                    const { data: { publicUrl } } = db.storage.from('social-media-images').getPublicUrl(fileName);
+                    iconUrl = publicUrl;
+                }
+
+                const record = {
+                    platform_name: platformInput.value.trim(),
+                    link_url: urlInput.value.trim(),
+                    icon_url: iconUrl && !iconUrl.startsWith('blob:') ? iconUrl : null,
+                    icon_svg_name: null,
+                    icon_color: null,
+                    display_order: newRecords.length + updatedRecords.length + 1,
+                };
+
+                if (rowId.startsWith('new_')) {
+                    newRecords.push(record);
+                } else {
+                    record.id = parseInt(rowId);
+                    updatedRecords.push(record);
+                }
+            }
+
+            try {
+                const { data: existingLinks, error: fetchError } = await db.from('social_links').select('id');
+                if (fetchError) throw new Error(`获取现有社交媒体数据失败: ${fetchError.message}`);
+
+                const existingIds = existingLinks.map(link => link.id);
+                const currentIds = updatedRecords.map(link => link.id).filter(id => id !== undefined);
+                const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+
+                console.log('New records:', newRecords);
+                console.log('Updated records:', updatedRecords);
+                console.log('IDs to delete:', idsToDelete);
+
+                if (idsToDelete.length > 0) {
+                    const { error: deleteError } = await db.from('social_links').delete().in('id', idsToDelete);
+                    if (deleteError) throw new Error(`删除失败: ${deleteError.message}`);
+                }
+
+                if (newRecords.length > 0) {
+                    const { error: insertError } = await db.from('social_links').insert(newRecords);
+                    if (insertError) throw new Error(`插入新记录失败: ${insertError.message}`);
+                }
+
+                if (updatedRecords.length > 0) {
+                    const { error: updateError } = await db.from('social_links').upsert(updatedRecords);
+                    if (updateError) throw new Error(`更新记录失败: ${updateError.message}`);
+                }
+
+                alert('社交链接已更新！');
+                newSocialFiles.clear();
+                await loadSocialLinks();
+            } catch (error) {
+                console.error('Error saving social links:', error);
+                alert(`社交链接保存失败: ${error.message}`);
+            } finally {
+                showLoading(false);
+                button.disabled = false;
+                button.textContent = '保存社媒链接变更';
+            }
         }
 
         async function loadProducts() {
@@ -272,7 +448,7 @@
                 db.from('navigation').select('link_text').order('display_order')
             ]);
             const products = productsRes.data;
-            const categories = navRes.data.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text);
+            const categories = navRes.data ? navRes.data.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home' && !['sale', 'discount', '折扣'].includes(item.link_text.toLowerCase())).map(item => item.link_text) : [];
             if (productsRes.error) { console.error("Error fetching products:", productsRes.error); return; }
 
             productsCache = products || [];
@@ -299,7 +475,6 @@
                 productListEl.appendChild(tr);
             });
 
-            // 初始化自定义下拉菜单
             productListEl.querySelectorAll('.custom-dropdown').forEach(dropdown => {
                 const trigger = dropdown.querySelector('.dropdown-trigger');
                 const menu = dropdown.querySelector('.dropdown-menu');
@@ -360,7 +535,6 @@
                 handle: '.cursor-move',
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
-                    
                     const updates = reorderedIds.map((id, index) => {
                         const product = productsCache.find(p => p.id === id);
                         return { 
@@ -368,14 +542,12 @@
                            display_order: index 
                         };
                     });
-                    
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
-
                     if (error) {
                         alert('排序失败: ' + error.message);
-                        await loadProducts(); // Revert UI if error
+                        await loadProducts();
                     } else {
                         reorderedIds.forEach((id, index) => {
                            const product = productsCache.find(p => p.id === id);
@@ -407,7 +579,6 @@
             const bulkToggleBtn = productPanel.querySelector('#bulk-toggle-discount-btn');
             if (bulkToggleBtn) bulkToggleBtn.addEventListener('click', bulkToggleDiscount);
 
-            // Initial add form row
             if (productPanel.querySelector('#add-product-forms-container').children.length === 0) {
                 addProductFormRow();
             }
@@ -457,20 +628,19 @@
                     id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
                     link_text: linkText,
                     link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
-                    display_order: index + 1 // Home 固定在 0，动态项从 1 开始
+                    display_order: index + 1
                 };
             });
 
             const { data: existingNavs } = await db.from('navigation').select('id');
             const existingIds = existingNavs.map(n => n.id);
             const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
-            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1); // 假设 Home ID 为 1
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
 
             showLoading(true);
             if (idsToDelete.length > 0) {
                 await db.from('navigation').delete().in('id', idsToDelete);
             }
-            // 确保 Home 项始终存在
             const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
             const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
             const { error } = await db.from('navigation').upsert(finalItems);
@@ -480,30 +650,11 @@
             else {
                 alert('导航栏已更新！');
                 await loadNavigation();
-                await loadProducts(); // 更新产品分类选项
+                if (mainContent.querySelector('#product-list')) {
+                    await loadProducts();
+                }
             }
             button.disabled = false; button.textContent = '保存全部变更';
-        }
-
-        async function saveSocialLinks(e) {
-            const button = e.target;
-            if (!button) return;
-            button.disabled = true; button.textContent = '保存中...';
-            const platformInputs = document.querySelectorAll('#social-links-list .social-platform');
-            const urlInputs = document.querySelectorAll('#social-links-list .social-url');
-            const updates = [];
-            for (let i = 0; i < platformInputs.length; i++) {
-                updates.push({
-                    id: platformInputs[i].dataset.id,
-                    platform_name: platformInputs[i].value,
-                    link_url: urlInputs[i].value,
-                    display_order: i + 1,
-                });
-            }
-            const { error } = await db.from('social_links').upsert(updates);
-            if (error) alert('社交链接保存失败: ' + error.message);
-            else alert('社交链接已更新！');
-            button.disabled = false; button.textContent = '保存社媒链接变更';
         }
 
         async function uploadImage(file) {
@@ -791,11 +942,11 @@
                     }
                 }
 
-                const name = form.querySelector('.new-product-name')?.value;
-                const price = parseFloat(form.querySelector('.new-product-price')?.value);
-                const target_url = form.querySelector('.new-product-target-url')?.value || null;
-                const discount_factor = form.querySelector('.new-product-discount-factor')?.value || null;
-                const expires_at = form.querySelector('.new-product-discount-expires')?.value ? new Date(form.querySelector('.new-product-discount-expires').value).toISOString() : null;
+                const name = form.querySelector('input[placeholder="产品名称"]')?.value;
+                const price = parseFloat(form.querySelector('input[placeholder="原价"]')?.value);
+                const target_url = form.querySelector('input[placeholder="跳转链接"]')?.value || null;
+                const discount_factor = form.querySelector('input[placeholder="折扣率"]')?.value || null;
+                const expires_at = form.querySelector('input[placeholder="折扣到期时间"]')?.value ? new Date(form.querySelector('input[placeholder="折扣到期时间"]').value).toISOString() : null;
                 
                 if (!name || isNaN(price) || !target_url) {
                     alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
@@ -871,35 +1022,35 @@
         });
 
         function updateSidebarNav() {
-            const { data: navData } = db.from('navigation').select('*').order('display_order');
-            sidebarNav.innerHTML = '';
-            sidebarNav.innerHTML = `
-                <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
-                <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
-                <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
-                <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
-                <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
-            `;
-            if (navData) {
-                navData.forEach(item => {
-                    if (item.link_text.toLowerCase() !== 'home') {
+            db.from('navigation').select('*').order('display_order').then(({ data: navData }) => {
+                sidebarNav.innerHTML = '';
+                sidebarNav.innerHTML = `
+                    <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
+                    <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
+                    <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
+                    <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
+                    <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
+                `;
+                if (navData) {
+                    const validNavItems = navData.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home' && !['sale', 'discount', '折扣'].includes(item.link_text.toLowerCase()));
+                    validNavItems.forEach(item => {
                         const btn = document.createElement('button');
                         btn.dataset.target = item.link_text.toLowerCase();
                         btn.className = 'tab-button';
                         btn.innerHTML = `<i data-lucide="list" class="mr-3 h-5 w-5"></i>${item.link_text}`;
                         sidebarNav.appendChild(btn);
-                    }
+                    });
+                }
+                sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.target.closest('.tab-button').dataset.target;
+                        sidebarNav.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                        e.target.closest('.tab-button').classList.add('active');
+                        renderPanel(target);
+                    });
                 });
-            }
-            sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const target = e.target.closest('.tab-button').dataset.target;
-                    sidebarNav.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                    e.target.closest('.tab-button').classList.add('active');
-                    renderPanel(target);
-                });
+                lucide.createIcons();
             });
-            lucide.createIcons();
         }
 
         const closeModalBtn = document.getElementById('close-modal-btn');
@@ -947,7 +1098,6 @@
             });
         }
 
-        // 确保 DOM 加载完成后执行初始化
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             updateSidebarNav();
