@@ -117,7 +117,7 @@
                         <div>
                             <h3 class="font-semibold mb-2 text-lg">批量上传 (Excel)</h3>
                             <div class="space-y-3 bg-gray-50 p-4 rounded-lg border h-full flex flex-col justify-center">
-                                <p class="text-sm text-gray-600">请上传 .xlsx/.csv 文件。文件需包含列: name, price, image_url, target_url, discount_factor, discount_expires_at</p>
+                                <p class="text-sm text-gray-600">文件需包含列: name, price, target_url, image_url, discount_factor (可选), discount_expires_at (可选,格式: YYYY-MM-DD HH:MM:SS)</p>
                                 <button id="download-template-btn" class="btn btn-secondary w-full text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>下载模板</button>
                                 <input type="file" id="bulk-upload-input" accept=".xlsx, .csv" class="text-sm">
                                 <button id="bulk-upload-btn" class="btn btn-primary w-full mt-2"><i data-lucide="upload" class="mr-2 h-4 w-4"></i>开始上传</button>
@@ -253,9 +253,10 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
+                        const product = productsCache.find(p => p.id === id);
                         return { 
-                            id: id,
-                            display_order: index 
+                           ...product, // Send the full product object back
+                           display_order: index 
                         };
                     });
                     
@@ -265,13 +266,15 @@
 
                     if (error) {
                         alert('排序失败: ' + error.message);
+                        await loadProducts(); // Revert UI if error
+                    } else {
+                         // Update local cache order after successful db update
+                        reorderedIds.forEach((id, index) => {
+                           const product = productsCache.find(p => p.id === id);
+                           if(product) product.display_order = index;
+                        });
+                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
-                    // Refresh local cache order to match UI
-                    reorderedIds.forEach((id, index) => {
-                       const product = productsCache.find(p => p.id === id);
-                       if(product) product.display_order = index;
-                    });
-                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -296,6 +299,15 @@
                 addImageInput.addEventListener('change', (e) => {
                     if (e.target.files && e.target.files[0]) {
                         newProductFile = e.target.files[0];
+                        addPreviewImage.src = URL.createObjectURL(newProductFile);
+                        addPreviewImage.classList.remove('hidden');
+                    }
+                });
+                addImageBox.addEventListener('dragover', (e) => e.preventDefault());
+                addImageBox.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if(e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        newProductFile = e.dataTransfer.files[0];
                         addPreviewImage.src = URL.createObjectURL(newProductFile);
                         addPreviewImage.classList.remove('hidden');
                     }
@@ -417,9 +429,9 @@
             const button = e.target;
             button.disabled = true;
             
-            let uploadedImageUrl = document.getElementById('new-product-image-url').value;
+            let uploadedImageUrl = document.getElementById('new-product-image-url')?.value;
             const imageInput = document.getElementById('add-image-input');
-            const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
+            const imageFile = imageInput?.files.length > 0 ? imageInput.files[0] : null;
 
             if(imageFile) {
                 uploadedImageUrl = await uploadImage(imageFile);
@@ -430,12 +442,8 @@
             }
 
             const newProduct = {
-                name: document.getElementById('new-product-name').value, 
-                price: document.getElementById('new-product-price').value, 
-                target_url: document.getElementById('new-product-target-url').value,
-                image_url: uploadedImageUrl
+                name: document.getElementById('new-product-name').value, price: document.getElementById('new-product-price').value, target_url: document.getElementById('new-product-target-url').value, image_url: uploadedImageUrl
             };
-
             if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
             
             showLoading(true);
@@ -445,7 +453,7 @@
             const { error } = await db.from('products').insert(newProduct);
             showLoading(false);
             if (error) { alert('添加产品失败: ' + error.message); } else {
-                ['new-product-name', 'new-product-price', 'new-product-image-url', 'new-product-target-url'].forEach(id => document.getElementById(id).value = '');
+                ['new-product-name', 'new-product-price', 'new-product-target-url'].forEach(id => document.getElementById(id).value = '');
                 document.getElementById('add-preview-image').classList.add('hidden');
                 imageInput.value = '';
                 await loadProducts();
@@ -564,6 +572,9 @@
         }
 
         async function deleteProduct(id, skipConfirm = false) {
+            const row = mainContent.querySelector(`tr[data-id="${id}"]`);
+            if (!row) return;
+
             if (skipConfirm || confirm('您确定要删除这个产品吗？')) {
                 showLoading(true);
                 await db.from('products').delete().eq('id', id);
@@ -625,7 +636,7 @@
 
         // --- 批量上传和模板 ---
         function downloadTemplate() {
-            const data = [{ name: '示例鞋子', price: 500, discount_factor: 0.9, image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
+            const data = [{ name: '示例鞋子', price: 500, discount_factor: 0.9, discount_expires_at: '2025-12-31 23:59:59', image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
             const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
@@ -667,7 +678,7 @@
                             discountPrice = (parseFloat(row.price) * parseFloat(row.discount_factor)).toFixed(2);
                         }
                         return {
-                            name: row.name, price: row.price, discount_price: discountPrice, discount_factor: row.discount_factor || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder
+                            name: row.name, price: row.price, discount_price: discountPrice, discount_factor: row.discount_factor || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder, discount_expires_at: row.discount_expires_at || null,
                         }
                     });
                     
