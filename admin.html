@@ -106,20 +106,18 @@
                         <div>
                             <h3 class="font-semibold mb-2 text-lg">单个添加产品</h3>
                             <div class="space-y-3 bg-gray-50 p-4 rounded-lg border">
+                                <div id="add-image-paste-box" class="relative p-4 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="add-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="add-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"></div>
+                                <input type="file" id="add-image-input" class="hidden" accept="image/*">
                                 <input type="text" id="new-product-name" placeholder="产品名称" class="input">
                                 <input type="text" id="new-product-target-url" placeholder="跳转链接 (Mulebuy)" class="input">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <input type="number" id="new-product-price" placeholder="原价" class="input">
-                                    <input type="number" id="new-product-discount-price" placeholder="折扣价 (可选)" class="input">
-                                </div>
-                                <input type="text" id="new-product-image-url" placeholder="产品图片链接" class="input">
+                                <input type="number" id="new-product-price" placeholder="原价" class="input">
                                 <button id="add-product-btn" class="btn btn-primary w-full">确认添加</button>
                             </div>
                         </div>
                         <div>
                             <h3 class="font-semibold mb-2 text-lg">批量上传 (Excel)</h3>
                             <div class="space-y-3 bg-gray-50 p-4 rounded-lg border h-full flex flex-col justify-center">
-                                <p class="text-sm text-gray-600">请上传 .xlsx/.csv 文件。文件需包含列: name, price, discount_price, image_url, target_url</p>
+                                <p class="text-sm text-gray-600">请上传 .xlsx/.csv 文件。文件需包含列: name, price, image_url, target_url, discount_factor, discount_expires_at</p>
                                 <button id="download-template-btn" class="btn btn-secondary w-full text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>下载模板</button>
                                 <input type="file" id="bulk-upload-input" accept=".xlsx, .csv" class="text-sm">
                                 <button id="bulk-upload-btn" class="btn btn-primary w-full mt-2"><i data-lucide="upload" class="mr-2 h-4 w-4"></i>开始上传</button>
@@ -255,8 +253,10 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
-                        const product = productsCache.find(p => p.id === id);
-                        return { ...product, display_order: index };
+                        return { 
+                            id: id,
+                            display_order: index 
+                        };
                     });
                     
                     showLoading(true);
@@ -284,6 +284,25 @@
             productPanel.querySelector('#download-template-btn')?.addEventListener('click', downloadTemplate);
             productPanel.querySelector('#bulk-upload-btn')?.addEventListener('click', bulkUpload);
             productPanel.querySelector('#add-product-btn')?.addEventListener('click', addSingleProduct);
+            
+            const addImageBox = productPanel.querySelector('#add-image-paste-box');
+            const addImageInput = productPanel.querySelector('#add-image-input');
+            const addPreviewImage = productPanel.querySelector('#add-preview-image');
+            
+            let newProductFile = null;
+            if(addImageBox){
+                addImageBox.addEventListener('click', () => addImageInput.click());
+                addImageBox.addEventListener('paste', (e) => handleImagePaste(e, addPreviewImage, file => newProductFile = file));
+                addImageInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        newProductFile = e.target.files[0];
+                        addPreviewImage.src = URL.createObjectURL(newProductFile);
+                        addPreviewImage.classList.remove('hidden');
+                    }
+                });
+            }
+
+
             productPanel.querySelector('#product-list')?.addEventListener('click', handleProductListClicks);
             productPanel.querySelector('#select-all-products')?.addEventListener('change', handleSelectAll);
             productPanel.querySelector('#bulk-delete-btn')?.addEventListener('click', bulkDelete);
@@ -397,9 +416,26 @@
         async function addSingleProduct(e) {
             const button = e.target;
             button.disabled = true;
+            
+            let uploadedImageUrl = document.getElementById('new-product-image-url').value;
+            const imageInput = document.getElementById('add-image-input');
+            const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
+
+            if(imageFile) {
+                uploadedImageUrl = await uploadImage(imageFile);
+                if(!uploadedImageUrl) {
+                    button.disabled = false;
+                    return;
+                }
+            }
+
             const newProduct = {
-                name: document.getElementById('new-product-name').value, price: document.getElementById('new-product-price').value, discount_price: document.getElementById('new-product-discount-price').value || null, image_url: document.getElementById('new-product-image-url').value, target_url: document.getElementById('new-product-target-url').value
+                name: document.getElementById('new-product-name').value, 
+                price: document.getElementById('new-product-price').value, 
+                target_url: document.getElementById('new-product-target-url').value,
+                image_url: uploadedImageUrl
             };
+
             if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
             
             showLoading(true);
@@ -409,7 +445,9 @@
             const { error } = await db.from('products').insert(newProduct);
             showLoading(false);
             if (error) { alert('添加产品失败: ' + error.message); } else {
-                ['new-product-name', 'new-product-price', 'new-product-discount-price', 'new-product-image-url', 'new-product-target-url'].forEach(id => document.getElementById(id).value = '');
+                ['new-product-name', 'new-product-price', 'new-product-image-url', 'new-product-target-url'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('add-preview-image').classList.add('hidden');
+                imageInput.value = '';
                 await loadProducts();
             }
             button.disabled = false;
@@ -512,12 +550,16 @@
                 image_url: uploadedImageUrl,
             };
 
-            await db.from('products').upsert(updates);
+            const { error } = await db.from('products').upsert(updates);
             showLoading(false);
 
-            modal.classList.add('hidden');
-            currentEditFile = null;
-            await loadProducts();
+            if(error) {
+                alert('保存失败: ' + error.message);
+            } else {
+                modal.classList.add('hidden');
+                currentEditFile = null;
+                await loadProducts();
+            }
             button.disabled = false; button.textContent = '保存更改';
         }
 
@@ -583,7 +625,7 @@
 
         // --- 批量上传和模板 ---
         function downloadTemplate() {
-            const data = [{ name: '示例鞋子', price: 500, discount_price: 450, image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
+            const data = [{ name: '示例鞋子', price: 500, discount_factor: 0.9, image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
             const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
@@ -619,9 +661,15 @@
                     const { count } = await db.from('products').select('*', { count: 'exact', head: true });
                     let currentOrder = count || 0;
 
-                    const productsToUpload = json.map(row => ({
-                        name: row.name, price: row.price, discount_price: row.discount_price || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder
-                    }));
+                    const productsToUpload = json.map(row => {
+                        let discountPrice = null;
+                        if(row.discount_factor && !isNaN(row.price)) {
+                            discountPrice = (parseFloat(row.price) * parseFloat(row.discount_factor)).toFixed(2);
+                        }
+                        return {
+                            name: row.name, price: row.price, discount_price: discountPrice, discount_factor: row.discount_factor || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder
+                        }
+                    });
                     
                     const { error } = await db.from('products').insert(productsToUpload);
                     showLoading(false);
