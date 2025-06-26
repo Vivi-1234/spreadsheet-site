@@ -36,6 +36,7 @@
         .fade-in-up { opacity: 0; transform: translateY(20px); transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .fade-in-up.visible { opacity: 1; transform: translateY(0); }
         .discount-badge { position: absolute; top: 1rem; right: 1rem; background-color: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .category-page { padding-top: 2rem; }
     </style>
 </head>
 <body class="text-neutral-800 antialiased">
@@ -45,7 +46,7 @@
     <!-- 导航栏 -->
     <header class="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-neutral-200/70">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" class="text-xl font-bold tracking-tighter text-neutral-900">SpreadSheet</a>
+            <a href="https://spreadsheet-site.vercel.app/" class="text-xl font-bold tracking-tighter text-neutral-900">SpreadSheet</a>
             <nav id="navigation-container" class="hidden md:flex items-center space-x-10"></nav>
             <button class="md:hidden"><i data-lucide="menu" class="w-6 h-6 text-neutral-600"></i></button>
         </div>
@@ -54,7 +55,7 @@
     <!-- 主内容区 -->
     <main class="container mx-auto px-6">
         <!-- 英雄区 -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10 items-center my-12 md:my-16 fade-in-up">
+        <section id="hero-section" class="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10 items-center my-12 md:my-16 fade-in-up">
             <div class="text-center lg:text-left">
                 <h1 id="site-title" class="text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tighter leading-tight"></h1>
                 <p id="site-subtitle" class="mt-4 text-neutral-500 max-w-lg mx-auto lg:mx-0 text-base"></p>
@@ -64,18 +65,24 @@
         </section>
 
         <!-- 产品展示区 -->
-        <section class="pt-8 md:pt-12 fade-in-up" style="transition-delay: 200ms;">
+        <section id="product-section" class="pt-8 md:pt-12 fade-in-up" style="transition-delay: 200ms;">
             <h2 id="product-section-title" class="text-2xl font-bold text-center mb-10 tracking-tight"></h2>
             <div id="product-list-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8"></div>
+        </section>
+
+        <!-- 分类页面 -->
+        <section id="category-section" class="category-page hidden">
+            <div id="category-product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8"></div>
         </section>
     </main>
 
     <!-- 页脚 -->
-    <footer class="bg-white mt-24 border-t border-neutral-200/70"><div class="container mx-auto px-6 py-12 text-center"><p class="font-bold text-lg mb-3">SpreadSheet</p><p class="text-neutral-500 text-sm max-w-md mx-auto">一个致力于发现和推荐 Mulebuy 优质好物的社区。加入我们，发现你的下一双心动好鞋。</p><div class="mt-8 pt-8 border-t border-neutral-200/70 text-xs text-neutral-400"><p>&copy; 2024 SpreadSheet. All Rights Reserved.</p></div></div></footer>
+    <footer class="bg-white mt-24 border-t border-neutral-200/70"><div class="container mx-auto px-6 py-12 text-center"><p class="font-bold text-lg mb-3">SpreadSheet</p><p class="text-neutral-500 text-sm max-w-md mx-auto">一个致力于发现和推荐 Mulebuy 优质好物的社区。加入我们，发现你的下一双心动好鞋。</p><div class="mt-8 pt-8 border-t border-neutral-200/70 text-xs text-neutral-400"><p>© 2024 SpreadSheet. All Rights Reserved.</p></div></footer>
 
     <script type="module">
         const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
+        const BASE_URL = 'https://spreadsheet-site.vercel.app/';
 
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -97,65 +104,113 @@
                 db.from('social_links').select('*').order('display_order'),
                 db.from('products').select('*').eq('is_active', true).order('display_order')
             ]);
-            
+
             // 渲染全局设置
             const settings = settingsRes.data;
             if (settings) {
                 document.title = settings.site_title;
-                document.getElementById('site-title').innerHTML = settings.site_title.replace('Next', '<br>Next');
-                document.getElementById('site-subtitle').textContent = settings.site_subtitle;
-                document.getElementById('product-section-title').textContent = settings.product_section_title;
-                document.getElementById('video-wrapper').innerHTML = `<iframe src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                const siteTitle = document.getElementById('site-title');
+                const siteSubtitle = document.getElementById('site-subtitle');
+                const productSectionTitle = document.getElementById('product-section-title');
+                const videoWrapper = document.getElementById('video-wrapper');
+                if (siteTitle) siteTitle.innerHTML = settings.site_title.replace('Next', '<br>Next');
+                if (siteSubtitle) siteSubtitle.textContent = settings.site_subtitle;
+                if (productSectionTitle) productSectionTitle.textContent = settings.product_section_title;
+                if (videoWrapper) videoWrapper.innerHTML = `<iframe src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
             }
 
             // 渲染导航栏
             const navigation = navRes.data;
             const navContainer = document.getElementById('navigation-container');
-            navContainer.innerHTML = '';
-            if(navigation) navigation.forEach(link => navContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">${link.link_text}</a>`);
+            if (navContainer) {
+                navContainer.innerHTML = '<a href="' + BASE_URL + '" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">Home</a>';
+                if (navigation) {
+                    navigation.forEach(link => {
+                        if (link.link_text.toLowerCase() !== 'home') {
+                            navContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" class="nav-link text-sm font-medium text-neutral-500 hover:text-neutral-900">${link.link_text}</a>`;
+                        }
+                    });
+                }
+            }
 
             // 渲染社交图标
             const socialLinks = socialRes.data;
             const socialContainer = document.getElementById('social-icons-container');
-            socialContainer.innerHTML = '';
-            if(socialLinks) socialLinks.forEach(link => {
-                 socialContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}"><i data-lucide="${link.icon_svg_name || 'link'}" class="w-5 h-5 text-white"></i></a>`
-            });
+            if (socialContainer) {
+                socialContainer.innerHTML = '';
+                if (socialLinks) {
+                    socialLinks.forEach(link => {
+                        socialContainer.innerHTML += `<a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}"><i data-lucide="${link.icon_svg_name || 'link'}" class="w-5 h-5 text-white"></i></a>`;
+                    });
+                }
+            }
 
             // 渲染产品列表
             const products = productsRes.data;
             const productContainer = document.getElementById('product-list-container');
-            productContainer.innerHTML = '';
-            if(products) products.forEach(p => {
-                const now = new Date();
-                const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
-                const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
-                
-                let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price}</p>`;
-                if (showDiscount) {
-                    priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price}</span></p>`;
+            const categoryProductList = document.getElementById('category-product-list');
+            if (productContainer && categoryProductList) {
+                productContainer.innerHTML = '';
+                categoryProductList.innerHTML = '';
+                const path = window.location.pathname.replace(/^\//, '').toLowerCase();
+                if (products) {
+                    products.forEach(p => {
+                        const now = new Date();
+                        const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
+                        const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
+
+                        let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price}</p>`;
+                        if (showDiscount) {
+                            priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price}</span></p>`;
+                        }
+
+                        const productCard = `
+                            <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
+                                <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
+                                <div class="p-4">
+                                    <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
+                                    ${priceHTML}
+                                </div>
+                                ${showDiscount ? '<div class="discount-badge">折扣</div>' : ''}
+                            </a>
+                        `;
+
+                        if (path === '' || path === 'index.html') {
+                            productContainer.innerHTML += productCard;
+                        } else if (p.category.toLowerCase() === path) {
+                            categoryProductList.innerHTML += productCard;
+                        }
+                    });
+
+                    // 显示对应部分
+                    if (path === '' || path === 'index.html') {
+                        document.getElementById('hero-section').classList.remove('hidden');
+                        document.getElementById('product-section').classList.remove('hidden');
+                        document.getElementById('category-section').classList.add('hidden');
+                    } else {
+                        document.getElementById('hero-section').classList.add('hidden');
+                        document.getElementById('product-section').classList.add('hidden');
+                        document.getElementById('category-section').classList.remove('hidden');
+                    }
                 }
-                
-                productContainer.innerHTML += `
-                    <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
-                        <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
-                        <div class="p-4">
-                            <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
-                            ${priceHTML}
-                        </div>
-                        ${showDiscount ? '<div class="discount-badge">折扣</div>' : ''}
-                    </a>
-                `;
-            });
-            
+            }
+
             lucide.createIcons();
             // 渲染淡入动画
-            const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 });
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
             document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
         }
 
         // --- 初始化 ---
         loadAndRender();
+        setInterval(loadAndRender, 30000); // 每30秒轮询一次
     </script>
 </body>
 </html>
