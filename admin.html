@@ -67,6 +67,7 @@
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let productsCache = [];
         let sortableInstance = null;
+        let newProductFile = null;
         
         // --- DOM 元素 ---
         const authScreen = document.getElementById('auth-screen');
@@ -111,6 +112,7 @@
                                 <input type="text" id="new-product-name" placeholder="产品名称" class="input">
                                 <input type="text" id="new-product-target-url" placeholder="跳转链接 (Mulebuy)" class="input">
                                 <input type="number" id="new-product-price" placeholder="原价" class="input">
+                                 <input type="number" id="new-product-discount-factor" placeholder="折扣率 (可选, 如 0.7)" class="input" step="0.01" min="0" max="1">
                                 <button id="add-product-btn" class="btn btn-primary w-full">确认添加</button>
                             </div>
                         </div>
@@ -253,10 +255,9 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
-                        const product = productsCache.find(p => p.id === id);
                         return { 
-                           ...product, // Send the full product object back
-                           display_order: index 
+                            id: id,
+                            display_order: index 
                         };
                     });
                     
@@ -266,15 +267,13 @@
 
                     if (error) {
                         alert('排序失败: ' + error.message);
-                        await loadProducts(); // Revert UI if error
-                    } else {
-                         // Update local cache order after successful db update
-                        reorderedIds.forEach((id, index) => {
-                           const product = productsCache.find(p => p.id === id);
-                           if(product) product.display_order = index;
-                        });
-                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
+                    // Refresh local cache order to match UI
+                    reorderedIds.forEach((id, index) => {
+                       const product = productsCache.find(p => p.id === id);
+                       if(product) product.display_order = index;
+                    });
+                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -289,26 +288,28 @@
             productPanel.querySelector('#add-product-btn')?.addEventListener('click', addSingleProduct);
             
             const addImageBox = productPanel.querySelector('#add-image-paste-box');
-            const addImageInput = productPanel.querySelector('#add-image-input');
-            const addPreviewImage = productPanel.querySelector('#add-preview-image');
-            
-            let newProductFile = null;
-            if(addImageBox){
+            if (addImageBox) {
+                const addImageInput = productPanel.querySelector('#add-image-input');
+                const addPreviewImage = productPanel.querySelector('#add-preview-image');
+                
                 addImageBox.addEventListener('click', () => addImageInput.click());
-                addImageBox.addEventListener('paste', (e) => handleImagePaste(e, addPreviewImage, file => newProductFile = file));
+                addImageBox.addEventListener('paste', (e) => handleImagePaste(e, addPreviewImage, file => {
+                    addImageInput.files = e.clipboardData.files;
+                }));
                 addImageInput.addEventListener('change', (e) => {
                     if (e.target.files && e.target.files[0]) {
-                        newProductFile = e.target.files[0];
-                        addPreviewImage.src = URL.createObjectURL(newProductFile);
+                        addPreviewImage.src = URL.createObjectURL(e.target.files[0]);
                         addPreviewImage.classList.remove('hidden');
                     }
                 });
-                addImageBox.addEventListener('dragover', (e) => e.preventDefault());
+                addImageBox.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-gray-300'); });
+                addImageBox.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('bg-gray-300'));
                 addImageBox.addEventListener('drop', (e) => {
                     e.preventDefault();
+                    e.currentTarget.classList.remove('bg-gray-300');
                     if(e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        newProductFile = e.dataTransfer.files[0];
-                        addPreviewImage.src = URL.createObjectURL(newProductFile);
+                        addImageInput.files = e.dataTransfer.files;
+                        addPreviewImage.src = URL.createObjectURL(e.dataTransfer.files[0]);
                         addPreviewImage.classList.remove('hidden');
                     }
                 });
@@ -429,10 +430,10 @@
             const button = e.target;
             button.disabled = true;
             
-            let uploadedImageUrl = document.getElementById('new-product-image-url')?.value;
             const imageInput = document.getElementById('add-image-input');
             const imageFile = imageInput?.files.length > 0 ? imageInput.files[0] : null;
 
+            let uploadedImageUrl = null;
             if(imageFile) {
                 uploadedImageUrl = await uploadImage(imageFile);
                 if(!uploadedImageUrl) {
@@ -442,18 +443,25 @@
             }
 
             const newProduct = {
-                name: document.getElementById('new-product-name').value, price: document.getElementById('new-product-price').value, target_url: document.getElementById('new-product-target-url').value, image_url: uploadedImageUrl
+                name: document.getElementById('new-product-name').value, 
+                price: document.getElementById('new-product-price').value, 
+                target_url: document.getElementById('new-product-target-url').value, 
+                discount_factor: document.getElementById('new-product-discount-factor').value || null,
+                image_url: uploadedImageUrl
             };
-            if (!newProduct.name || !newProduct.price || !newProduct.image_url || !newProduct.target_url) { alert('请填写所有必填项！'); button.disabled = false; return; }
+            if (!newProduct.name || !newProduct.price || !newProduct.target_url) { alert('请填写产品名称、原价和跳转链接！'); button.disabled = false; return; }
             
             showLoading(true);
             const { count } = await db.from('products').select('*', { count: 'exact', head: true });
             newProduct.display_order = count || 0;
+            if (newProduct.discount_factor) {
+                 newProduct.discount_price = (parseFloat(newProduct.price) * parseFloat(newProduct.discount_factor)).toFixed(2);
+            }
 
             const { error } = await db.from('products').insert(newProduct);
             showLoading(false);
             if (error) { alert('添加产品失败: ' + error.message); } else {
-                ['new-product-name', 'new-product-price', 'new-product-target-url'].forEach(id => document.getElementById(id).value = '');
+                ['new-product-name', 'new-product-price', 'new-product-target-url', 'new-product-discount-factor'].forEach(id => document.getElementById(id).value = '');
                 document.getElementById('add-preview-image').classList.add('hidden');
                 imageInput.value = '';
                 await loadProducts();
@@ -557,7 +565,7 @@
                 discount_expires_at: expiresAt,
                 image_url: uploadedImageUrl,
             };
-
+            
             const { error } = await db.from('products').upsert(updates);
             showLoading(false);
 
@@ -636,7 +644,7 @@
 
         // --- 批量上传和模板 ---
         function downloadTemplate() {
-            const data = [{ name: '示例鞋子', price: 500, discount_factor: 0.9, discount_expires_at: '2025-12-31 23:59:59', image_url: 'https://example.com/image.jpg', target_url: 'https://mulebuy.com/product/123' }];
+            const data = [{ name: '示例鞋子', price: 500, target_url: 'https://mulebuy.com/product/123', image_url: 'https://example.com/image.jpg', discount_factor: 0.9, discount_expires_at: '2025-12-31 23:59:59' }];
             const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
