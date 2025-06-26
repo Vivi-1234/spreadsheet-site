@@ -67,7 +67,7 @@
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let productsCache = [];
         let sortableInstance = null;
-        let newProductFile = null;
+        let newProductFiles = new Map();
         
         // --- DOM 元素 ---
         const authScreen = document.getElementById('auth-screen');
@@ -103,27 +103,14 @@
             products: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">产品管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6 border-b pb-6">
-                        <div>
-                            <h3 class="font-semibold mb-2 text-lg">单个添加产品</h3>
-                            <div class="space-y-3 bg-gray-50 p-4 rounded-lg border">
-                                <div id="add-image-paste-box" class="relative p-4 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="add-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="add-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"></div>
-                                <input type="file" id="add-image-input" class="hidden" accept="image/*">
-                                <input type="text" id="new-product-name" placeholder="产品名称" class="input">
-                                <input type="text" id="new-product-target-url" placeholder="跳转链接 (Mulebuy)" class="input">
-                                <input type="number" id="new-product-price" placeholder="原价" class="input">
-                                 <input type="number" id="new-product-discount-factor" placeholder="折扣率 (可选, 如 0.7)" class="input" step="0.01" min="0" max="1">
-                                <button id="add-product-btn" class="btn btn-primary w-full">确认添加</button>
-                            </div>
+                     <div class="mb-6 border-b pb-6">
+                        <h3 class="font-semibold mb-2 text-lg">添加新产品</h3>
+                        <div id="add-product-forms-container" class="space-y-4">
+                           <!-- 新产品表单将在这里动态添加 -->
                         </div>
-                        <div>
-                            <h3 class="font-semibold mb-2 text-lg">批量上传 (Excel)</h3>
-                            <div class="space-y-3 bg-gray-50 p-4 rounded-lg border h-full flex flex-col justify-center">
-                                <p class="text-sm text-gray-600">文件需包含列: name, price, target_url, image_url, discount_factor (可选), discount_expires_at (可选,格式: YYYY-MM-DD HH:MM:SS)</p>
-                                <button id="download-template-btn" class="btn btn-secondary w-full text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>下载模板</button>
-                                <input type="file" id="bulk-upload-input" accept=".xlsx, .csv" class="text-sm">
-                                <button id="bulk-upload-btn" class="btn btn-primary w-full mt-2"><i data-lucide="upload" class="mr-2 h-4 w-4"></i>开始上传</button>
-                            </div>
+                        <div class="mt-4 flex justify-between">
+                            <button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加下一个产品</button>
+                            <button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部产品</button>
                         </div>
                     </div>
                     <div id="bulk-actions-bar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between">
@@ -255,10 +242,8 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
-                        return { 
-                            id: id,
-                            display_order: index 
-                        };
+                        const product = productsCache.find(p => p.id === id);
+                        return { ...product, display_order: index };
                     });
                     
                     showLoading(true);
@@ -267,13 +252,14 @@
 
                     if (error) {
                         alert('排序失败: ' + error.message);
+                        await loadProducts(); // Revert UI if error
+                    } else {
+                        reorderedIds.forEach((id, index) => {
+                           const product = productsCache.find(p => p.id === id);
+                           if(product) product.display_order = index;
+                        });
+                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
-                    // Refresh local cache order to match UI
-                    reorderedIds.forEach((id, index) => {
-                       const product = productsCache.find(p => p.id === id);
-                       if(product) product.display_order = index;
-                    });
-                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -283,43 +269,17 @@
         function setupProductEventListeners() {
             const productPanel = document.getElementById('main-content');
             if(!productPanel) return;
-            productPanel.querySelector('#download-template-btn')?.addEventListener('click', downloadTemplate);
-            productPanel.querySelector('#bulk-upload-btn')?.addEventListener('click', bulkUpload);
-            productPanel.querySelector('#add-product-btn')?.addEventListener('click', addSingleProduct);
             
-            const addImageBox = productPanel.querySelector('#add-image-paste-box');
-            if (addImageBox) {
-                const addImageInput = productPanel.querySelector('#add-image-input');
-                const addPreviewImage = productPanel.querySelector('#add-preview-image');
-                
-                addImageBox.addEventListener('click', () => addImageInput.click());
-                addImageBox.addEventListener('paste', (e) => handleImagePaste(e, addPreviewImage, file => {
-                    addImageInput.files = e.clipboardData.files;
-                }));
-                addImageInput.addEventListener('change', (e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        addPreviewImage.src = URL.createObjectURL(e.target.files[0]);
-                        addPreviewImage.classList.remove('hidden');
-                    }
-                });
-                addImageBox.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-gray-300'); });
-                addImageBox.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('bg-gray-300'));
-                addImageBox.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove('bg-gray-300');
-                    if(e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        addImageInput.files = e.dataTransfer.files;
-                        addPreviewImage.src = URL.createObjectURL(e.dataTransfer.files[0]);
-                        addPreviewImage.classList.remove('hidden');
-                    }
-                });
-            }
-
-
+            productPanel.querySelector('#add-product-form-row-btn')?.addEventListener('click', addProductFormRow);
+            productPanel.querySelector('#submit-all-new-products-btn')?.addEventListener('click', submitAllNewProducts);
+            
             productPanel.querySelector('#product-list')?.addEventListener('click', handleProductListClicks);
             productPanel.querySelector('#select-all-products')?.addEventListener('change', handleSelectAll);
             productPanel.querySelector('#bulk-delete-btn')?.addEventListener('click', bulkDelete);
             productPanel.querySelector('#bulk-toggle-discount-btn')?.addEventListener('click', bulkToggleDiscount);
+
+            // Initial add form row
+            addProductFormRow();
         }
         
         function handleProductListClicks(e) {
@@ -426,49 +386,6 @@
             }
         }
         
-        async function addSingleProduct(e) {
-            const button = e.target;
-            button.disabled = true;
-            
-            const imageInput = document.getElementById('add-image-input');
-            const imageFile = imageInput?.files.length > 0 ? imageInput.files[0] : null;
-
-            let uploadedImageUrl = null;
-            if(imageFile) {
-                uploadedImageUrl = await uploadImage(imageFile);
-                if(!uploadedImageUrl) {
-                    button.disabled = false;
-                    return;
-                }
-            }
-
-            const newProduct = {
-                name: document.getElementById('new-product-name').value, 
-                price: document.getElementById('new-product-price').value, 
-                target_url: document.getElementById('new-product-target-url').value, 
-                discount_factor: document.getElementById('new-product-discount-factor').value || null,
-                image_url: uploadedImageUrl
-            };
-            if (!newProduct.name || !newProduct.price || !newProduct.target_url) { alert('请填写产品名称、原价和跳转链接！'); button.disabled = false; return; }
-            
-            showLoading(true);
-            const { count } = await db.from('products').select('*', { count: 'exact', head: true });
-            newProduct.display_order = count || 0;
-            if (newProduct.discount_factor) {
-                 newProduct.discount_price = (parseFloat(newProduct.price) * parseFloat(newProduct.discount_factor)).toFixed(2);
-            }
-
-            const { error } = await db.from('products').insert(newProduct);
-            showLoading(false);
-            if (error) { alert('添加产品失败: ' + error.message); } else {
-                ['new-product-name', 'new-product-price', 'new-product-target-url', 'new-product-discount-factor'].forEach(id => document.getElementById(id).value = '');
-                document.getElementById('add-preview-image').classList.add('hidden');
-                imageInput.value = '';
-                await loadProducts();
-            }
-            button.disabled = false;
-        }
-
         let currentEditFile = null;
         let currentEditImageUrl = '';
         async function openEditModal(productId) {
@@ -580,9 +497,6 @@
         }
 
         async function deleteProduct(id, skipConfirm = false) {
-            const row = mainContent.querySelector(`tr[data-id="${id}"]`);
-            if (!row) return;
-
             if (skipConfirm || confirm('您确定要删除这个产品吗？')) {
                 showLoading(true);
                 await db.from('products').delete().eq('id', id);
@@ -642,7 +556,110 @@
             }
         }
 
-        // --- 批量上传和模板 ---
+        // --- 批量/动态添加产品 ---
+        function addProductFormRow() {
+            const container = document.getElementById('add-product-forms-container');
+            const formId = `new-form-${Date.now()}`;
+            const div = document.createElement('div');
+            div.className = 'space-y-3 bg-gray-50 p-4 rounded-lg border relative add-form-row';
+            div.id = formId;
+
+            div.innerHTML = `
+                <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
+                <div class="relative p-4 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300 add-image-box"><p>点击选择、拖拽或粘贴图片</p><img src="" class="hidden max-h-24 mx-auto rounded mt-2 add-preview-image"></div>
+                <input type="file" class="hidden add-image-input" accept="image/*">
+                <input type="text" placeholder="产品名称" class="input new-product-name">
+                <input type="text" placeholder="跳转链接 (Mulebuy)" class="input new-product-target-url">
+                <input type="number" placeholder="原价" class="input new-product-price">
+                <input type="number" placeholder="折扣率 (可选, 如 0.7)" class="input new-product-discount-factor" step="0.01" min="0" max="1">
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+
+            const imageBox = div.querySelector('.add-image-box');
+            const imageInput = div.querySelector('.add-image-input');
+            const previewImage = div.querySelector('.add-preview-image');
+            
+            imageBox.addEventListener('click', () => imageInput.click());
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    newProductFiles.set(formId, e.target.files[0]);
+                    previewImage.src = URL.createObjectURL(e.target.files[0]);
+                    previewImage.classList.remove('hidden');
+                }
+            });
+             imageBox.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-gray-300'); });
+            imageBox.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('bg-gray-300'));
+            imageBox.addEventListener('drop', (e) => {
+                e.preventDefault(); e.currentTarget.classList.remove('bg-gray-300');
+                if(e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    newProductFiles.set(formId, e.dataTransfer.files[0]);
+                    previewImage.src = URL.createObjectURL(e.dataTransfer.files[0]);
+                    previewImage.classList.remove('hidden');
+                }
+            });
+            div.querySelector('.remove-form-row-btn').addEventListener('click', () => {
+                newProductFiles.delete(formId);
+                div.remove();
+            });
+        }
+        
+        async function submitAllNewProducts() {
+            const forms = document.querySelectorAll('.add-form-row');
+            if(forms.length === 0) { alert('没有要添加的产品。'); return; }
+
+            showLoading(true);
+            const { count } = await db.from('products').select('*', { count: 'exact', head: true });
+            let currentOrder = count || 0;
+            let productsToUpload = [];
+
+            for (const form of forms) {
+                const imageFile = newProductFiles.get(form.id);
+                let imageUrl = null;
+                if (imageFile) {
+                    imageUrl = await uploadImage(imageFile);
+                    if (!imageUrl) {
+                        alert(`表单 #${form.id} 的图片上传失败，已终止操作。`);
+                        showLoading(false);
+                        return;
+                    }
+                }
+
+                const name = form.querySelector('.new-product-name').value;
+                const price = parseFloat(form.querySelector('.new-product-price').value);
+                const target_url = form.querySelector('.new-product-target-url').value;
+                const discount_factor = form.querySelector('.new-product-discount-factor').value || null;
+                
+                if (!name || isNaN(price) || !target_url) {
+                    alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
+                    showLoading(false);
+                    return;
+                }
+                
+                let discountPrice = null;
+                if(discount_factor && !isNaN(price)) {
+                    discountPrice = (price * parseFloat(discount_factor)).toFixed(2);
+                }
+
+                productsToUpload.push({
+                    name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor: discount_factor, display_order: currentOrder++
+                });
+            }
+            
+            const { error } = await db.from('products').insert(productsToUpload);
+            showLoading(false);
+
+            if (error) {
+                alert("批量添加失败: " + error.message);
+            } else {
+                alert(`成功添加 ${productsToUpload.length} 个新产品！`);
+                document.getElementById('add-product-forms-container').innerHTML = '';
+                newProductFiles.clear();
+                addProductFormRow(); // Add a fresh empty form
+                await loadProducts();
+            }
+        }
+
         function downloadTemplate() {
             const data = [{ name: '示例鞋子', price: 500, target_url: 'https://mulebuy.com/product/123', image_url: 'https://example.com/image.jpg', discount_factor: 0.9, discount_expires_at: '2025-12-31 23:59:59' }];
             const worksheet = XLSX.utils.json_to_sheet(data);
@@ -650,63 +667,7 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
             XLSX.writeFile(workbook, "product_template.xlsx");
         }
-
-        async function bulkUpload() {
-            const input = document.getElementById('bulk-upload-input');
-            const button = document.getElementById('bulk-upload-btn');
-            if (!input.files.length) { alert('请先选择一个文件！'); return; }
-            button.disabled = true; button.innerHTML = '<i data-lucide="loader-2" class="animate-spin mr-2 h-4 w-4"></i>上传中...'; lucide.createIcons();
-
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-
-                    if (json.length === 0) { throw new Error('文件为空或格式不正确。'); }
-                    const requiredCols = ['name', 'price', 'target_url', 'image_url'];
-                    const firstRow = json[0];
-                    for(const col of requiredCols){
-                        if(!(col in firstRow)){
-                            throw new Error(`Excel文件缺少必需的列: ${col}`);
-                        }
-                    }
-
-                    showLoading(true);
-                    const { count } = await db.from('products').select('*', { count: 'exact', head: true });
-                    let currentOrder = count || 0;
-
-                    const productsToUpload = json.map(row => {
-                        let discountPrice = null;
-                        if(row.discount_factor && !isNaN(row.price)) {
-                            discountPrice = (parseFloat(row.price) * parseFloat(row.discount_factor)).toFixed(2);
-                        }
-                        return {
-                            name: row.name, price: row.price, discount_price: discountPrice, discount_factor: row.discount_factor || null, image_url: row.image_url, target_url: row.target_url, display_order: ++currentOrder, discount_expires_at: row.discount_expires_at || null,
-                        }
-                    });
-                    
-                    const { error } = await db.from('products').insert(productsToUpload);
-                    showLoading(false);
-                    if (error) { throw new Error(error.message); } 
-                    
-                    alert(`成功上传 ${productsToUpload.length} 个产品！`);
-                    input.value = ''; 
-                    await loadProducts();
-                } catch (e) {
-                     showLoading(false);
-                     alert('批量上传失败: ' + e.message);
-                } finally {
-                     button.disabled = false; button.innerHTML = '<i data-lucide="upload" class="mr-2 h-4 w-4"></i>开始上传'; lucide.createIcons();
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
+        
         // --- 认证与初始化 ---
         const loginBtn = document.getElementById('login-btn');
         const passwordInput = document.getElementById('password');
