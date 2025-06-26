@@ -65,7 +65,7 @@
     </div>
 
     <!-- 管理后台主界面 -->
-    <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
+    <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
     <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
@@ -197,14 +197,12 @@
             if (saveBtn) saveBtn.addEventListener('click', saveSettings);
         }
         
-        // MODIFIED: 为导航项添加监听器，并简化逻辑
         async function loadNavigation() {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
             
-            navList.innerHTML = ''; // Clear list
+            navList.innerHTML = '';
             
-            // Add static 'Home' item which is not editable
             const homeDiv = document.createElement('div');
             homeDiv.className = 'flex items-center gap-2 nav-item-row home-nav-item p-2 rounded';
             homeDiv.innerHTML = `
@@ -218,31 +216,11 @@
             
             if (data) {
                 const validItems = data.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home');
-                validItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center gap-2 nav-item-row';
-                    div.dataset.id = item.id;
-                    div.innerHTML = `
-                        <input type="text" value="${item.link_text}" class="input nav-text w-1/3" placeholder="链接文字">
-                        <input type="text" value="${item.link_url}" class="input nav-url w-2/3" placeholder="URL会在此自动生成" disabled>
-                        <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
-                    `;
-                    
-                    // Add listener to existing items for better editing UX
-                    const linkTextInput = div.querySelector('.nav-text');
-                    const urlInput = div.querySelector('.nav-url');
-                    linkTextInput.addEventListener('input', () => {
-                        const text = linkTextInput.value.trim();
-                        urlInput.value = text ? `${BASE_URL}${text}` : '';
-                    });
-
-                    div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
-                    navList.appendChild(div);
-                });
+                validItems.forEach(item => renderNavItem(item, false));
             }
             
             const addBtn = document.getElementById('add-nav-btn');
-            if (addBtn) addBtn.addEventListener('click', () => renderNavItem({})); // Pass empty object
+            if (addBtn) addBtn.addEventListener('click', () => renderNavItem({}, true));
             
             const saveBtn = document.getElementById('save-nav-btn');
             if (saveBtn) saveBtn.addEventListener('click', saveNavigation);
@@ -250,8 +228,7 @@
             lucide.createIcons();
         }
 
-        // MODIFIED: 添加事件监听器以自动生成URL
-        function renderNavItem(item = {}) {
+        function renderNavItem(item = {}, isNew = false) {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
             const div = document.createElement('div');
@@ -259,23 +236,23 @@
             div.dataset.id = item.id || `new_${Date.now()}`;
             div.innerHTML = `
                 <input type="text" value="${item.link_text || ''}" class="input nav-text w-1/3" placeholder="链接文字 (例如 Sales)">
-                <input type="text" value="${item.link_url || ''}" class="input nav-url w-2/3" placeholder="URL会在此自动生成" disabled>
+                <input type="text" value="${item.link_url || ''}" class="input nav-url w-2/3" placeholder="URL会自动在此生成" disabled>
                 <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
             `;
             
             const linkTextInput = div.querySelector('.nav-text');
             const urlInput = div.querySelector('.nav-url');
 
-            // Add listener to auto-generate URL when user types
             linkTextInput.addEventListener('input', () => {
                 const text = linkTextInput.value.trim();
-                // Generate URL based on input, respecting case (e.g., "Sales" becomes "/Sales")
                 urlInput.value = text ? `${BASE_URL}${text}` : '';
             });
 
             div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
             navList.appendChild(div);
-            lucide.createIcons();
+            if (isNew) {
+                lucide.createIcons();
+            }
         }
 
         async function loadSocialLinks() {
@@ -434,10 +411,6 @@
                 const existingIds = existingLinks.map(link => link.id);
                 const currentIds = updatedRecords.map(link => link.id).filter(id => id !== undefined);
                 const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
-
-                console.log('New records:', newRecords);
-                console.log('Updated records:', updatedRecords);
-                console.log('IDs to delete:', idsToDelete);
 
                 if (idsToDelete.length > 0) {
                     const { error: deleteError } = await db.from('social_links').delete().in('id', idsToDelete);
@@ -646,65 +619,86 @@
             button.disabled = false; button.textContent = '保存设置';
         }
 
-        // MODIFIED: 简化并修复保存逻辑
+        // FIXED: 重写保存逻辑以解决数据库报错
         async function saveNavigation(e) {
             const button = e.target;
             if (!button) return;
             button.disabled = true; button.textContent = '保存中...';
 
-            // Select all rows except the special home item row
             const navRows = document.querySelectorAll('#navigation-list .nav-item-row:not(.home-nav-item)');
             
-            let displayOrderCounter = 1; // Start order from 1 for non-home items
-            const navItems = Array.from(navRows).map((row) => {
+            const itemsToUpsert = [];
+            const itemsToInsert = [];
+            
+            let displayOrderCounter = 1;
+
+            Array.from(navRows).forEach((row) => {
                 const linkText = row.querySelector('.nav-text')?.value.trim();
                 const linkUrl = row.querySelector('.nav-url')?.value.trim();
+                const id = row.dataset.id;
 
-                // Only process rows that have link text
                 if (linkText) {
-                    return {
-                        id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
+                    const record = {
                         link_text: linkText,
-                        // URL is now read directly from the auto-populated (but disabled) input
-                        link_url: linkUrl || `${BASE_URL}${linkText}`, // Fallback just in case
+                        link_url: linkUrl || `${BASE_URL}${linkText}`,
                         display_order: displayOrderCounter++
                     };
+
+                    if (id.startsWith('new_')) {
+                        itemsToInsert.push(record);
+                    } else {
+                        record.id = parseInt(id);
+                        itemsToUpsert.push(record);
+                    }
                 }
-                return null;
-            }).filter(item => item !== null); // Remove empty rows from the array
+            });
 
-            const { data: existingNavs } = await db.from('navigation').select('id');
+            // --- 删除逻辑 ---
+            const { data: existingNavs, error: fetchErr } = await db.from('navigation').select('id');
+            if (fetchErr) {
+                alert(`获取数据失败: ${fetchErr.message}`);
+                showLoading(false);
+                button.disabled = false; button.textContent = '保存全部变更';
+                return;
+            }
             const existingIds = existingNavs.map(n => n.id);
-            const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
-
-            // Important: Do not delete ID 1 (which is 'Home')
+            const currentIds = itemsToUpsert.map(n => n.id);
             const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
 
             showLoading(true);
-            if (idsToDelete.length > 0) {
-                await db.from('navigation').delete().in('id', idsToDelete);
-            }
-            
-            // Always ensure the Home item is present with id=1 and order=0
-            const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
-            
-            // Combine the static Home item with the dynamic items from the form
-            const finalItems = [homeItem, ...navItems];
-            
-            const { error } = await db.from('navigation').upsert(finalItems);
-            showLoading(false);
 
-            if (error) {
-                alert('导航栏保存失败: ' + error.message);
-            } else {
+            try {
+                if (idsToDelete.length > 0) {
+                    const { error } = await db.from('navigation').delete().in('id', idsToDelete);
+                    if (error) throw error;
+                }
+                
+                // 确保Home项存在
+                itemsToUpsert.push({ id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 });
+
+                if (itemsToUpsert.length > 0) {
+                    const { error } = await db.from('navigation').upsert(itemsToUpsert);
+                    if (error) throw error;
+                }
+
+                if (itemsToInsert.length > 0) {
+                    const { error } = await db.from('navigation').insert(itemsToInsert);
+                    if (error) throw error;
+                }
+                
                 alert('导航栏已更新！');
-                await loadNavigation(); // Reload navigation to show fresh, correctly ordered data
-                // If the products tab is the current view, reload it to update category dropdowns
+                await loadNavigation();
                 if (document.querySelector('.tab-button[data-target="products"].active')) {
                      await loadProducts();
                 }
+
+            } catch (error) {
+                console.error("Save navigation error:", error);
+                alert('导航栏保存失败: ' + error.message);
+            } finally {
+                showLoading(false);
+                button.disabled = false; button.textContent = '保存全部变更';
             }
-            button.disabled = false; button.textContent = '保存全部变更';
         }
 
         async function uploadImage(file) {
@@ -1043,7 +1037,7 @@
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
                 if (authScreen) authScreen.classList.add('hidden');
                 if (adminPanel) adminPanel.classList.remove('hidden');
-                lucide.createIcons();
+                setupSidebarNav(); // <-- Use new static setup function
                 renderPanel('dashboard');
             }
         }
@@ -1071,46 +1065,36 @@
             location.reload();
         });
 
-        function updateSidebarNav() {
-            db.from('navigation').select('*').order('display_order').then(({ data: navData }) => {
-                sidebarNav.innerHTML = '';
-                sidebarNav.innerHTML = `
-                    <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
-                    <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
-                    <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
-                    <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
-                    <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
-                `;
-                if (navData) {
-                    const validNavItems = navData.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home' && !['sale', 'discount', '折扣'].includes(item.link_text.toLowerCase()));
-                    validNavItems.forEach(item => {
-                        const btn = document.createElement('button');
-                        btn.dataset.target = item.link_text.toLowerCase();
-                        btn.className = 'tab-button';
-                        btn.innerHTML = `<i data-lucide="list" class="mr-3 h-5 w-5"></i>${item.link_text}`;
-                        sidebarNav.appendChild(btn);
-                    });
-                }
-                sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const target = e.target.closest('.tab-button').dataset.target;
-                        sidebarNav.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                        e.target.closest('.tab-button').classList.add('active');
-                        renderPanel(target);
-                    });
+        // FIXED: 改为静态的侧边栏设置函数
+        function setupSidebarNav() {
+            sidebarNav.innerHTML = `
+                <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
+                <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
+                <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
+                <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
+                <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
+            `;
+            sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Navigate to the correct panel
+                    const targetPanel = e.target.closest('.tab-button').dataset.target;
+                    
+                    // Set active class
+                    sidebarNav.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.closest('.tab-button').classList.add('active');
+
+                    // Render the content
+                    renderPanel(targetPanel);
                 });
-                lucide.createIcons();
             });
+            lucide.createIcons();
         }
 
         const closeModalBtn = document.getElementById('close-modal-btn');
         if (closeModalBtn) closeModalBtn.addEventListener('click', () => {
             if (modal) modal.classList.add('hidden');
         });
-        const saveNavBtn = document.getElementById('save-nav-btn');
-        if (saveNavBtn) saveNavBtn.addEventListener('click', () => {
-            saveNavigation().then(() => updateSidebarNav());
-        });
+        
         const saveProductBtn = document.getElementById('save-product-changes-btn');
         if (saveProductBtn) saveProductBtn.addEventListener('click', saveProductChanges);
         
@@ -1150,7 +1134,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
-            updateSidebarNav();
         });
     </script>
 </body>
