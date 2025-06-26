@@ -52,6 +52,13 @@
         .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
         .nav-item-row .nav-url { pointer-events: none; background-color: #f3f4f6; }
         .home-nav-item { background-color: #e5e7eb; pointer-events: none; }
+        .custom-dropdown { position: relative; width: 100%; }
+        .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; }
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; }
+        .dropdown-menu.active { display: block; }
+        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; }
+        .dropdown-item:hover { background-color: #f3f4f6; }
+        .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
     </style>
 </head>
 <body>
@@ -64,7 +71,7 @@
     <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div><div><label class="label">产品分类</label><input type="text" id="edit-product-category" class="input mt-1" placeholder="如 Sale"></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
     
     <!-- 加载遮罩 -->
     <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
@@ -133,7 +140,7 @@
                              <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                          </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3">分类</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">分类</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理</h2>
@@ -259,31 +266,90 @@
             const productListEl = mainContent.querySelector('#product-list');
             if (!productListEl) return;
             productListEl.innerHTML = ''; 
-            
-            const { data, error } = await db.from('products').select('*').eq('is_active', true).order('display_order');
-            if (error) { console.error("Error fetching products:", error); return; }
-            productsCache = data || [];
-            
+
+            const [productsRes, navRes] = await Promise.all([
+                db.from('products').select('*').eq('is_active', true).order('display_order'),
+                db.from('navigation').select('link_text').order('display_order')
+            ]);
+            const products = productsRes.data;
+            const categories = navRes.data.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text);
+            if (productsRes.error) { console.error("Error fetching products:", productsRes.error); return; }
+
+            productsCache = products || [];
             productsCache.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.className = 'bg-white border-b product-row';
                 tr.dataset.id = p.id;
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
+                const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
+                const dropdownTrigger = `<div class="custom-dropdown"><div class="dropdown-trigger" data-id="${p.id}">${selectedCategories.length > 0 ? selectedCategories.join(', ') : '选择分类'}</div><div class="dropdown-menu" data-id="${p.id}"></div></div>`;
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
+                    <td class="p-3">${dropdownTrigger}</td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
                     <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
                     <td class="p-3">${p.target_url || '—'}</td>
                     <td class="p-3">${discountFactorText}</td>
                     <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
                     <td class="p-3">${expiryDate}</td>
-                    <td class="p-3">${p.category || '—'}</td>
                     <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button></td>
                 `;
                 productListEl.appendChild(tr);
             });
+
+            // 初始化自定义下拉菜单
+            productListEl.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                const productId = trigger.dataset.id;
+                const selectedCategories = productsCache.find(p => p.id == productId)?.category?.split(',').map(cat => cat.trim()) || [];
+
+                menu.innerHTML = categories.map(cat => `
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="cat-${productId}-${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''} value="${cat}">
+                        <label for="cat-${productId}-${cat}">${cat}</label>
+                    </div>
+                `).join('');
+
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    menu.classList.toggle('active');
+                    document.addEventListener('click', closeDropdown);
+                });
+
+                menu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const checkbox = e.target.closest('input[type="checkbox"]');
+                    if (checkbox) {
+                        const selected = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
+                        const product = productsCache.find(p => p.id == productId);
+                        if (product) {
+                            product.category = selected;
+                            trigger.textContent = selected.length > 0 ? selected : '选择分类';
+                            showLoading(true);
+                            db.from('products').update({ category: selected }).eq('id', productId).then(() => {
+                                showLoading(false);
+                            }).catch(err => {
+                                alert('分类更新失败: ' + err.message);
+                                showLoading(false);
+                            });
+                        }
+                    }
+                });
+            });
+
+            function closeDropdown(e) {
+                const dropdowns = productListEl.querySelectorAll('.dropdown-menu.active');
+                dropdowns.forEach(menu => {
+                    if (!menu.contains(e.target)) {
+                        menu.classList.remove('active');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            }
+
             lucide.createIcons();
             if (sortableInstance) sortableInstance.destroy();
             sortableInstance = new Sortable(productListEl, {
@@ -412,6 +478,7 @@
             else {
                 alert('导航栏已更新！');
                 await loadNavigation();
+                await loadProducts(); // 更新产品分类选项
             }
             button.disabled = false; button.textContent = '保存全部变更';
         }
@@ -473,9 +540,8 @@
             const editFactor = document.getElementById('edit-product-discount-factor');
             const editActive = document.getElementById('edit-product-discount-active');
             const editExpires = document.getElementById('edit-product-discount-expires');
-            const editCategory = document.getElementById('edit-product-category');
             const calculatedEl = document.getElementById('calculated-discount-price');
-            if (!(editId && editName && editPrice && editUrl && editFactor && editActive && editExpires && editCategory && calculatedEl)) return;
+            if (!(editId && editName && editPrice && editUrl && editFactor && editActive && editExpires && calculatedEl)) return;
 
             editId.value = product.id;
             editName.value = product.name;
@@ -483,7 +549,6 @@
             editUrl.value = product.target_url || '';
             editFactor.value = product.discount_factor || '';
             editActive.checked = product.discount_is_active;
-            editCategory.value = product.category || '';
             
             const priceInput = editPrice;
             const factorInput = editFactor;
@@ -567,8 +632,7 @@
                 discount_factor: factor || null,
                 discount_is_active: document.getElementById('edit-product-discount-active')?.checked,
                 discount_expires_at: expiresAt,
-                image_url: uploadedImageUrl,
-                category: document.getElementById('edit-product-category')?.value || ''
+                image_url: uploadedImageUrl
             };
             
             const { error } = await db.from('products').upsert(updates);
@@ -668,7 +732,7 @@
                 <input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;">
                 <input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;">
                 <input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;">
-                <input type="text" placeholder="产品分类" class="input flex-1" style="max-width: 100px;" id="new-product-category">
+                <div class="custom-dropdown flex-1" style="max-width: 100px;"><div class="dropdown-trigger" data-id="${formId}">选择分类</div><div class="dropdown-menu" data-id="${formId}"></div></div>
                 <button class="p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
@@ -677,9 +741,11 @@
             const imageBox = div.querySelector('.add-image-box');
             const imageInput = div.querySelector('.add-image-input');
             const previewImage = div.querySelector('.add-preview-image');
-            const categoryInput = div.querySelector('#new-product-category');
-            
-            if (imageBox && imageInput && previewImage && categoryInput) {
+            const dropdown = div.querySelector('.custom-dropdown');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            if (imageBox && imageInput && previewImage && trigger && menu) {
                 imageBox.addEventListener('click', () => imageInput.click());
                 imageInput.addEventListener('change', (e) => {
                     if (e.target.files && e.target.files[0]) {
@@ -703,7 +769,38 @@
                     newProductFiles.delete(formId);
                     div.remove();
                 });
+
+                // 动态填充分类选项
+                loadCategories().then(categories => {
+                    menu.innerHTML = categories.map(cat => `
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="cat-${formId}-${cat}" value="${cat}">
+                            <label for="cat-${formId}-${cat}">${cat}</label>
+                        </div>
+                    `).join('');
+
+                    trigger.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        menu.classList.toggle('active');
+                        document.addEventListener('click', closeDropdown);
+                    });
+
+                    menu.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const checkbox = e.target.closest('input[type="checkbox"]');
+                        if (checkbox) {
+                            const selected = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
+                            trigger.textContent = selected.length > 0 ? selected : '选择分类';
+                        }
+                    });
+                });
             }
+        }
+
+        async function loadCategories() {
+            const { data, error } = await db.from('navigation').select('link_text').order('display_order');
+            if (error) { console.error("Error fetching categories:", error); return []; }
+            return data.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text);
         }
         
         async function submitAllNewProducts() {
@@ -732,7 +829,9 @@
                 const target_url = form.querySelector('.new-product-target-url')?.value || null;
                 const discount_factor = form.querySelector('.new-product-discount-factor')?.value || null;
                 const expires_at = form.querySelector('.new-product-discount-expires')?.value ? new Date(form.querySelector('.new-product-discount-expires').value).toISOString() : null;
-                const category = form.querySelector('#new-product-category')?.value || '';
+                const dropdown = form.querySelector('.custom-dropdown');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                const category = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
                 
                 if (!name || isNaN(price) || !target_url) {
                     alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
