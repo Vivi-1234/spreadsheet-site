@@ -52,7 +52,7 @@
     <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣价</label><input type="number" id="edit-product-discount-price" class="input mt-1"></div><div><label class="label">折扣有效期(天)</label><input type="number" id="edit-product-discount-days" class="input mt-1" placeholder="例如: 3"></div><div class="flex items-center pt-6"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
     
     <!-- 加载遮罩 -->
     <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
@@ -133,7 +133,7 @@
                              <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                          </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理</h2>
@@ -231,11 +231,13 @@
                 const tr = document.createElement('tr');
                 tr.className = 'bg-white border-b product-row';
                 tr.dataset.id = p.id;
-                const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleDateString() : '—';
+                const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN') : '—';
+                const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
+                    <td class="p-3">${discountFactorText}</td>
                     <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
                     <td class="p-3">${expiryDate}</td>
                     <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button></td>
@@ -251,13 +253,7 @@
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
-                    const updates = reorderedIds.map((id, index) => {
-                        const product = productsCache.find(p => p.id === id);
-                        return { 
-                           ...product,
-                           display_order: index 
-                        };
-                    });
+                    const updates = reorderedIds.map((id, index) => ({ id: id, display_order: index }));
                     
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
@@ -266,7 +262,7 @@
                     if (error) {
                         alert('排序失败: ' + error.message);
                     }
-                    // Refresh local cache order to match UI
+                    // Refresh local cache order after successful db update
                     reorderedIds.forEach((id, index) => {
                        const product = productsCache.find(p => p.id === id);
                        if(product) product.display_order = index;
@@ -424,31 +420,50 @@
             document.getElementById('edit-product-name').value = product.name;
             document.getElementById('edit-product-price').value = product.price;
             document.getElementById('edit-product-target-url').value = product.target_url;
-            document.getElementById('edit-product-discount-price').value = product.discount_price;
+            document.getElementById('edit-product-discount-factor').value = product.discount_factor;
             document.getElementById('edit-product-discount-active').checked = product.discount_is_active;
             
+            const priceInput = document.getElementById('edit-product-price');
+            const factorInput = document.getElementById('edit-product-discount-factor');
+            const calculatedEl = document.getElementById('calculated-discount-price');
+
+            function calculateDiscount() {
+                const price = parseFloat(priceInput.value);
+                const factor = parseFloat(factorInput.value);
+                if (!isNaN(price) && !isNaN(factor)) {
+                    calculatedEl.textContent = `¥${(price * factor).toFixed(2)}`;
+                } else {
+                    calculatedEl.textContent = 'N/A';
+                }
+            }
+            priceInput.addEventListener('input', calculateDiscount);
+            factorInput.addEventListener('input', calculateDiscount);
+            calculateDiscount();
+
             currentEditImageUrl = product.image_url;
             const preview = document.getElementById('edit-preview-image');
             const deleteBtn = document.getElementById('delete-image-btn');
+            const placeholder = document.getElementById('edit-image-placeholder');
             
             if (product.image_url) {
                 preview.src = product.image_url;
                 preview.classList.remove('hidden');
                 deleteBtn.classList.remove('hidden');
-                document.getElementById('edit-image-placeholder').classList.add('hidden');
+                placeholder.classList.add('hidden');
             } else {
                  preview.classList.add('hidden');
                  deleteBtn.classList.add('hidden');
-                 document.getElementById('edit-image-placeholder').classList.remove('hidden');
+                 placeholder.classList.remove('hidden');
             }
 
+            const expiresInput = document.getElementById('edit-product-discount-expires');
             if (product.discount_expires_at) {
-                const now = new Date();
-                const expiry = new Date(product.discount_expires_at);
-                const diffDays = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
-                document.getElementById('edit-product-discount-days').value = diffDays > 0 ? diffDays : '';
+                // Format to YYYY-MM-DDTHH:MM for datetime-local input
+                const d = new Date(product.discount_expires_at);
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                expiresInput.value = d.toISOString().slice(0,16);
             } else {
-                document.getElementById('edit-product-discount-days').value = '';
+                expiresInput.value = '';
             }
             
             modal.classList.remove('hidden');
@@ -469,11 +484,14 @@
                 }
             }
             
-            const discountDays = document.getElementById('edit-product-discount-days').value;
-            let expiresAt = null;
-            if (discountDays && !isNaN(discountDays) && parseInt(discountDays) >= 0) {
-                expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + parseInt(discountDays));
+            const expiresInput = document.getElementById('edit-product-discount-expires').value;
+            let expiresAt = expiresInput ? new Date(expiresInput).toISOString() : null;
+
+            const price = parseFloat(document.getElementById('edit-product-price').value);
+            const factor = parseFloat(document.getElementById('edit-product-discount-factor').value);
+            let discountPrice = null;
+            if (!isNaN(price) && !isNaN(factor)) {
+                discountPrice = (price * factor).toFixed(2);
             }
 
             const productId = document.getElementById('edit-product-id').value;
@@ -482,9 +500,10 @@
             const updates = {
                 ...originalProduct,
                 name: document.getElementById('edit-product-name').value,
-                price: document.getElementById('edit-product-price').value,
+                price: price,
                 target_url: document.getElementById('edit-product-target-url').value,
-                discount_price: document.getElementById('edit-product-discount-price').value || null,
+                discount_price: discountPrice,
+                discount_factor: factor || null,
                 discount_is_active: document.getElementById('edit-product-discount-active').checked,
                 discount_expires_at: expiresAt,
                 image_url: uploadedImageUrl,
@@ -523,6 +542,7 @@
             } else {
                 actionBar.classList.add('hidden');
             }
+             lucide.createIcons();
         }
         
         function handleSelectAll(e) {
