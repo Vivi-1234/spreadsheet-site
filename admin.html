@@ -122,22 +122,22 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">产品管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md">
                      <div class="mb-6 border-b pb-6">
-                        <h3 class="font-semibold mb-2 text-lg">添加新产品</h3>
-                        <div id="add-product-forms-container" class="space-y-4">
-                           <!-- 新产品表单将在这里动态添加 -->
-                        </div>
-                        <div class="mt-4 flex justify-between">
-                            <button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加下一个产品</button>
-                            <button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部产品</button>
-                        </div>
-                    </div>
-                    <div id="bulk-actions-bar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+                         <h3 class="font-semibold mb-2 text-lg">添加新产品</h3>
+                         <div id="add-product-forms-container" class="space-y-4">
+                             <!-- 新产品表单将在这里动态添加 -->
+                         </div>
+                         <div class="mt-4 flex justify-between">
+                             <button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加下一个产品</button>
+                             <button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部产品</button>
+                         </div>
+                     </div>
+                     <div id="bulk-actions-bar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between">
                          <div><span id="selected-count">0</span> 个产品已选中</div>
                          <div class="flex items-center gap-2">
                              <button id="bulk-toggle-discount-btn" class="btn btn-secondary text-xs"><i data-lucide="power" class="mr-1 h-4 w-4"></i>切换折扣状态</button>
                              <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                          </div>
-                    </div>
+                     </div>
                     <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">分类</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
@@ -197,12 +197,16 @@
             if (saveBtn) saveBtn.addEventListener('click', saveSettings);
         }
         
+        // MODIFIED: 为导航项添加监听器，并简化逻辑
         async function loadNavigation() {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
-            navList.innerHTML = '';
+            
+            navList.innerHTML = ''; // Clear list
+            
+            // Add static 'Home' item which is not editable
             const homeDiv = document.createElement('div');
-            homeDiv.className = 'flex items-center gap-2 nav-item-row home-nav-item';
+            homeDiv.className = 'flex items-center gap-2 nav-item-row home-nav-item p-2 rounded';
             homeDiv.innerHTML = `
                 <input type="text" value="Home" class="input nav-text w-1/3" disabled>
                 <input type="text" value="${BASE_URL}" class="input nav-url w-2/3" disabled>
@@ -211,8 +215,8 @@
 
             const { data, error } = await db.from('navigation').select('*').order('display_order');
             if (error) { console.error("Error fetching navigation:", error); return; }
+            
             if (data) {
-                // 过滤无效或重复的导航条目，只保留有效的分类
                 const validItems = data.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home');
                 validItems.forEach(item => {
                     const div = document.createElement('div');
@@ -220,30 +224,55 @@
                     div.dataset.id = item.id;
                     div.innerHTML = `
                         <input type="text" value="${item.link_text}" class="input nav-text w-1/3" placeholder="链接文字">
-                        <input type="text" value="${item.link_url}" class="input nav-url w-2/3" placeholder="跳转位置 (URL)" disabled>
+                        <input type="text" value="${item.link_url}" class="input nav-url w-2/3" placeholder="URL会在此自动生成" disabled>
                         <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
                     `;
+                    
+                    // Add listener to existing items for better editing UX
+                    const linkTextInput = div.querySelector('.nav-text');
+                    const urlInput = div.querySelector('.nav-url');
+                    linkTextInput.addEventListener('input', () => {
+                        const text = linkTextInput.value.trim();
+                        urlInput.value = text ? `${BASE_URL}${text}` : '';
+                    });
+
                     div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
                     navList.appendChild(div);
                 });
             }
+            
             const addBtn = document.getElementById('add-nav-btn');
-            if (addBtn) addBtn.addEventListener('click', () => renderNavItem({ id: `new_${Date.now()}`, link_text: '', link_url: '' }));
+            if (addBtn) addBtn.addEventListener('click', () => renderNavItem({})); // Pass empty object
+            
             const saveBtn = document.getElementById('save-nav-btn');
             if (saveBtn) saveBtn.addEventListener('click', saveNavigation);
+            
+            lucide.createIcons();
         }
 
-        function renderNavItem(item) {
+        // MODIFIED: 添加事件监听器以自动生成URL
+        function renderNavItem(item = {}) {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
             const div = document.createElement('div');
             div.className = 'flex items-center gap-2 nav-item-row';
             div.dataset.id = item.id || `new_${Date.now()}`;
             div.innerHTML = `
-                <input type="text" value="${item.link_text || ''}" class="input nav-text w-1/3" placeholder="链接文字">
-                <input type="text" value="${item.link_url || ''}" class="input nav-url w-2/3" placeholder="跳转位置 (URL)" disabled>
+                <input type="text" value="${item.link_text || ''}" class="input nav-text w-1/3" placeholder="链接文字 (例如 Sales)">
+                <input type="text" value="${item.link_url || ''}" class="input nav-url w-2/3" placeholder="URL会在此自动生成" disabled>
                 <button class="delete-nav-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="trash-2" class="h-4 w-4 text-red-500"></i></button>
             `;
+            
+            const linkTextInput = div.querySelector('.nav-text');
+            const urlInput = div.querySelector('.nav-url');
+
+            // Add listener to auto-generate URL when user types
+            linkTextInput.addEventListener('input', () => {
+                const text = linkTextInput.value.trim();
+                // Generate URL based on input, respecting case (e.g., "Sales" becomes "/Sales")
+                urlInput.value = text ? `${BASE_URL}${text}` : '';
+            });
+
             div.querySelector('.delete-nav-btn').addEventListener('click', () => div.remove());
             navList.appendChild(div);
             lucide.createIcons();
@@ -550,8 +579,8 @@
                         await loadProducts();
                     } else {
                         reorderedIds.forEach((id, index) => {
-                           const product = productsCache.find(p => p.id === id);
-                           if(product) product.display_order = index;
+                            const product = productsCache.find(p => p.id === id);
+                            if(product) product.display_order = index;
                         });
                         productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
@@ -617,41 +646,62 @@
             button.disabled = false; button.textContent = '保存设置';
         }
 
+        // MODIFIED: 简化并修复保存逻辑
         async function saveNavigation(e) {
             const button = e.target;
             if (!button) return;
             button.disabled = true; button.textContent = '保存中...';
-            const navRows = document.querySelectorAll('#navigation-list .nav-item-row');
-            const navItems = Array.from(navRows).map((row, index) => {
+
+            // Select all rows except the special home item row
+            const navRows = document.querySelectorAll('#navigation-list .nav-item-row:not(.home-nav-item)');
+            
+            let displayOrderCounter = 1; // Start order from 1 for non-home items
+            const navItems = Array.from(navRows).map((row) => {
                 const linkText = row.querySelector('.nav-text')?.value.trim();
-                return {
-                    id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
-                    link_text: linkText,
-                    link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
-                    display_order: index + 1
-                };
-            });
+                const linkUrl = row.querySelector('.nav-url')?.value.trim();
+
+                // Only process rows that have link text
+                if (linkText) {
+                    return {
+                        id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
+                        link_text: linkText,
+                        // URL is now read directly from the auto-populated (but disabled) input
+                        link_url: linkUrl || `${BASE_URL}${linkText}`, // Fallback just in case
+                        display_order: displayOrderCounter++
+                    };
+                }
+                return null;
+            }).filter(item => item !== null); // Remove empty rows from the array
 
             const { data: existingNavs } = await db.from('navigation').select('id');
             const existingIds = existingNavs.map(n => n.id);
             const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
+
+            // Important: Do not delete ID 1 (which is 'Home')
             const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
 
             showLoading(true);
             if (idsToDelete.length > 0) {
                 await db.from('navigation').delete().in('id', idsToDelete);
             }
+            
+            // Always ensure the Home item is present with id=1 and order=0
             const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
-            const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
+            
+            // Combine the static Home item with the dynamic items from the form
+            const finalItems = [homeItem, ...navItems];
+            
             const { error } = await db.from('navigation').upsert(finalItems);
             showLoading(false);
 
-            if (error) alert('导航栏保存失败: ' + error.message);
-            else {
+            if (error) {
+                alert('导航栏保存失败: ' + error.message);
+            } else {
                 alert('导航栏已更新！');
-                await loadNavigation();
-                if (mainContent.querySelector('#product-list')) {
-                    await loadProducts();
+                await loadNavigation(); // Reload navigation to show fresh, correctly ordered data
+                // If the products tab is the current view, reload it to update category dropdowns
+                if (document.querySelector('.tab-button[data-target="products"].active')) {
+                     await loadProducts();
                 }
             }
             button.disabled = false; button.textContent = '保存全部变更';
