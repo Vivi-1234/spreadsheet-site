@@ -89,9 +89,23 @@
             return `${BASE_URL}${url}`;
         }
 
+        // --- 辅助函数：添加推广码 ---
+        function appendRefParam(url, ref) {
+            if (!ref) return url;
+            const urlObj = new URL(url, window.location.origin);
+            if (!urlObj.searchParams.has('ref')) {
+                urlObj.searchParams.append('ref', ref);
+            }
+            return urlObj.toString();
+        }
+
         // --- 数据加载和渲染 ---
         async function loadAndRender() {
             try {
+                // 获取当前页面的 ref 参数
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref = urlParams.get('ref');
+
                 const [settingsRes, navRes, socialRes, productsRes] = await Promise.all([
                     db.from('settings').select('*').limit(1).single(),
                     db.from('navigation').select('*').order('display_order'),
@@ -144,11 +158,12 @@
                     socialContainer.innerHTML = '';
                     if (socialLinks) {
                         socialLinks.forEach(link => {
+                            const formattedUrl = appendRefParam(link.link_url, ref);
                             const iconElement = link.icon_url 
                                 ? `<img src="${link.icon_url}" alt="${link.platform_name} logo" class="social-icon-image">` 
                                 : `<i data-lucide="${link.icon_svg_name || 'link'}" style="color: ${link.icon_color || '#333'};"></i>`;
                             socialContainer.innerHTML += `
-                                <a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-14 h-14 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};">
+                                <a href="${formattedUrl}" target="_blank" class="social-icon-bubble w-14 h-14 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};">
                                     ${iconElement}
                                 </a>`;
                         });
@@ -177,8 +192,9 @@
                                 priceHTML = `<p class="font-bold text-xl text-red-600 mt-2">¥${p.discount_price} <span class="text-base text-gray-400 font-normal line-through ml-2">¥${p.price}</span></p>`;
                             }
 
+                            const formattedUrl = appendRefParam(p.target_url, ref);
                             const productCard = `
-                                <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
+                                <a href="${formattedUrl}" target="_blank" class="group block rounded-xl product-card relative">
                                     <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
                                     <div class="p-8">
                                         <h3 class="font-semibold text-lg text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
