@@ -89,8 +89,14 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
         const BASE_URL = 'https://spreadsheet-site.vercel.app/';
 
-        const { createClient } = supabase;
-        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // --- 辅助函数：修复URL ---
+        function formatUrl(url) {
+            if (!url) return '#';
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            return `${BASE_URL}${url}`;
+        }
 
         // 官方社交图标 SVG (简化版)
         const socialIcons = {
@@ -109,10 +115,10 @@
                     db.from('products').select('*').eq('is_active', true).order('display_order')
                 ]);
 
-                console.log('Settings data:', settingsRes.data); // 调试
-                console.log('Navigation data:', navRes.data); // 调试
-                console.log('Social data:', socialRes.data); // 调试
-                console.log('Products data:', productsRes.data); // 调试
+                console.log('Settings data:', settingsRes.data);
+                console.log('Navigation data:', navRes.data);
+                console.log('Social data:', socialRes.data);
+                console.log('Products data:', productsRes.data);
 
                 // 渲染全局设置
                 const settings = settingsRes.data;
@@ -126,7 +132,10 @@
                     if (siteTitle) siteTitle.innerHTML = (settings.site_title || 'SpreadSheet').replace('Next', '<br>Next');
                     if (siteSubtitle) siteSubtitle.textContent = settings.site_subtitle || 'Discover great products';
                     if (productSectionTitle) productSectionTitle.textContent = settings.product_section_title || 'Featured Products';
-                    if (videoWrapper) videoWrapper.innerHTML = settings.video_url ? `<iframe src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : '';
+                    if (videoWrapper) {
+                        const videoUrl = settings.video_url ? settings.video_url.replace('watch?v=', 'embed/').split('&')[0] : ''; // 转换为 embed URL
+                        videoWrapper.innerHTML = videoUrl ? `<iframe src="${videoUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : '';
+                    }
                 }
 
                 // 渲染导航栏
@@ -179,14 +188,14 @@
                             const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
                             const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
 
-                            let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price}</p>`;
+                            let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price || 0}</p>`;
                             if (showDiscount) {
-                                priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price}</span></p>`;
+                                priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price || 0} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price || 0}</span></p>`;
                             }
 
                             const productCard = `
                                 <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
-                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url || 'https://via.placeholder.com/150'}" alt="${p.name}" class="w-full h-full object-cover"></div>
+                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url || 'https://via.placeholder.com/150'}" alt="${p.name || 'Unnamed Product'}" class="w-full h-full object-cover"></div>
                                     <div class="p-4">
                                         <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name || 'Unnamed Product'}</h3>
                                         ${priceHTML}
