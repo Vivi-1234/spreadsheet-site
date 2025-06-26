@@ -282,7 +282,9 @@
             productPanel.querySelector('#bulk-toggle-discount-btn')?.addEventListener('click', bulkToggleDiscount);
 
             // Initial add form row
-            addProductFormRow();
+            if(productPanel.querySelector('#add-product-forms-container').children.length === 0){
+                addProductFormRow();
+            }
         }
         
         function handleProductListClicks(e) {
@@ -568,7 +570,7 @@
             const container = document.getElementById('add-product-forms-container');
             const formId = `new-form-${Date.now()}`;
             const div = document.createElement('div');
-            div.className = 'grid grid-cols-1 md:grid-cols-6 gap-3 bg-gray-50 p-4 rounded-lg border relative add-form-row items-center';
+            div.className = 'grid grid-cols-1 md:grid-cols-7 gap-3 bg-gray-50 p-4 rounded-lg border relative add-form-row items-center';
             div.id = formId;
 
             div.innerHTML = `
@@ -578,10 +580,9 @@
                 </div>
                 <input type="file" class="hidden add-image-input" accept="image/*">
                 <input type="text" placeholder="产品名称" class="input new-product-name col-span-2">
-                <input type="text" placeholder="跳转链接" class="input new-product-target-url col-span-2">
                 <input type="number" placeholder="原价" class="input new-product-price">
                 <input type="number" placeholder="折扣率" class="input new-product-discount-factor" step="0.01" min="0" max="1">
-                <div class="col-span-6"><input type="datetime-local" class="input new-product-discount-expires" title="折扣到期时间"></div>
+                <input type="datetime-local" class="input new-product-discount-expires col-span-2" title="折扣到期时间">
                 <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
