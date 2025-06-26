@@ -52,97 +52,29 @@
         .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
         .nav-item-row .nav-url { pointer-events: none; background-color: #f3f4f6; }
         .home-nav-item { background-color: #e5e7eb; pointer-events: none; }
-        .social-item-row img { cursor: pointer; }
+        .custom-dropdown { position: relative; width: 100%; }
+        .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; }
+        .dropdown-menu.active { display: block; }
+        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; }
+        .dropdown-item:hover { background-color: #f3f4f6; }
+        .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
     </style>
 </head>
 <body>
     <!-- 登录界面 -->
     <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">后台登录</h1>
-            <div class="space-y-4">
-                <div>
-                    <label for="password" class="label block mb-1">请输入密码:</label>
-                    <input type="password" id="password" class="input" placeholder="••••••••">
-                </div>
-                <button id="login-btn" class="w-full btn btn-primary">登录</button>
-            </div>
-            <p id="auth-error" class="text-red-500 text-sm text-center mt-4"></p>
-        </div>
+        <div class="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg"><h1 class="text-2xl font-bold text-center text-gray-800 mb-6">后台登录</h1><div class="space-y-4"><div><label for="password" class="label block mb-1">请输入密码:</label><input type="password" id="password" class="input" placeholder="••••••••"></div><button id="login-btn" class="w-full btn btn-primary">登录</button></div><p id="auth-error" class="text-red-500 text-sm text-center mt-4"></p></div>
     </div>
 
     <!-- 管理后台主界面 -->
-    <div id="admin-panel" class="hidden">
-        <div class="flex h-screen bg-gray-100">
-            <aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1>
-                <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow">
-                    <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
-                    <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
-                    <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
-                    <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
-                    <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
-                </nav>
-                <div class="pt-4 border-t">
-                    <button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center">
-                        <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录
-                    </button>
-                </div>
-            </aside>
-            <main class="flex-1 p-8 overflow-y-auto" id="main-content"></main>
-        </div>
-    </div>
+    <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
-            <div class="p-6 border-b flex justify-between items-center">
-                <h3 class="text-lg font-semibold">编辑产品</h3>
-                <button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="edit-product-id">
-                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300">
-                    <p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p>
-                    <img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2">
-                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700">
-                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                    </button>
-                </div>
-                <input type="file" id="edit-image-input" class="hidden" accept="image/*">
-                <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
-                    <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
-                </div>
-                <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                    <p class="font-semibold mb-2">折扣设置</p>
-                    <div class="grid grid-cols-3 gap-4 items-center">
-                        <div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
-                        <div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded">
-                            <label for="edit-product-discount-active" class="ml-2">开启折扣</label>
-                        </div>
-                        <div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6 bg-gray-50 rounded-b-xl text-right">
-                <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
-            </div>
-        </div>
-    </div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
     
     <!-- 加载遮罩 -->
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
-        <div class="flex items-center">
-            <i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i>
-            <p class="ml-4 text-lg font-semibold">处理中...</p>
-        </div>
-    </div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
 
     <script type="module">
         // --- 配置 ---
@@ -221,8 +153,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">社交媒体管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md max-w-2xl">
                     <div id="social-links-list" class="space-y-3 mb-4"></div>
-                    <div class="mt-4"><button id="add-social-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加社交媒体</button></div>
-                    <div class="text-right mt-4"><button id="save-social-btn" class="btn btn-primary">保存全部变更</button></div>
+                    <div class="text-right"><button id="save-social-btn" class="btn btn-primary">保存社媒链接变更</button></div>
                 </div>`
         };
 
@@ -324,143 +255,11 @@
         async function loadSocialLinks() {
             const socialList = document.getElementById('social-links-list');
             if (!socialList) return;
+            const { data } = await db.from('social_links').select('*').order('display_order');
             socialList.innerHTML = '';
-            const { data, error } = await db.from('social_links').select('*').order('display_order');
-            if (error) { console.error("Error fetching social links:", error); return; }
-            if (data) {
-                data.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center gap-2 social-item-row';
-                    div.dataset.id = item.id;
-                    div.innerHTML = `
-                        <input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform w-1/4" placeholder="平台名称">
-                        <input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url w-1/4" placeholder="主页链接">
-                        <div class="w-1/4">
-                            <input type="file" data-id="${item.id}" class="input social-icon-input" accept="image/*" style="display:none;">
-                            <img src="${item.icon_url || ''}" alt="${item.platform_name} Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();">
-                            <button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${item.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
-                        </div>
-                        <input type="color" data-id="${item.id}" value="${item.icon_color || '#333333'}" class="input w-1/6 social-color-input">
-                    `;
-                    div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
-                    div.querySelector('.social-icon-input').addEventListener('change', async (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            showLoading(true);
-                            const fileName = `social-icons/${Date.now()}-${file.name}`;
-                            const { data: uploadData, error: uploadError } = await db.storage.from('social-icons').upload(fileName, file);
-                            if (uploadError) {
-                                console.error('Upload error:', uploadError);
-                                showLoading(false);
-                                return;
-                            }
-                            const { data: { publicUrl } } = db.storage.from('social-icons').getPublicUrl(fileName);
-                            div.querySelector('img').src = publicUrl;
-                            showLoading(false);
-                        }
-                    });
-                    socialList.appendChild(div);
-                });
-            }
-            new Sortable(socialList, {
-                animation: 150,
-                onEnd: updateSocialOrder
-            });
-        }
-
-        async function updateSocialOrder(evt) {
-            const items = evt.to.querySelectorAll('.social-item-row');
-            const updates = Array.from(items).map((item, index) => ({
-                id: parseInt(item.dataset.id),
-                display_order: index + 1
-            }));
-            showLoading(true);
-            const { error } = await db.from('social_links').upsert(updates);
-            showLoading(false);
-            if (error) console.error('Order update error:', error);
-        }
-
-        async function saveSocialLinks(e) {
-            const button = e.target;
-            if (!button) return;
-            button.disabled = true; button.textContent = '保存中...';
-            const socialRows = document.querySelectorAll('#social-links-list .social-item-row');
-            const updates = [];
-            for (let row of socialRows) {
-                const id = parseInt(row.dataset.id);
-                const platformName = row.querySelector('.social-platform').value;
-                const linkUrl = row.querySelector('.social-url').value;
-                const iconUrl = row.querySelector('img').src || null;
-                const iconColor = row.querySelector('.social-color-input').value;
-                updates.push({ id, platform_name: platformName, link_url: linkUrl, icon_url: iconUrl, icon_color: iconColor, display_order: row.dataset.order || row.style.order || 0 });
-            }
-
-            showLoading(true);
-            const { error } = await db.from('social_links').upsert(updates);
-            showLoading(false);
-
-            if (error) {
-                alert('社交链接保存失败: ' + error.message);
-            } else {
-                alert('社交链接已更新！');
-                await loadSocialLinks();
-            }
-            button.disabled = false; button.textContent = '保存全部变更';
-        }
-
-        async function saveSettings(e) {
-            const button = e.target;
-            if (!button) return;
-            button.disabled = true; button.textContent = '保存中...';
-            const updates = {
-                id: 1,
-                site_title: document.getElementById('siteTitle')?.value,
-                site_subtitle: document.getElementById('siteSubtitle')?.value,
-                video_url: document.getElementById('videoUrl')?.value,
-                product_section_title: document.getElementById('productSectionTitle')?.value,
-            };
-            const { error } = await db.from('settings').upsert(updates);
-            if (error) alert('保存失败: ' + error.message);
-            else alert('网站设置已保存！');
-            button.disabled = false; button.textContent = '保存设置';
-        }
-
-        async function saveNavigation(e) {
-            const button = e.target;
-            if (!button) return;
-            button.disabled = true; button.textContent = '保存中...';
-            const navRows = document.querySelectorAll('#navigation-list .nav-item-row');
-            const navItems = Array.from(navRows).map((row, index) => {
-                const linkText = row.querySelector('.nav-text')?.value.trim();
-                return {
-                    id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
-                    link_text: linkText,
-                    link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
-                    display_order: index + 1
-                };
-            });
-
-            const { data: existingNavs } = await db.from('navigation').select('id');
-            const existingIds = existingNavs.map(n => n.id);
-            const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
-            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
-
-            showLoading(true);
-            if (idsToDelete.length > 0) {
-                await db.from('navigation').delete().in('id', idsToDelete);
-            }
-            const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
-            const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
-            const { error } = await db.from('navigation').upsert(finalItems);
-            showLoading(false);
-
-            if (error) alert('导航栏保存失败: ' + error.message);
-            else {
-                alert('导航栏已更新！');
-                await loadNavigation();
-                await loadProducts();
-            }
-            button.disabled = false; button.textContent = '保存全部变更';
+            if (data) data.forEach(item => socialList.innerHTML += `<div class="grid grid-cols-4 gap-2"><input type="text" data-id="${item.id}" value="${item.platform_name}" class="input social-platform col-span-1" placeholder="平台名称"><input type="text" data-id="${item.id}" value="${item.link_url}" class="input social-url col-span-3" placeholder="主页链接"></div>`);
+            const saveBtn = document.getElementById('save-social-btn');
+            if (saveBtn) saveBtn.addEventListener('click', saveSocialLinks);
         }
 
         async function loadProducts() {
@@ -484,13 +283,11 @@
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
                 const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
-                const categorySelect = `<select multiple class="category-select" data-id="${p.id}">` +
-                    categories.map(cat => `<option value="${cat}" ${selectedCategories.includes(cat) ? 'selected' : ''}>${cat}</option>`).join('') +
-                    '</select>';
+                const dropdownTrigger = `<div class="custom-dropdown"><div class="dropdown-trigger flex items-center justify-between" data-id="${p.id}">${selectedCategories.length > 0 ? selectedCategories.join(', ') : '选择分类'} <i data-lucide="chevron-down" class="w-4 h-4"></i></div><div class="dropdown-menu" data-id="${p.id}"></div></div>`;
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
-                    <td class="p-3">${categorySelect}</td>
+                    <td class="p-3">${dropdownTrigger}</td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
                     <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
                     <td class="p-3">${p.target_url || '—'}</td>
@@ -502,20 +299,58 @@
                 productListEl.appendChild(tr);
             });
 
-            productListEl.querySelectorAll('.category-select').forEach(select => {
-                select.addEventListener('change', async (e) => {
-                    const productId = e.target.dataset.id;
-                    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value).join(',');
-                    const product = productsCache.find(p => p.id == productId);
-                    if (product) {
-                        product.category = selectedOptions;
-                        showLoading(true);
-                        const { error } = await db.from('products').update({ category: selectedOptions }).eq('id', productId);
-                        showLoading(false);
-                        if (error) alert('分类更新失败: ' + error.message);
+            // 初始化自定义下拉菜单
+            productListEl.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                const productId = trigger.dataset.id;
+                const selectedCategories = productsCache.find(p => p.id == productId)?.category?.split(',').map(cat => cat.trim()) || [];
+
+                menu.innerHTML = categories.map(cat => `
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="cat-${productId}-${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''} value="${cat}">
+                        <label for="cat-${productId}-${cat}">${cat}</label>
+                    </div>
+                `).join('');
+
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isActive = menu.classList.contains('active');
+                    document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active'));
+                    if (!isActive) menu.classList.add('active');
+                    document.addEventListener('click', closeDropdown);
+                });
+
+                menu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const checkbox = e.target.closest('input[type="checkbox"]');
+                    if (checkbox) {
+                        const selected = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
+                        const product = productsCache.find(p => p.id == productId);
+                        if (product) {
+                            product.category = selected;
+                            trigger.firstChild.textContent = selected.length > 0 ? selected : '选择分类';
+                            showLoading(true);
+                            db.from('products').update({ category: selected }).eq('id', productId).then(() => {
+                                showLoading(false);
+                            }).catch(err => {
+                                alert('分类更新失败: ' + err.message);
+                                showLoading(false);
+                            });
+                        }
                     }
                 });
             });
+
+            function closeDropdown(e) {
+                const dropdowns = productListEl.querySelectorAll('.dropdown-menu.active');
+                dropdowns.forEach(menu => {
+                    if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
+                        menu.classList.remove('active');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            }
 
             lucide.createIcons();
             if (sortableInstance) sortableInstance.destroy();
@@ -525,35 +360,44 @@
                 handle: '.cursor-move',
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
+                    
                     const updates = reorderedIds.map((id, index) => {
                         const product = productsCache.find(p => p.id === id);
-                        return { ...product, display_order: index };
+                        return { 
+                           ...product,
+                           display_order: index 
+                        };
                     });
+                    
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
                     showLoading(false);
+
                     if (error) {
                         alert('排序失败: ' + error.message);
-                        await loadProducts();
+                        await loadProducts(); // Revert UI if error
                     } else {
                         reorderedIds.forEach((id, index) => {
-                            const product = productsCache.find(p => p.id === id);
-                            if (product) product.display_order = index;
+                           const product = productsCache.find(p => p.id === id);
+                           if(product) product.display_order = index;
                         });
-                        productsCache.sort((a, b) => a.display_order - b.display_order);
+                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
                 }
             });
             setupProductEventListeners();
         }
 
+        // --- 事件监听设置 ---
         function setupProductEventListeners() {
             const productPanel = document.getElementById('main-content');
             if (!productPanel) return;
+            
             const addBtn = productPanel.querySelector('#add-product-form-row-btn');
             if (addBtn) addBtn.addEventListener('click', addProductFormRow);
             const submitBtn = productPanel.querySelector('#submit-all-new-products-btn');
             if (submitBtn) submitBtn.addEventListener('click', submitAllNewProducts);
+            
             const productList = productPanel.querySelector('#product-list');
             if (productList) productList.addEventListener('click', handleProductListClicks);
             const selectAll = productPanel.querySelector('#select-all-products');
@@ -562,16 +406,19 @@
             if (bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', bulkDelete);
             const bulkToggleBtn = productPanel.querySelector('#bulk-toggle-discount-btn');
             if (bulkToggleBtn) bulkToggleBtn.addEventListener('click', bulkToggleDiscount);
+
+            // Initial add form row
             if (productPanel.querySelector('#add-product-forms-container').children.length === 0) {
                 addProductFormRow();
             }
         }
-
+        
         function handleProductListClicks(e) {
             const target = e.target;
             const button = target.closest('button');
             const row = target.closest('tr');
             const id = row?.dataset.id || button?.dataset.id || target.dataset.id;
+            
             if (target.classList.contains('product-checkbox')) {
                 updateBulkActionBar();
             } else if (target.classList.contains('discount-toggle')) {
@@ -581,6 +428,7 @@
             }
         }
 
+        // --- 数据保存与操作 ---
         async function saveSettings(e) {
             const button = e.target;
             if (!button) return;
@@ -609,19 +457,20 @@
                     id: isNaN(parseInt(row.dataset.id)) ? undefined : parseInt(row.dataset.id),
                     link_text: linkText,
                     link_url: linkText.toLowerCase() === 'home' ? BASE_URL : `${BASE_URL}${linkText.toLowerCase()}`,
-                    display_order: index + 1
+                    display_order: index + 1 // Home 固定在 0，动态项从 1 开始
                 };
             });
 
             const { data: existingNavs } = await db.from('navigation').select('id');
             const existingIds = existingNavs.map(n => n.id);
             const currentIds = navItems.map(n => n.id).filter(id => id !== undefined);
-            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id) && id !== 1); // 假设 Home ID 为 1
 
             showLoading(true);
             if (idsToDelete.length > 0) {
                 await db.from('navigation').delete().in('id', idsToDelete);
             }
+            // 确保 Home 项始终存在
             const homeItem = { id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 };
             const finalItems = [homeItem, ...navItems.filter(item => item.link_text.toLowerCase() !== 'home')];
             const { error } = await db.from('navigation').upsert(finalItems);
@@ -631,9 +480,30 @@
             else {
                 alert('导航栏已更新！');
                 await loadNavigation();
-                await loadProducts();
+                await loadProducts(); // 更新产品分类选项
             }
             button.disabled = false; button.textContent = '保存全部变更';
+        }
+
+        async function saveSocialLinks(e) {
+            const button = e.target;
+            if (!button) return;
+            button.disabled = true; button.textContent = '保存中...';
+            const platformInputs = document.querySelectorAll('#social-links-list .social-platform');
+            const urlInputs = document.querySelectorAll('#social-links-list .social-url');
+            const updates = [];
+            for (let i = 0; i < platformInputs.length; i++) {
+                updates.push({
+                    id: platformInputs[i].dataset.id,
+                    platform_name: platformInputs[i].value,
+                    link_url: urlInputs[i].value,
+                    display_order: i + 1,
+                });
+            }
+            const { error } = await db.from('social_links').upsert(updates);
+            if (error) alert('社交链接保存失败: ' + error.message);
+            else alert('社交链接已更新！');
+            button.disabled = false; button.textContent = '保存社媒链接变更';
         }
 
         async function uploadImage(file) {
@@ -1074,49 +944,6 @@
                 deleteImageBtn.classList.add('hidden');
                 imagePlaceholder.classList.remove('hidden');
                 imageInput.value = '';
-            });
-        }
-
-        // 添加社交媒体条目
-        const addSocialBtn = document.getElementById('add-social-btn');
-        if (addSocialBtn) {
-            addSocialBtn.addEventListener('click', () => {
-                const socialList = document.getElementById('social-links-list');
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-2 social-item-row';
-                div.dataset.id = `new_${Date.now()}`;
-                div.innerHTML = `
-                    <input type="text" class="input social-platform w-1/4" placeholder="平台名称">
-                    <input type="text" class="input social-url w-1/4" placeholder="主页链接">
-                    <div class="w-1/4">
-                        <input type="file" class="input social-icon-input" accept="image/*" style="display:none;">
-                        <img src="" alt="Icon" class="w-10 h-10 object-cover rounded" onclick="this.previousElementSibling.click();">
-                        <button class="delete-social-btn p-2 ml-2 bg-red-500 text-white rounded-full hover:bg-red-700" data-id="${div.dataset.id}"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
-                    </div>
-                    <input type="color" class="input w-1/6 social-color-input" value="#333333">
-                `;
-                div.querySelector('.delete-social-btn').addEventListener('click', () => div.remove());
-                div.querySelector('.social-icon-input').addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        showLoading(true);
-                        const fileName = `social-icons/${Date.now()}-${file.name}`;
-                        const { data: uploadData, error: uploadError } = await db.storage.from('social-icons').upload(fileName, file);
-                        if (uploadError) {
-                            console.error('Upload error:', uploadError);
-                            showLoading(false);
-                            return;
-                        }
-                        const { data: { publicUrl } } = db.storage.from('social-icons').getPublicUrl(fileName);
-                        div.querySelector('img').src = publicUrl;
-                        showLoading(false);
-                    }
-                });
-                socialList.appendChild(div);
-                new Sortable(socialList, {
-                    animation: 150,
-                    onEnd: updateSocialOrder
-                });
             });
         }
 
