@@ -31,12 +31,16 @@
         .product-card:hover img { transform: scale(1.05); }
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 1rem; background-color: #e5e7eb; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .social-icon-bubble { transition: transform 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        .social-icon-bubble { transition: transform 0.3s ease; }
         .social-icon-bubble:hover { transform: scale(1.1); }
         .fade-in-up { opacity: 0; transform: translateY(20px); transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .fade-in-up.visible { opacity: 1; transform: translateY(0); }
         .discount-badge { position: absolute; top: 1rem; right: 1rem; background-color: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .category-page { padding-top: 2rem; }
+        /* 自定义社交图标样式 */
+        .telegram-icon { fill: #0088cc; width: 20px; height: 20px; }
+        .reddit-icon { fill: #ff4500; width: 20px; height: 20px; }
+        .discord-icon { fill: #7289da; width: 20px; height: 20px; }
     </style>
 </head>
 <body class="text-neutral-800 antialiased">
@@ -151,12 +155,12 @@
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer) {
                     socialContainer.innerHTML = '';
-                    if (socialLinks && socialLinks.length > 0) {
+                    if (socialLinks) {
                         socialLinks.forEach(link => {
-                            const iconUrl = link.icon_url || ''; // 使用上传的图标 URL
+                            const iconSvgName = link.icon_svg_name || 'link'; // 默认使用 link 图标
                             socialContainer.innerHTML += `
-                                <a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}">
-                                    ${iconUrl ? `<img src="${iconUrl}" alt="${link.platform_name} Icon" class="w-5 h-5 object-cover rounded">` : `<i data-lucide="link" class="w-5 h-5 text-white"></i>`}
+                                <a href="${formatUrl(link.link_url)}" target="_blank" class="social-icon-bubble w-11 h-11 flex items-center justify-center rounded-full shadow-md" style="background-color: ${link.icon_color || '#333'};" title="${link.platform_name}">
+                                    <i data-lucide="${iconSvgName}" class="w-5 h-5 text-white"></i>
                                 </a>`;
                         });
                     } else {
@@ -173,22 +177,22 @@
                     categoryProductList.innerHTML = '';
                     const path = window.location.pathname.replace(/^\//, '').toLowerCase() || 'index.html';
                     console.log('Current path:', path);
-                    if (products && products.length > 0) {
+                    if (products) {
                         products.forEach(p => {
                             const now = new Date();
                             const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
                             const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
 
-                            let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price || 0}</p>`;
+                            let priceHTML = `<p class="font-bold text-lg text-neutral-900 mt-1">¥${p.price}</p>`;
                             if (showDiscount) {
-                                priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price || 0} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price || 0}</span></p>`;
+                                priceHTML = `<p class="font-bold text-lg text-red-600 mt-1">¥${p.discount_price} <span class="text-sm text-gray-400 font-normal line-through ml-1">¥${p.price}</span></p>`;
                             }
 
                             const productCard = `
                                 <a href="${formatUrl(p.target_url)}" target="_blank" class="group block rounded-xl product-card relative">
-                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url || 'https://via.placeholder.com/150'}" alt="${p.name || 'Unnamed Product'}" class="w-full h-full object-cover"></div>
+                                    <div class="img-wrapper rounded-t-xl"><img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover"></div>
                                     <div class="p-4">
-                                        <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name || 'Unnamed Product'}</h3>
+                                        <h3 class="font-semibold text-base text-neutral-800 truncate group-hover:text-blue-600 transition-colors">${p.name}</h3>
                                         ${priceHTML}
                                     </div>
                                     ${showDiscount ? '<div class="discount-badge">折扣</div>' : ''}
