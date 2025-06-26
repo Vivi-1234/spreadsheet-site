@@ -40,6 +40,10 @@
         .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .toggle-slider { background-color: #2563eb; }
         input:checked + .toggle-slider:before { transform: translateX(16px); }
+        /* 自定义样式以适应一排布局 */
+        .modal-row { display: flex; align-items: center; gap: 1rem; flex-wrap: nowrap; overflow-x: auto; }
+        .modal-row .flex-1 { flex: 1 0 auto; min-width: 0; }
+        .discount-section { display: flex; align-items: center; gap: 1rem; }
     </style>
 </head>
 <body>
@@ -52,7 +56,7 @@
     <div id="admin-panel" class="hidden"><div class="flex h-screen bg-gray-100"><aside class="w-64 bg-white p-4 flex flex-col shadow-lg border-r border-gray-200"><h1 class="text-2xl font-bold text-gray-800 px-2 pb-4 border-b">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"><button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button></nav><div class="pt-4 border-t"><button id="logout-btn" class="w-full text-sm font-medium text-red-600 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
 
     <!-- 弹窗: 编辑产品 -->
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-blue-50 border border-blue-200"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-gray-50 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*"><div class="modal-row"><div class="flex-1"><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div><div class="flex-1"><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div class="flex-1"><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div><div class="flex-1"><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="flex-1"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1"></div></div><div class="discount-section"><div class="flex items-center"><input type="checkbox" id="edit-product-discount-active" class="h-4 w-4 rounded"><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right flex-1"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold"></span></p></div></div></div><div class="p-6 bg-gray-50 rounded-b-xl text-right"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
     
     <!-- 加载遮罩 -->
     <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
@@ -94,10 +98,10 @@
             settings: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">网站全局设置</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md space-y-4 max-w-2xl">
-                    <div><label for="site-title" class="label">主标题</label><input type="text" id="site-title" class="input mt-1"></div>
-                    <div><label for="site-subtitle" class="label">副标题</label><textarea id="site-subtitle" class="input mt-1" rows="2"></textarea></div>
-                    <div><label for="video-url" class="label">教程视频链接</label><input type="text" id="video-url" class="input mt-1"><p class="text-xs text-gray-500 mt-1">提示: 请使用 YouTube 的 "embed" 格式链接，例如 https://www.youtube.com/embed/VIDEO_ID</p></div>
-                    <div><label for="product-section-title" class="label">产品区标题</label><input type="text" id="product-section-title" class="input mt-1"></div>
+                    <div><label for="siteTitle" class="label">主标题</label><input type="text" id="siteTitle" class="input mt-1"></div>
+                    <div><label for="siteSubtitle" class="label">副标题</label><textarea id="siteSubtitle" class="input mt-1" rows="2"></textarea></div>
+                    <div><label for="videoUrl" class="label">教程视频链接</label><input type="text" id="videoUrl" class="input mt-1"><p class="text-xs text-gray-500 mt-1">提示: 请使用 YouTube 的 "embed" 格式链接，例如 https://www.youtube.com/embed/VIDEO_ID</p></div>
+                    <div><label for="productSectionTitle" class="label">产品区标题</label><input type="text" id="productSectionTitle" class="input mt-1"></div>
                     <div class="text-right"><button id="save-settings-btn" class="btn btn-primary">保存设置</button></div>
                 </div>`,
             products: `
@@ -120,7 +124,7 @@
                              <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                          </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理</h2>
@@ -165,10 +169,10 @@
         async function loadSettings() {
             const { data } = await db.from('settings').select('*').limit(1).single();
             if (data) {
-                document.getElementById('site-title').value = data.site_title;
-                document.getElementById('site-subtitle').value = data.site_subtitle;
-                document.getElementById('video-url').value = data.video_url;
-                document.getElementById('product-section-title').value = data.product_section_title;
+                document.getElementById('siteTitle').value = data.site_title;
+                document.getElementById('siteSubtitle').value = data.site_subtitle;
+                document.getElementById('videoUrl').value = data.video_url;
+                document.getElementById('productSectionTitle').value = data.product_section_title;
             }
             document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
         }
@@ -225,6 +229,7 @@
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
                     <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
+                    <td class="p-3">${p.target_url || '—'}</td>
                     <td class="p-3">${discountFactorText}</td>
                     <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
                     <td class="p-3">${expiryDate}</td>
@@ -307,10 +312,10 @@
             e.target.disabled = true; e.target.textContent = '保存中...';
             const updates = {
                 id: 1,
-                site_title: document.getElementById('site-title').value,
-                site_subtitle: document.getElementById('site-subtitle').value,
-                video_url: document.getElementById('video-url').value,
-                product_section_title: document.getElementById('product-section-title').value,
+                site_title: document.getElementById('siteTitle').value,
+                site_subtitle: document.getElementById('siteSubtitle').value,
+                video_url: document.getElementById('videoUrl').value,
+                product_section_title: document.getElementById('productSectionTitle').value,
             };
             const { error } = await db.from('settings').upsert(updates);
             if (error) alert('保存失败: ' + error.message);
@@ -399,8 +404,8 @@
             document.getElementById('edit-product-id').value = product.id;
             document.getElementById('edit-product-name').value = product.name;
             document.getElementById('edit-product-price').value = product.price;
-            document.getElementById('edit-product-target-url').value = product.target_url;
-            document.getElementById('edit-product-discount-factor').value = product.discount_factor;
+            document.getElementById('edit-product-target-url').value = product.target_url || '';
+            document.getElementById('edit-product-discount-factor').value = product.discount_factor || '';
             document.getElementById('edit-product-discount-active').checked = product.discount_is_active;
             
             const priceInput = document.getElementById('edit-product-price');
@@ -581,6 +586,7 @@
                 <input type="file" class="hidden add-image-input" accept="image/*">
                 <input type="text" placeholder="产品名称" class="input new-product-name col-span-2">
                 <input type="number" placeholder="原价" class="input new-product-price">
+                <input type="text" placeholder="跳转链接" class="input new-product-target-url">
                 <input type="number" placeholder="折扣率" class="input new-product-discount-factor" step="0.01" min="0" max="1">
                 <input type="datetime-local" class="input new-product-discount-expires col-span-2" title="折扣到期时间">
                 <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
@@ -639,7 +645,7 @@
 
                 const name = form.querySelector('.new-product-name').value;
                 const price = parseFloat(form.querySelector('.new-product-price').value);
-                const target_url = form.querySelector('.new-product-target-url').value;
+                const target_url = form.querySelector('.new-product-target-url').value || null;
                 const discount_factor = form.querySelector('.new-product-discount-factor').value || null;
                 const expires_at = form.querySelector('.new-product-discount-expires').value ? new Date(form.querySelector('.new-product-discount-expires').value).toISOString() : null;
                 
