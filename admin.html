@@ -242,8 +242,10 @@
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
                     const updates = reorderedIds.map((id, index) => {
-                        const product = productsCache.find(p => p.id === id);
-                        return { ...product, display_order: index };
+                        return { 
+                            id: id,
+                            display_order: index 
+                        };
                     });
                     
                     showLoading(true);
@@ -252,14 +254,13 @@
 
                     if (error) {
                         alert('排序失败: ' + error.message);
-                        await loadProducts(); // Revert UI if error
-                    } else {
-                        reorderedIds.forEach((id, index) => {
-                           const product = productsCache.find(p => p.id === id);
-                           if(product) product.display_order = index;
-                        });
-                        productsCache.sort((a,b) => a.display_order - b.display_order);
                     }
+                    // Refresh local cache order to match UI
+                    reorderedIds.forEach((id, index) => {
+                       const product = productsCache.find(p => p.id === id);
+                       if(product) product.display_order = index;
+                    });
+                    productsCache.sort((a,b) => a.display_order - b.display_order);
                 }
             });
             setupProductEventListeners();
@@ -506,7 +507,10 @@
         }
         
         async function toggleDiscount(id, isActive) {
-            await db.from('products').update({ discount_is_active: isActive }).eq('id', id);
+            const product = productsCache.find(p => p.id == id);
+            if (!product) return;
+            product.discount_is_active = isActive;
+            await db.from('products').upsert(product);
         }
 
         // --- 批量操作 ---
@@ -550,7 +554,8 @@
 
             if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
                 showLoading(true);
-                await db.from('products').update({ discount_is_active: turnOn }).in('id', selectedIds);
+                const updates = productsToUpdate.map(p => ({...p, discount_is_active: turnOn}));
+                await db.from('products').upsert(updates);
                 await loadProducts();
                 showLoading(false);
             }
@@ -561,17 +566,20 @@
             const container = document.getElementById('add-product-forms-container');
             const formId = `new-form-${Date.now()}`;
             const div = document.createElement('div');
-            div.className = 'space-y-3 bg-gray-50 p-4 rounded-lg border relative add-form-row';
+            div.className = 'grid grid-cols-1 md:grid-cols-5 gap-3 bg-gray-50 p-4 rounded-lg border relative add-form-row items-center';
             div.id = formId;
 
             div.innerHTML = `
-                <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
-                <div class="relative p-4 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300 add-image-box"><p>点击选择、拖拽或粘贴图片</p><img src="" class="hidden max-h-24 mx-auto rounded mt-2 add-preview-image"></div>
+                <div class="relative p-2 rounded-lg bg-gray-200 text-center cursor-pointer text-gray-500 border-2 border-dashed border-gray-300 add-image-box h-full flex items-center justify-center">
+                    <p class="text-xs">添加图片</p>
+                    <img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-md add-preview-image">
+                </div>
                 <input type="file" class="hidden add-image-input" accept="image/*">
                 <input type="text" placeholder="产品名称" class="input new-product-name">
-                <input type="text" placeholder="跳转链接 (Mulebuy)" class="input new-product-target-url">
+                <input type="text" placeholder="跳转链接" class="input new-product-target-url">
                 <input type="number" placeholder="原价" class="input new-product-price">
-                <input type="number" placeholder="折扣率 (可选, 如 0.7)" class="input new-product-discount-factor" step="0.01" min="0" max="1">
+                <input type="number" placeholder="折扣率" class="input new-product-discount-factor" step="0.01" min="0" max="1">
+                <button class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
             lucide.createIcons();
@@ -588,7 +596,7 @@
                     previewImage.classList.remove('hidden');
                 }
             });
-             imageBox.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-gray-300'); });
+            imageBox.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-gray-300'); });
             imageBox.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('bg-gray-300'));
             imageBox.addEventListener('drop', (e) => {
                 e.preventDefault(); e.currentTarget.classList.remove('bg-gray-300');
@@ -655,7 +663,7 @@
                 alert(`成功添加 ${productsToUpload.length} 个新产品！`);
                 document.getElementById('add-product-forms-container').innerHTML = '';
                 newProductFiles.clear();
-                addProductFormRow(); // Add a fresh empty form
+                addProductFormRow();
                 await loadProducts();
             }
         }
