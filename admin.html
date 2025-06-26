@@ -53,10 +53,10 @@
         .nav-item-row .nav-url { pointer-events: none; background-color: #f3f4f6; }
         .home-nav-item { background-color: #e5e7eb; pointer-events: none; }
         .custom-dropdown { position: relative; width: 100%; }
-        .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; }
+        .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
         .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; }
         .dropdown-menu.active { display: block; }
-        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; }
+        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; }
         .dropdown-item:hover { background-color: #f3f4f6; }
         .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
     </style>
@@ -283,7 +283,7 @@
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
                 const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
-                const dropdownTrigger = `<div class="custom-dropdown"><div class="dropdown-trigger" data-id="${p.id}">${selectedCategories.length > 0 ? selectedCategories.join(', ') : '选择分类'}</div><div class="dropdown-menu" data-id="${p.id}"></div></div>`;
+                const dropdownTrigger = `<div class="custom-dropdown"><div class="dropdown-trigger flex items-center justify-between" data-id="${p.id}">${selectedCategories.length > 0 ? selectedCategories.join(', ') : '选择分类'} <i data-lucide="chevron-down" class="w-4 h-4"></i></div><div class="dropdown-menu" data-id="${p.id}"></div></div>`;
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
@@ -315,7 +315,9 @@
 
                 trigger.addEventListener('click', (e) => {
                     e.preventDefault();
-                    menu.classList.toggle('active');
+                    const isActive = menu.classList.contains('active');
+                    document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active'));
+                    if (!isActive) menu.classList.add('active');
                     document.addEventListener('click', closeDropdown);
                 });
 
@@ -327,7 +329,7 @@
                         const product = productsCache.find(p => p.id == productId);
                         if (product) {
                             product.category = selected;
-                            trigger.textContent = selected.length > 0 ? selected : '选择分类';
+                            trigger.firstChild.textContent = selected.length > 0 ? selected : '选择分类';
                             showLoading(true);
                             db.from('products').update({ category: selected }).eq('id', productId).then(() => {
                                 showLoading(false);
@@ -343,7 +345,7 @@
             function closeDropdown(e) {
                 const dropdowns = productListEl.querySelectorAll('.dropdown-menu.active');
                 dropdowns.forEach(menu => {
-                    if (!menu.contains(e.target)) {
+                    if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
                         menu.classList.remove('active');
                         document.removeEventListener('click', closeDropdown);
                     }
@@ -732,7 +734,6 @@
                 <input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;">
                 <input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;">
                 <input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;">
-                <div class="custom-dropdown flex-1" style="max-width: 100px;"><div class="dropdown-trigger" data-id="${formId}">选择分类</div><div class="dropdown-menu" data-id="${formId}"></div></div>
                 <button class="p-1 bg-red-500 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>
             `;
             container.appendChild(div);
@@ -741,11 +742,8 @@
             const imageBox = div.querySelector('.add-image-box');
             const imageInput = div.querySelector('.add-image-input');
             const previewImage = div.querySelector('.add-preview-image');
-            const dropdown = div.querySelector('.custom-dropdown');
-            const trigger = dropdown.querySelector('.dropdown-trigger');
-            const menu = dropdown.querySelector('.dropdown-menu');
-
-            if (imageBox && imageInput && previewImage && trigger && menu) {
+            
+            if (imageBox && imageInput && previewImage) {
                 imageBox.addEventListener('click', () => imageInput.click());
                 imageInput.addEventListener('change', (e) => {
                     if (e.target.files && e.target.files[0]) {
@@ -769,38 +767,7 @@
                     newProductFiles.delete(formId);
                     div.remove();
                 });
-
-                // 动态填充分类选项
-                loadCategories().then(categories => {
-                    menu.innerHTML = categories.map(cat => `
-                        <div class="dropdown-item">
-                            <input type="checkbox" id="cat-${formId}-${cat}" value="${cat}">
-                            <label for="cat-${formId}-${cat}">${cat}</label>
-                        </div>
-                    `).join('');
-
-                    trigger.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        menu.classList.toggle('active');
-                        document.addEventListener('click', closeDropdown);
-                    });
-
-                    menu.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const checkbox = e.target.closest('input[type="checkbox"]');
-                        if (checkbox) {
-                            const selected = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
-                            trigger.textContent = selected.length > 0 ? selected : '选择分类';
-                        }
-                    });
-                });
             }
-        }
-
-        async function loadCategories() {
-            const { data, error } = await db.from('navigation').select('link_text').order('display_order');
-            if (error) { console.error("Error fetching categories:", error); return []; }
-            return data.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text);
         }
         
         async function submitAllNewProducts() {
@@ -829,9 +796,6 @@
                 const target_url = form.querySelector('.new-product-target-url')?.value || null;
                 const discount_factor = form.querySelector('.new-product-discount-factor')?.value || null;
                 const expires_at = form.querySelector('.new-product-discount-expires')?.value ? new Date(form.querySelector('.new-product-discount-expires').value).toISOString() : null;
-                const dropdown = form.querySelector('.custom-dropdown');
-                const menu = dropdown.querySelector('.dropdown-menu');
-                const category = Array.from(menu.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
                 
                 if (!name || isNaN(price) || !target_url) {
                     alert(`请为所有产品填写必填项 (名称, 原价, 跳转链接)。`);
@@ -845,7 +809,7 @@
                 }
 
                 productsToUpload.push({
-                    name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category
+                    name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: ''
                 });
             }
             
