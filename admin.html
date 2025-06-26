@@ -133,7 +133,7 @@
                              <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                          </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">原价</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理</h2>
@@ -231,12 +231,13 @@
                 const tr = document.createElement('tr');
                 tr.className = 'bg-white border-b product-row';
                 tr.dataset.id = p.id;
-                const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN') : '—';
+                const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
                 tr.innerHTML = `
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
+                    <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
                     <td class="p-3">${discountFactorText}</td>
                     <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
                     <td class="p-3">${expiryDate}</td>
@@ -253,7 +254,10 @@
                 onEnd: async (evt) => {
                     const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
                     
-                    const updates = reorderedIds.map((id, index) => ({ id: id, display_order: index }));
+                    const updates = reorderedIds.map((id, index) => {
+                        const product = productsCache.find(p => p.id === id);
+                        return { ...product, display_order: index };
+                    });
                     
                     showLoading(true);
                     const { error } = await db.from('products').upsert(updates);
@@ -262,7 +266,7 @@
                     if (error) {
                         alert('排序失败: ' + error.message);
                     }
-                    // Refresh local cache order after successful db update
+                    // Refresh local cache order to match UI
                     reorderedIds.forEach((id, index) => {
                        const product = productsCache.find(p => p.id === id);
                        if(product) product.display_order = index;
@@ -458,7 +462,6 @@
 
             const expiresInput = document.getElementById('edit-product-discount-expires');
             if (product.discount_expires_at) {
-                // Format to YYYY-MM-DDTHH:MM for datetime-local input
                 const d = new Date(product.discount_expires_at);
                 d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                 expiresInput.value = d.toISOString().slice(0,16);
