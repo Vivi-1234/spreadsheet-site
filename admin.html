@@ -1019,7 +1019,12 @@
         const siteVisits = data.filter(e => e.event_type === 'site_visit');
         const productClicks = data.filter(e => e.event_type === 'product_click');
         
+        // --- 核心修复：创建一个干净的、已过滤的访问数据列表 ---
+        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
+
+        // 1. 使用过滤后的数据更新“网站总访问”卡片
         document.getElementById('total-visits').textContent = validVisits.length;
+        
         document.getElementById('total-product-clicks').textContent = productClicks.length;
         document.getElementById('total-products').textContent = productCount || 0;
         document.getElementById('active-discounts').textContent = discountCount || 0;
@@ -1033,15 +1038,12 @@
             dateLabels.push(d.toLocaleDateString('en-CA'));
         }
         
-        renderChart('visits-chart', 'line', dateLabels, processDataForChart(siteVisits, dateLabels), '网站访问量');
+        // 2. 使用过滤后的数据来生成“网站访问趋势”折线图
+        renderChart('visits-chart', 'line', dateLabels, processDataForChart(validVisits, dateLabels), '网站访问量');
         renderChart('product-clicks-chart', 'line', dateLabels, processDataForChart(productClicks, dateLabels), '产品点击量');
         
-        // --- 修改开始 ---
-        // 1. 筛选掉错误数据，只保留有效的访问记录
-        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
+        // 3. 使用过滤后的数据来生成“访问来源分布”饼图
         const totalValidVisits = validVisits.length;
-
-        // 2. 基于有效数据，统计每个国家的访问次数
         const countryCounts = validVisits.reduce((acc, curr) => {
             const country = curr.country_code || 'Unknown';
             acc[country] = (acc[country] || 0) + 1;
@@ -1049,15 +1051,12 @@
         }, {});
         
         const countryData = Object.values(countryCounts);
-
-        // 3. 创建新的标签，包含国家代码和百分比
         const countryLabels = Object.keys(countryCounts).map(key => {
             const percentage = totalValidVisits > 0 ? ((countryCounts[key] / totalValidVisits) * 100).toFixed(1) : 0;
             return `${key} (${percentage}%)`;
         });
         
         renderChart('country-chart', 'pie', countryLabels, countryData, '访问来源');
-        // --- 修改结束 ---
     }
     
     function processDataForChart(events, labels) {
