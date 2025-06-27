@@ -528,24 +528,33 @@
         row.querySelector('.delete-social-btn').addEventListener('click', () => { newSocialFiles.delete(rowId); row.remove(); });
     }
     
-    function addProductFormRow() {
-        const container = document.getElementById('add-product-forms-container');
-        if (!container) return;
-        const formId = `new-form-${Date.now()}`;
-        const div = document.createElement('div');
-        div.className = 'add-form-row';
-        div.id = formId;
-        div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" placeholder="折扣到期时间" class="input flex-1 flatpickr-input" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
-        container.appendChild(div);
-        lucide.createIcons();
-        initFlatpickr(div.querySelector('.flatpickr-input'));
-        const imageBox = div.querySelector('.add-image-box'), imageInput = div.querySelector('.add-image-input'), previewImage = div.querySelector('.add-preview-image');
-        imageBox.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files?.[0]) { newProductFiles.set(formId, e.target.files[0]); previewImage.src = URL.createObjectURL(e.target.files[0]); previewImage.classList.remove('hidden'); }
-        });
-        div.querySelector('.remove-form-row-btn').addEventListener('click', () => { newProductFiles.delete(formId); div.remove(); });
-    }
+   function addProductFormRow() {
+    const container = document.getElementById('add-product-forms-container');
+    if (!container) return;
+    const formId = `new-form-${Date.now()}`;
+    const div = document.createElement('div');
+    div.className = 'add-form-row';
+    div.id = formId;
+    div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" class="input flex-1 flatpickr-input" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
+    container.appendChild(div);
+    lucide.createIcons();
+    initFlatpickr(div.querySelector('.flatpickr-input'));
+    const imageBox = div.querySelector('.add-image-box'), 
+          imageInput = div.querySelector('.add-image-input'), 
+          previewImage = div.querySelector('.add-preview-image');
+    imageBox.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (e) => {
+        if (e.target.files?.[0]) { 
+            newProductFiles.set(formId, e.target.files[0]); 
+            previewImage.src = URL.createObjectURL(e.target.files[0]); 
+            previewImage.classList.remove('hidden'); 
+        }
+    });
+    div.querySelector('.remove-form-row-btn').addEventListener('click', () => { 
+        newProductFiles.delete(formId); 
+        div.remove(); 
+    });
+}
 
     // --- Data Saving Functions ---
     async function saveSettings(e) { 
@@ -710,29 +719,42 @@
     }
 
     async function submitAllNewProducts() {
-        const forms = document.querySelectorAll('.add-form-row');
-        if (forms.length === 0) return showAlert('没有要添加的产品。');
-        showLoading(true);
-        const { count } = await db.from('products').select('*', { count: 'exact', head: true });
-        let currentOrder = count || 0;
-        const productsToUpload = [];
-        for (const form of forms) {
-            const imageFile = newProductFiles.get(form.id);
-            const imageUrl = imageFile ? await uploadImage(imageFile) : null;
-            const name = form.querySelector('input[placeholder="产品名称"]').value;
-            const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
-            const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
-            const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
-            const expires_at = form.querySelector('input[type="datetime-local"]').value ? new Date(form.querySelector('input[type="datetime-local"]').value).toISOString() : null;
-            if (!name || isNaN(price) || !target_url) { showLoading(false); return showAlert(`请填写必填项 (名称, 原价, 跳转链接)。`, true); }
-            const discountPrice = (discount_factor && !isNaN(price)) ? (price * parseFloat(discount_factor)).toFixed(2) : null;
-            productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: '' });
+    const forms = document.querySelectorAll('.add-form-row');
+    if (forms.length === 0) return showAlert('没有要添加的产品。');
+    showLoading(true);
+    const { count } = await db.from('products').select('*', { count: 'exact', head: true });
+    let currentOrder = count || 0;
+    const productsToUpload = [];
+    for (const form of forms) {
+        const imageFile = newProductFiles.get(form.id);
+        const imageUrl = imageFile ? await uploadImage(imageFile) : null;
+        
+        // 使用与原始代码一致的选择器，确保能找到元素
+        const name = form.querySelector('input[placeholder="产品名称"]').value;
+        const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
+        const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
+        const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
+        const expires_at = form.querySelector('input[type="datetime-local"]').value ? new Date(form.querySelector('input[type="datetime-local"]').value).toISOString() : null;
+        
+        if (!name || isNaN(price) || !target_url) { 
+            showLoading(false); 
+            return showAlert(`请填写必填项 (名称, 原价, 跳转链接)。`, true); 
         }
-        const { error } = await db.from('products').insert(productsToUpload);
-        showLoading(false);
-        if (error) showAlert("批量添加失败: " + error.message, true);
-        else { showAlert(`成功添加 ${productsToUpload.length} 个新产品！`); document.getElementById('add-product-forms-container').innerHTML = ''; newProductFiles.clear(); addProductFormRow(); await loadProducts(); }
+        
+        const discountPrice = (discount_factor && !isNaN(price)) ? (price * parseFloat(discount_factor)).toFixed(2) : null;
+        productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: '' });
     }
+    const { error } = await db.from('products').insert(productsToUpload);
+    showLoading(false);
+    if (error) showAlert("批量添加失败: " + error.message, true);
+    else { 
+        showAlert(`成功添加 ${productsToUpload.length} 个新产品！`); 
+        document.getElementById('add-product-forms-container').innerHTML = ''; 
+        newProductFiles.clear(); 
+        addProductFormRow(); 
+        await loadProducts(); 
+    }
+}
     
     async function saveProductChanges(e) {
         showLoading(true);
