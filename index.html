@@ -71,7 +71,9 @@
     <header>
         <div class="container mx-auto px-12 py-6 flex justify-between items-center">
             <a href="/" class="text-2xl font-bold tracking-tighter text-[#00FF00] text-shadow">Matrix SpreadSheet</a>
-            <nav id="navigation-container" class="hidden md:flex items-center space-x-8"></nav>
+            <nav id="navigation-container" class="hidden md:flex items-center space-x-8">
+                 <!-- Navigation will be dynamically inserted here -->
+            </nav>
             <button class="md:hidden text-[#00FF00]"><i data-lucide="menu" class="w-7 h-7"></i></button>
         </div>
     </header>
@@ -238,16 +240,22 @@
                     navContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
 
-                // Render social icons - RESTORED to original logic
+                // Render social icons - RESTORED and FIXED
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer && socialLinks) {
-                    socialContainer.innerHTML = ''; // Clear existing
+                    socialContainer.innerHTML = ''; 
                     socialLinks.forEach(link => {
                         const iconElement = link.icon_url 
                             ? `<img src="${link.icon_url}" alt="${link.platform_name} logo" class="social-icon-image">` 
                             : `<i data-lucide="${link.icon_svg_name || 'link'}" style="color: ${link.icon_color || '#00FF00'};"></i>`;
+                        
+                        let finalUrl = link.link_url || '#';
+                        if (finalUrl !== '#' && !finalUrl.startsWith('http')) {
+                            finalUrl = `https://${finalUrl}`;
+                        }
+
                         socialContainer.innerHTML += `
-                            <a href="${appendRefParam(link.link_url)}" target="_blank" class="social-icon-bubble">
+                            <a href="${appendRefParam(finalUrl)}" target="_blank" class="social-icon-bubble">
                                 ${iconElement}
                             </a>`;
                     });
