@@ -43,7 +43,6 @@
         .product-card img { transition: transform 0.4s ease; width: 100%; height: 100%; object-fit: cover; }
         .product-card:hover img { transform: scale(1.05); }
 
-        /* 修改点: 更酷的折扣徽章动画和样式 */
         @keyframes flicker-glow {
             0%, 100% {
                 box-shadow: 0 0 4px #00ff00, inset 0 0 2px rgba(255, 255, 255, 0.4);
@@ -94,6 +93,32 @@
         .brand-dropdown.active .brand-dropdown-menu { display: block; }
         .brand-dropdown-item { padding: 0.75rem 1rem; cursor: pointer; }
         .brand-dropdown-item:hover { background: #00FF00; color: #000; }
+        
+        /* 秒杀专区样式 */
+        .text-shadow-glow {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 12px rgba(0, 255, 0, 0.6);
+        }
+        .timer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.5rem 1rem;
+            border: 1px solid #00FF00;
+            min-width: 80px;
+        }
+        .timer-value {
+            font-size: 2.5rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+        .timer-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.25rem;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body class="text-[#00FF00] antialiased">
@@ -124,6 +149,24 @@
             </div>
             <div class="w-full">
                 <div id="video-wrapper" class="video-container shadow-[0_0_15px_#00FF00]"></div>
+            </div>
+        </section>
+
+        <!-- 秒杀专区 (默认隐藏) -->
+        <section id="flash-sale-section" class="hidden my-16 md:my-20 fade-in-up" style="transition-delay: 100ms;">
+            <div class="relative w-full p-6 border-2 border-[#00FF00] shadow-[0_0_15px_#00FF00] bg-black bg-opacity-50">
+                <div class="flex flex-col items-center justify-center text-center">
+                    <h2 class="text-4xl md:text-5xl font-bold tracking-widest text-white text-shadow-glow">FLASH SALE</h2>
+                    <p class="mt-2 text-lg text-[#00FF00]">ENDING IN</p>
+                    <div id="countdown-timer" class="flex gap-4 md:gap-8 mt-4 text-white">
+                        <div class="timer-box"><span id="days" class="timer-value">00</span><span class="timer-label">Days</span></div>
+                        <div class="timer-box"><span id="hours" class="timer-value">00</span><span class="timer-label">Hours</span></div>
+                        <div class="timer-box"><span id="minutes" class="timer-value">00</span><span class="timer-label">Minutes</span></div>
+                        <div class="timer-box"><span id="seconds" class="timer-value">00</span><span class="timer-label">Seconds</span></div>
+                    </div>
+                </div>
+                <!-- 秒杀产品列表容器 -->
+                <div id="flash-sale-product-list" class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-14"></div>
             </div>
         </section>
 
@@ -238,7 +281,7 @@
                     productContainer.innerHTML += productCard;
                 });
             } else {
-                productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No nodes available for this selection.</p>`;
+                productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products in this section.</p>`;
             }
         }
         
@@ -263,20 +306,19 @@
                     if (rateResponse.ok) {
                         const rateData = await rateResponse.json();
                         cnyToUsdRate = rateData.rates.USD;
-                        console.log('Successfully fetched USD exchange rate:', cnyToUsdRate);
-                    } else {
-                        console.error('Failed to fetch exchange rate, using default fallback rate.');
                     }
                 } catch (rateError) {
                      console.error('Error fetching exchange rate:', rateError, 'Using default fallback rate.');
                 }
 
-                const [settingsRes, navRes, socialRes, productsRes, brandsRes] = await Promise.all([
+                const [settingsRes, navRes, socialRes, productsRes, brandsRes, flashSaleSettingsRes, flashSaleProductsRes] = await Promise.all([
                     db.from('settings').select('*').limit(1).single(),
                     db.from('navigation').select('*').order('display_order'),
                     db.from('social_links').select('*').order('display_order'),
                     db.from('products').select(`*, brands (*)`).eq('is_active', true).order('display_order'),
                     db.from('brands').select('*').order('name'),
+                    db.from('flash_sale_settings').select('*').single(),
+                    db.from('flash_sale_products').select('*, products(*, brands(*))').order('display_order')
                 ]);
 
                 allProducts = productsRes.data || [];
@@ -284,6 +326,20 @@
                 const navItems = navRes.data || [];
                 const socialLinks = socialRes.data;
                 const brands = brandsRes.data || [];
+                const flashSaleSettings = flashSaleSettingsRes.data;
+                const flashSaleProducts = (flashSaleProductsRes.data || []).map(item => item.products).filter(Boolean);
+
+                // 渲染秒杀专区
+                const flashSaleSection = document.getElementById('flash-sale-section');
+                if (flashSaleSettings && flashSaleSettings.is_active && flashSaleSettings.end_time) {
+                    const endTime = new Date(flashSaleSettings.end_time);
+                    if (endTime > new Date()) {
+                        flashSaleSection.classList.remove('hidden');
+                        setupCountdown(endTime);
+                        renderProducts('flash-sale-product-list', flashSaleProducts);
+                    }
+                }
+
 
                 if (settings) {
                     document.title = settings.site_title || 'Matrix SpreadSheet';
@@ -296,7 +352,6 @@
                     }
                 }
                 
-                // 优化导航栏和品牌下拉菜单的HTML结构
                 const navContainer = document.getElementById('navigation-container');
                 if (navContainer) {
                     const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
@@ -395,7 +450,6 @@
                 const item = e.target.closest('.brand-dropdown-item');
                 if (item) {
                     currentBrandFilter = item.dataset.brand;
-                    // 更新品牌按钮的HTML时，保持新的结构
                     const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
                     brandToggle.innerHTML = `<i data-lucide="list-filter"></i> <span class="nav-link">${textContent}</span>`;
                     lucide.createIcons();
@@ -405,7 +459,40 @@
             });
         }
         
-        // --- 背景动画初始化 ---
+        // --- 背景动画和倒计时初始化 ---
+        function setupCountdown(targetDate) {
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+
+            if (!daysEl) return;
+
+            const countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    const timerContainer = document.getElementById('countdown-timer');
+                    if (timerContainer) {
+                        timerContainer.innerHTML = '<div class="text-2xl font-bold text-red-500">SALE ENDED</div>';
+                    }
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                daysEl.textContent = String(days).padStart(2, '0');
+                hoursEl.textContent = String(hours).padStart(2, '0');
+                minutesEl.textContent = String(minutes).padStart(2, '0');
+                secondsEl.textContent = String(seconds).padStart(2, '0');
+            }, 1000);
+        }
+
         function initMatrixRain() {
             const canvas = document.querySelector('.matrix-rain');
             if (!canvas) return;
