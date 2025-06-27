@@ -1038,7 +1038,7 @@
         
         // --- 修改开始 ---
         // 1. 筛选掉错误数据，只保留有效的访问记录
-        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error');
+        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
         const totalValidVisits = validVisits.length;
 
         // 2. 基于有效数据，统计每个国家的访问次数
