@@ -139,6 +139,8 @@
         let allProducts = [];
         let currentCategoryFilter = 'all';
         let currentBrandFilter = 'all';
+        // 新增: 设置一个默认的后备汇率，并在API失败时使用
+        let cnyToUsdRate = 0.14; 
 
         const urlParams = new URLSearchParams(window.location.search);
         const refId = urlParams.get('ref');
@@ -181,10 +183,17 @@
                     const now = new Date();
                     const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
                     const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
-                    let priceHTML = `<p class="font-bold text-xl text-[#00FF00] mt-2">¥${p.price}</p>`;
-                    if (showDiscount) {
-                        priceHTML = `<p class="font-bold text-xl text-red-500 mt-2">¥${p.discount_price} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">¥${p.price}</span></p>`;
+                    
+                    // 修改点: 进行价格转换
+                    const usdPrice = (p.price * cnyToUsdRate).toFixed(2);
+                    const usdDiscountPrice = p.discount_price ? (p.discount_price * cnyToUsdRate).toFixed(2) : null;
+
+                    // 修改点: 使用转换后的美元价格和 $ 符号
+                    let priceHTML = `<p class="font-bold text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
+                    if (showDiscount && usdDiscountPrice) {
+                        priceHTML = `<p class="font-bold text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
                     }
+
                     const productCard = `
                         <a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative">
                             <div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div>
@@ -217,6 +226,21 @@
         // --- 数据加载与页面构建 ---
         async function loadAndRender() {
             try {
+                // 新增: 在加载所有数据前，先获取汇率
+                try {
+                    const rateResponse = await fetch('https://api.frankfurter.app/latest?from=CNY&to=USD');
+                    if (rateResponse.ok) {
+                        const rateData = await rateResponse.json();
+                        cnyToUsdRate = rateData.rates.USD;
+                        console.log('Successfully fetched USD exchange rate:', cnyToUsdRate);
+                    } else {
+                        console.error('Failed to fetch exchange rate, using default fallback rate.');
+                    }
+                } catch (rateError) {
+                     console.error('Error fetching exchange rate:', rateError, 'Using default fallback rate.');
+                }
+
+                // 继续加载其他数据
                 const [settingsRes, navRes, socialRes, productsRes, brandsRes] = await Promise.all([
                     db.from('settings').select('*').limit(1).single(),
                     db.from('navigation').select('*').order('display_order'),
@@ -272,7 +296,6 @@
                             finalUrl = `https://${finalUrl}`;
                         }
 
-                        // 修改点：社交链接直接使用 finalUrl，不再调用 appendRefParam
                         socialContainer.innerHTML += `
                             <a href="${finalUrl}" target="_blank" class="social-icon-bubble">
                                 ${iconElement}
