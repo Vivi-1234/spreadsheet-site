@@ -535,10 +535,14 @@
     const div = document.createElement('div');
     div.className = 'add-form-row';
     div.id = formId;
-    div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" class="input flex-1 flatpickr-input" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
+    
+    // FIX: Reverted this HTML string to match the original working version EXACTLY.
+    // The "flatpickr-input" class was removed from the datetime-local input.
+    div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
+    
     container.appendChild(div);
     lucide.createIcons();
-    initFlatpickr(div.querySelector('.flatpickr-input'));
+    initFlatpickr(div.querySelector('input[type="datetime-local"]')); // Initialize flatpickr on the new element
     const imageBox = div.querySelector('.add-image-box'), 
           imageInput = div.querySelector('.add-image-input'), 
           previewImage = div.querySelector('.add-preview-image');
