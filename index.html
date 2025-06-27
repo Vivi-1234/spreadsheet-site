@@ -11,64 +11,67 @@
     <link href="https://fonts.googleapis.com/css2?family=Consolas&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body{font-family:'Consolas',monospace;background:#000;color:#00ff00;margin:0;padding:0;overflow-y:auto}.matrix-rain{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:.3;pointer-events:none}header{background:rgba(0,0,0,.9);backdrop-filter:blur(5px);border-bottom:1px solid #00ff00;position:sticky;top:0;z-index:30}.nav-link{position:relative;transition:color .3s ease;color:#00ff00;font-weight:600;text-shadow:0 0 5px #00ff00;padding-bottom:2px}.nav-link:after{content:'';position:absolute;width:0;height:2px;display:block;margin-top:4px;right:0;background:#00ff00;transition:width .3s ease}.nav-link:hover:after{width:100%;left:0}.product-card{background:rgba(51,51,51,.9);border:1px solid #00ff00;transition:all .3s ease-in-out;border-radius:.5rem}.product-card:hover{transform:translateY(-10px);box-shadow:0 15px 30px -10px #00ff00;border-color:#00cc00}.product-card .img-wrapper{overflow:hidden;aspect-ratio:4/3;border-radius:.5rem .5rem 0 0}.product-card img{transition:transform .4s ease;width:100%;height:100%;object-fit:cover}.product-card:hover img{transform:scale(1.05)}@keyframes flicker-glow{0%,100%{box-shadow:0 0 4px #00ff00,inset 0 0 2px rgba(255,255,255,.4);opacity:.9}50%{box-shadow:0 0 8px #00ff00,inset 0 0 4px rgba(255,255,255,.6);opacity:1}}.discount-badge{position:absolute;top:1rem;right:1rem;background:#00ff00;color:#000;padding:.3rem .8rem;font-weight:700;font-size:.9rem;text-shadow:none;clip-path:polygon(0 0,100% 0,100% 100%,15% 100%,0 75%);animation:flicker-glow 3s infinite ease-in-out;border:1px solid #00ff00}.video-container{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:1rem;background:rgba(51,51,51,.7);border:1px solid #00ff00}.video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:1rem}.social-icon-bubble{transition:all .3s ease;width:56px;height:56px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);border:2px solid #00ff00}.social-icon-bubble:hover{transform:scale(1.15);box-shadow:0 0 15px #00ff00}.social-icon-image{width:100%;height:100%;object-fit:cover;border-radius:50%}.fade-in-up{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.25,.46,.45,.94),transform .8s cubic-bezier(.25,.46,.45,.94)}.fade-in-up.visible{opacity:1;transform:translateY(0)}.input{width:100%;border:1px solid #00ff00;border-radius:.5rem;padding:.75rem 1rem;background:rgba(0,0,0,.8);color:#00ff00;transition:all .3s ease}.input:focus{outline:0;border-color:#00ff00;box-shadow:0 0 10px #00ff00}footer{background:rgba(0,0,0,.9);border-top:1px solid #00ff00}.filter-btn{padding:.5rem 1.25rem;border:1px solid #00ff00;color:#00ff00;background:0 0;transition:all .3s ease;border-radius:9999px;cursor:pointer}.filter-btn:hover{background:rgba(0,255,0,.1);box-shadow:0 0 8px #00ff00}.filter-btn.active{background:#00ff00;color:#000;text-shadow:none}.brand-dropdown{position:relative}.brand-dropdown-menu{display:none;position:absolute;top:100%;right:0;background:rgba(0,0,0,.95);border:1px solid #00ff00;border-radius:.5rem;z-index:40;min-width:150px;margin-top:.5rem}.brand-dropdown.active .brand-dropdown-menu{display:block}.brand-dropdown-item{padding:.75rem 1rem;cursor:pointer}.brand-dropdown-item:hover{background:#00ff00;color:#000}.text-shadow-glow{text-shadow:0 0 8px rgba(255,255,255,.8),0 0 12px rgba(0,255,0,.6)}.timer-box{display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.7);padding:.5rem 1rem;border:1px solid #00ff00;min-width:80px}.timer-value{font-size:2.5rem;line-height:1;font-weight:700}.timer-label{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;margin-top:.25rem;opacity:.7}
+        body{font-family:'Consolas',monospace;background:#000;color:#00ff00;margin:0;padding:0;overflow-y:auto}.matrix-rain{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:.3;pointer-events:none}header{background:rgba(0,0,0,.9);backdrop-filter:blur(5px);border-bottom:1px solid #00ff00;position:sticky;top:0;z-index:30}.nav-link{position:relative;transition:color .3s ease;color:#00ff00;font-weight:600;text-shadow:0 0 5px #00ff00;padding-bottom:2px}.nav-link:after{content:'';position:absolute;width:0;height:2px;display:block;margin-top:4px;right:0;background:#00ff00;transition:width .3s ease}.nav-link:hover:after{width:100%;left:0}.product-card{background:rgba(51,51,51,.9);border:1px solid #00ff00;transition:all .3s ease-in-out;border-radius:.5rem}.product-card:hover{transform:translateY(-10px);box-shadow:0 15px 30px -10px #00ff00;border-color:#00cc00}.product-card .img-wrapper{overflow:hidden;aspect-ratio:4/3;border-radius:.5rem .5rem 0 0}.product-card img{transition:transform .4s ease;width:100%;height:100%;object-fit:cover}.product-card:hover img{transform:scale(1.05)}@keyframes flicker-glow{0%,100%{box-shadow:0 0 4px #00ff00,inset 0 0 2px rgba(255,255,255,.4);opacity:.9}50%{box-shadow:0 0 8px #00ff00,inset 0 0 4px rgba(255,255,255,.6);opacity:1}}.discount-badge{position:absolute;top:1rem;right:1rem;background:#00ff00;color:#000;padding:.3rem .8rem;font-weight:700;font-size:.9rem;text-shadow:none;clip-path:polygon(0 0,100% 0,100% 100%,15% 100%,0 75%);animation:flicker-glow 3s infinite ease-in-out;border:1px solid #00ff00}.video-container{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:1rem;background:rgba(51,51,51,.7);border:1px solid #00ff00}.video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:1rem}.social-icon-bubble{transition:all .3s ease;width:40px;height:40px;md:width:56px;md:height:56px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);border:2px solid #00ff00}.social-icon-bubble:hover{transform:scale(1.15);box-shadow:0 0 15px #00ff00}.social-icon-image{width:100%;height:100%;object-fit:cover;border-radius:50%}.fade-in-up{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.25,.46,.45,.94),transform .8s cubic-bezier(.25,.46,.45,.94)}.fade-in-up.visible{opacity:1;transform:translateY(0)}.input{width:100%;border:1px solid #00ff00;border-radius:.5rem;padding:.75rem 1rem;background:rgba(0,0,0,.8);color:#00ff00;transition:all .3s ease}.input:focus{outline:0;border-color:#00ff00;box-shadow:0 0 10px #00ff00}footer{background:rgba(0,0,0,.9);border-top:1px solid #00ff00}.filter-btn{padding:.5rem 1.25rem;border:1px solid #00ff00;color:#00ff00;background:0 0;transition:all .3s ease;border-radius:9999px;cursor:pointer}.filter-btn:hover{background:rgba(0,255,0,.1);box-shadow:0 0 8px #00ff00}.filter-btn.active{background:#00ff00;color:#000;text-shadow:none}.brand-dropdown{position:relative}.brand-dropdown-menu{display:none;position:absolute;top:100%;right:0;background:rgba(0,0,0,.95);border:1px solid #00ff00;border-radius:.5rem;z-index:40;min-width:150px;margin-top:.5rem}.brand-dropdown.active .brand-dropdown-menu{display:block}.brand-dropdown-item{padding:.75rem 1rem;cursor:pointer}.brand-dropdown-item:hover{background:#00ff00;color:#000}.text-shadow-glow{text-shadow:0 0 8px rgba(255,255,255,.8),0 0 12px rgba(0,255,0,.6)}.timer-box{display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.7);padding:.25rem .5rem;border:1px solid #00ff00;min-width:60px}.timer-value{font-size:1.5rem;line-height:1.2;font-weight:700}.timer-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem;opacity:.7}
     </style>
 </head>
 <body class="text-[#00FF00] antialiased">
     <canvas class="matrix-rain"></canvas>
-    <div id="social-icons-container" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center space-y-4 mr-6 md:mr-8"></div>
+    <div id="social-icons-container" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center space-y-2 md:space-y-4 mr-2 md:mr-8"></div>
 
     <header>
-        <div class="container mx-auto px-12 py-6 flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold tracking-tighter text-[#00FF00] text-shadow">Matrix SpreadSheet</a>
-            <nav id="navigation-container" class="hidden md:flex items-center space-x-8"></nav>
-            <button class="md:hidden text-[#00FF00]"><i data-lucide="menu" class="w-7 h-7"></i></button>
+        <div class="container mx-auto px-4 md:px-12 py-4 flex justify-between items-center">
+            <a href="/" class="text-xl md:text-2xl font-bold tracking-tighter text-[#00FF00] text-shadow">Matrix SpreadSheet</a>
+            <nav id="desktop-nav" class="hidden md:flex items-center space-x-8"></nav>
+            <button id="mobile-menu-btn" class="md:hidden text-[#00FF00] p-2">
+                <i data-lucide="menu" class="w-7 h-7"></i>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-nav" class="hidden md:hidden bg-black/95 border-t border-t-[#00FF00] p-4 space-y-4">
+            <!-- Mobile nav content will be injected here by JS -->
         </div>
     </header>
 
-    <main class="container mx-auto px-12">
-        <section id="hero-section" class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-12 items-center my-16 md:my-20 fade-in-up">
+    <main class="container mx-auto px-4 md:px-12">
+        <section id="hero-section" class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-8 items-center my-12 md:my-20 fade-in-up">
             <div class="text-center lg:text-left">
-                <h1 id="site-title" class="text-5xl md:text-6xl font-extrabold text-[#00FF00] tracking-tighter leading-tight text-shadow"></h1>
-                <p id="site-subtitle" class="mt-6 text-[#00FF00] max-w-xl mx-auto lg:mx-0 text-lg opacity-80"></p>
+                <h1 id="site-title" class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-[#00FF00] tracking-tighter leading-tight text-shadow"></h1>
+                <p id="site-subtitle" class="mt-4 md:mt-6 text-base md:text-lg text-[#00FF00] max-w-xl mx-auto lg:mx-0 opacity-80"></p>
             </div>
             <div class="w-full">
                 <div id="video-wrapper" class="video-container shadow-[0_0_15px_#00FF00]"></div>
             </div>
         </section>
 
-        <section id="flash-sale-section" class="hidden my-16 md:my-20 fade-in-up" style="transition-delay: 100ms;">
-            <div class="relative w-full p-6 border-2 border-[#00FF00] shadow-[0_0_15px_#00FF00] bg-black bg-opacity-50">
+        <section id="flash-sale-section" class="hidden my-12 md:my-20 fade-in-up" style="transition-delay: 100ms;">
+            <div class="relative w-full p-4 md:p-6 border-2 border-[#00FF00] shadow-[0_0_15px_#00FF00] bg-black bg-opacity-50">
                 <div class="flex flex-col items-center justify-center text-center">
-                    <h2 class="text-4xl md:text-5xl font-bold tracking-widest text-white text-shadow-glow">FLASH SALE</h2>
-                    <p class="mt-2 text-lg text-[#00FF00]">ENDING IN</p>
-                    <div id="countdown-timer" class="flex gap-4 md:gap-8 mt-4 text-white">
-                        <div class="timer-box"><span id="days" class="timer-value">00</span><span class="timer-label">Days</span></div>
-                        <div class="timer-box"><span id="hours" class="timer-value">00</span><span class="timer-label">Hours</span></div>
-                        <div class="timer-box"><span id="minutes" class="timer-value">00</span><span class="timer-label">Minutes</span></div>
-                        <div class="timer-box"><span id="seconds" class="timer-value">00</span><span class="timer-label">Seconds</span></div>
+                    <h2 class="text-3xl md:text-5xl font-bold tracking-widest text-white text-shadow-glow">FLASH SALE</h2>
+                    <p class="mt-2 text-base md:text-lg text-[#00FF00]">ENDING IN</p>
+                    <div id="countdown-timer" class="flex gap-2 md:gap-8 mt-4 text-white">
+                         <!-- Timer boxes will be populated by JS -->
                     </div>
                 </div>
-                <div id="flash-sale-product-list" class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-14"></div>
+                <div id="flash-sale-product-list" class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-12 md:gap-y-14"></div>
             </div>
         </section>
 
         <section id="product-section" class="pt-10 md:pt-16 fade-in-up" style="transition-delay: 200ms;">
-            <div id="category-filter-container" class="flex flex-wrap justify-center gap-4 mb-12"></div>
-            <div id="product-list-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-14"></div>
+            <div id="category-filter-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 md:mb-12"></div>
+            <div id="product-list-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-12 md:gap-y-14"></div>
         </section>
         
         <section id="category-section" class="category-page hidden">
-            <h2 id="category-title" class="text-3xl font-bold text-center mb-12 tracking-tight capitalize text-[#00FF00]"></h2>
-            <div id="category-product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-14"></div>
+            <h2 id="category-title" class="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 tracking-tight capitalize text-[#00FF00]"></h2>
+            <div id="category-product-list" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-12 md:gap-y-14"></div>
         </section>
     </main>
 
-    <footer class="bg-transparent mt-28">
-        <div class="container mx-auto px-12 py-14 text-center">
-            <p class="font-bold text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
-            <p class="text-[#00FF00] opacity-60 text-base max-w-lg mx-auto">A community dedicated to discovering Mulebuy's finest goods. Join us to find your next perfect pair.</p>
-            <div class="mt-10 pt-10 border-t border-[#00FF00] opacity-40 text-sm">
+    <footer class="bg-transparent mt-20 md:mt-28">
+        <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
+            <p class="font-bold text-lg md:text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
+            <p class="text-sm md:text-base text-[#00FF00] opacity-60 max-w-lg mx-auto">A community dedicated to discovering Mulebuy's finest goods. Join us to find your next perfect pair.</p>
+            <div class="mt-8 pt-8 md:mt-10 md:pt-10 border-t border-[#00FF00] opacity-40 text-xs md:text-sm">
                 <p>© 2025 Matrix SpreadSheet. All Rights Reserved.</p>
             </div>
         </div>
@@ -131,9 +134,9 @@
                     const usdPrice = (p.price * cnyToUsdRate).toFixed(2);
                     const usdDiscountPrice = p.discount_price ? (p.discount_price * cnyToUsdRate).toFixed(2) : null;
 
-                    let priceHTML = `<p class="font-bold text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
+                    let priceHTML = `<p class="font-bold text-lg md:text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
                     if (showDiscount && usdDiscountPrice) {
-                        priceHTML = `<p class="font-bold text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
+                        priceHTML = `<p class="font-bold text-lg md:text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
                     }
 
                     let discountBadgeHTML = '';
@@ -147,8 +150,8 @@
                     const productCard = `
                         <a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative">
                             <div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div>
-                            <div class="p-6">
-                                <h3 class="font-semibold text-lg text-[#00FF00] truncate group-hover:text-[#00CC00] transition-colors">${p.name}</h3>
+                            <div class="p-3 md:p-6">
+                                <h3 class="font-semibold text-base md:text-lg text-[#00FF00] truncate group-hover:text-[#00CC00] transition-colors">${p.name}</h3>
                                 ${priceHTML}
                             </div>
                             ${discountBadgeHTML}
@@ -224,21 +227,23 @@
                     }
                 }
                 
-                const navContainer = document.getElementById('navigation-container');
-                if (navContainer) {
+                const desktopNavContainer = document.getElementById('desktop-nav');
+                const mobileNavContainer = document.getElementById('mobile-nav');
+                if (desktopNavContainer && mobileNavContainer) {
                     const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
                     const brandDropdownHTML = `
                         <div class="brand-dropdown">
-                            <button id="brand-dropdown-toggle" class="text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300">
+                            <button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300">
                                 <i data-lucide="list-filter"></i>
                                 <span class="nav-link">Brands</span>
                             </button>
-                            <div id="brand-dropdown-menu" class="brand-dropdown-menu">
+                            <div class="brand-dropdown-menu">
                                 <div class="brand-dropdown-item" data-brand="all">All Brands</div>
                                 ${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}
                             </div>
                         </div>`;
-                    navContainer.innerHTML = homeLink + brandDropdownHTML;
+                    desktopNavContainer.innerHTML = homeLink + brandDropdownHTML;
+                    mobileNavContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
 
                 const socialContainer = document.getElementById('social-icons-container');
@@ -307,30 +312,56 @@
                     button.classList.add('active');
                     currentCategoryFilter = button.dataset.category;
                     applyFiltersAndRender();
-                    // Removed logEvent for nav_click
                 }
             });
-
-            const brandDropdown = document.querySelector('.brand-dropdown');
-            const brandToggle = document.getElementById('brand-dropdown-toggle');
-            brandToggle?.addEventListener('click', (e) => { e.stopPropagation(); brandDropdown.classList.toggle('active'); });
-            document.addEventListener('click', (e) => { if (!brandDropdown?.contains(e.target)) brandDropdown?.classList.remove('active'); });
             
-            const brandMenu = document.getElementById('brand-dropdown-menu');
-            brandMenu?.addEventListener('click', (e) => {
-                const item = e.target.closest('.brand-dropdown-item');
-                if (item) {
-                    currentBrandFilter = item.dataset.brand;
-                    const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
-                    brandToggle.innerHTML = `<i data-lucide="list-filter"></i> <span class="nav-link">${textContent}</span>`;
-                    lucide.createIcons();
-                    applyFiltersAndRender();
-                    brandDropdown.classList.remove('active');
-                }
+            document.querySelectorAll('.brand-dropdown').forEach(dropdown => {
+                const trigger = dropdown.querySelector('.nav-trigger');
+                const menu = dropdown.querySelector('.brand-dropdown-menu');
+                trigger?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                });
+                menu?.addEventListener('click', (e) => {
+                    const item = e.target.closest('.brand-dropdown-item');
+                    if(item) {
+                        currentBrandFilter = item.dataset.brand;
+                        const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
+                        dropdown.querySelector('.nav-link').textContent = textContent;
+                        applyFiltersAndRender();
+                        dropdown.classList.remove('active');
+                        // also close mobile menu if open
+                        document.getElementById('mobile-nav').classList.add('hidden');
+                    }
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.brand-dropdown.active').forEach(dropdown => {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('active');
+                    }
+                });
+            });
+
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileNav.classList.toggle('hidden');
             });
         }
         
         function setupCountdown(targetDate) {
+            const timerContainer = document.getElementById('countdown-timer');
+            if(!timerContainer) return;
+
+            timerContainer.innerHTML = `
+                <div class="timer-box"><span id="days" class="timer-value">00</span><span class="timer-label">Days</span></div>
+                <div class="timer-box"><span id="hours" class="timer-value">00</span><span class="timer-label">Hours</span></div>
+                <div class="timer-box"><span id="minutes" class="timer-value">00</span><span class="timer-label">Minutes</span></div>
+                <div class="timer-box"><span id="seconds" class="timer-value">00</span><span class="timer-label">Seconds</span></div>
+            `;
+            
             const daysEl = document.getElementById('days');
             const hoursEl = document.getElementById('hours');
             const minutesEl = document.getElementById('minutes');
@@ -344,22 +375,14 @@
 
                 if (distance < 0) {
                     clearInterval(countdownInterval);
-                    const timerContainer = document.getElementById('countdown-timer');
-                    if (timerContainer) {
-                        timerContainer.innerHTML = '<div class="text-2xl font-bold text-red-500">SALE ENDED</div>';
-                    }
+                    timerContainer.innerHTML = '<div class="text-2xl font-bold text-red-500">SALE ENDED</div>';
                     return;
                 }
 
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                daysEl.textContent = String(days).padStart(2, '0');
-                hoursEl.textContent = String(hours).padStart(2, '0');
-                minutesEl.textContent = String(minutes).padStart(2, '0');
-                secondsEl.textContent = String(seconds).padStart(2, '0');
+                daysEl.textContent = String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0');
+                hoursEl.textContent = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+                minutesEl.textContent = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+                secondsEl.textContent = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
             }, 1000);
         }
 
