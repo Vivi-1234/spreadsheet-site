@@ -28,7 +28,7 @@
             background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); border-bottom: 1px solid #00FF00; position: sticky; top: 0; z-index: 30;
         }
         .nav-link {
-            position: relative; transition: color 0.3s ease; color: #00FF00; font-weight: 600; text-shadow: 0 0 5px #00FF00;
+            position: relative; transition: color 0.3s ease; color: #00FF00; font-weight: 600; text-shadow: 0 0 5px #00FF00; padding-bottom: 2px; /* Add padding for space */
         }
         .nav-link:after {
             content: ''; position: absolute; width: 0; height: 2px; display: block; margin-top: 4px; right: 0; background: #00FF00; transition: width 0.3s ease;
@@ -42,7 +42,33 @@
         .product-card .img-wrapper { overflow: hidden; aspect-ratio: 4 / 3; border-radius: 0.5rem 0.5rem 0 0; }
         .product-card img { transition: transform 0.4s ease; width: 100%; height: 100%; object-fit: cover; }
         .product-card:hover img { transform: scale(1.05); }
-        .discount-badge { position: absolute; top: 1.5rem; right: 1.5rem; background: #ef4444; color: #000000; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; text-shadow: 0 0 2px #ffffff; }
+
+        /* 修改点: 更酷的折扣徽章动画和样式 */
+        @keyframes flicker-glow {
+            0%, 100% {
+                box-shadow: 0 0 4px #00ff00, inset 0 0 2px rgba(255, 255, 255, 0.4);
+                opacity: 0.9;
+            }
+            50% {
+                box-shadow: 0 0 8px #00ff00, inset 0 0 4px rgba(255, 255, 255, 0.6);
+                opacity: 1;
+            }
+        }
+        .discount-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #00ff00; /* 亮绿色背景 */
+            color: #000000; /* 黑色文字，对比更清晰 */
+            padding: 0.3rem 0.8rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-shadow: none; /* 移除文字阴影以保证清晰度 */
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 75%); /* 更有科技感的切角 */
+            animation: flicker-glow 3s infinite ease-in-out;
+            border: 1px solid #00ff00;
+        }
+
         /* --- 视频和社交图标 --- */
         .video-container {
             position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 1rem; background: rgba(51, 51, 51, 0.7); border: 1px solid #00FF00;
@@ -139,7 +165,6 @@
         let allProducts = [];
         let currentCategoryFilter = 'all';
         let currentBrandFilter = 'all';
-        // 新增: 设置一个默认的后备汇率，并在API失败时使用
         let cnyToUsdRate = 0.14; 
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -184,14 +209,21 @@
                     const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
                     const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
                     
-                    // 修改点: 进行价格转换
                     const usdPrice = (p.price * cnyToUsdRate).toFixed(2);
                     const usdDiscountPrice = p.discount_price ? (p.discount_price * cnyToUsdRate).toFixed(2) : null;
 
-                    // 修改点: 使用转换后的美元价格和 $ 符号
                     let priceHTML = `<p class="font-bold text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
                     if (showDiscount && usdDiscountPrice) {
                         priceHTML = `<p class="font-bold text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
+                    }
+
+                    // 动态生成折扣徽章HTML
+                    let discountBadgeHTML = '';
+                    if (showDiscount && p.discount_factor) {
+                        const percentageOff = Math.round((1 - p.discount_factor) * 100);
+                        if (percentageOff > 0) {
+                           discountBadgeHTML = `<div class="discount-badge">${percentageOff}% OFF</div>`;
+                        }
                     }
 
                     const productCard = `
@@ -201,7 +233,7 @@
                                 <h3 class="font-semibold text-lg text-[#00FF00] truncate group-hover:text-[#00CC00] transition-colors">${p.name}</h3>
                                 ${priceHTML}
                             </div>
-                            ${showDiscount ? '<div class="discount-badge">DISCOUNT</div>' : ''}
+                            ${discountBadgeHTML}
                         </a>`;
                     productContainer.innerHTML += productCard;
                 });
@@ -226,7 +258,6 @@
         // --- 数据加载与页面构建 ---
         async function loadAndRender() {
             try {
-                // 新增: 在加载所有数据前，先获取汇率
                 try {
                     const rateResponse = await fetch('https://api.frankfurter.app/latest?from=CNY&to=USD');
                     if (rateResponse.ok) {
@@ -240,7 +271,6 @@
                      console.error('Error fetching exchange rate:', rateError, 'Using default fallback rate.');
                 }
 
-                // 继续加载其他数据
                 const [settingsRes, navRes, socialRes, productsRes, brandsRes] = await Promise.all([
                     db.from('settings').select('*').limit(1).single(),
                     db.from('navigation').select('*').order('display_order'),
@@ -255,7 +285,6 @@
                 const socialLinks = socialRes.data;
                 const brands = brandsRes.data || [];
 
-                // 渲染全局设置和视频
                 if (settings) {
                     document.title = settings.site_title || 'Matrix SpreadSheet';
                     document.getElementById('site-title').innerHTML = (settings.site_title || 'Matrix SpreadSheet').replace('Next', '<br>Next');
@@ -267,13 +296,16 @@
                     }
                 }
                 
-                // 渲染顶部导航和品牌下拉菜单
+                // 优化导航栏和品牌下拉菜单的HTML结构
                 const navContainer = document.getElementById('navigation-container');
                 if (navContainer) {
                     const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
                     const brandDropdownHTML = `
                         <div class="brand-dropdown">
-                            <button id="brand-dropdown-toggle" class="nav-link text-lg font-medium flex items-center gap-2"><i data-lucide="list-filter"></i> Brands</button>
+                            <button id="brand-dropdown-toggle" class="text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300">
+                                <i data-lucide="list-filter"></i>
+                                <span class="nav-link">Brands</span>
+                            </button>
                             <div id="brand-dropdown-menu" class="brand-dropdown-menu">
                                 <div class="brand-dropdown-item" data-brand="all">All Brands</div>
                                 ${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}
@@ -282,7 +314,6 @@
                     navContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
 
-                // 渲染社交媒体图标
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer && socialLinks) {
                     socialContainer.innerHTML = ''; 
@@ -303,7 +334,6 @@
                     });
                 }
                 
-                // 渲染首页的分类筛选器
                 const categoryFilterContainer = document.getElementById('category-filter-container');
                 if (categoryFilterContainer) {
                     let filterHTML = '<button class="filter-btn active" data-category="all">All</button>';
@@ -336,7 +366,6 @@
         
         // --- 事件监听器设置 ---
         function setupEventListeners() {
-            // 产品卡片点击事件
             document.body.addEventListener('click', (e) => {
                 const card = e.target.closest('.product-card');
                 if (card && card.dataset.productName) {
@@ -344,7 +373,6 @@
                 }
             });
             
-            // 分类筛选器点击事件
             const categoryContainer = document.getElementById('category-filter-container');
             categoryContainer?.addEventListener('click', (e) => {
                 const button = e.target.closest('.filter-btn');
@@ -357,17 +385,19 @@
                 }
             });
 
-            // 品牌下拉菜单事件
             const brandDropdown = document.querySelector('.brand-dropdown');
             const brandToggle = document.getElementById('brand-dropdown-toggle');
             brandToggle?.addEventListener('click', (e) => { e.stopPropagation(); brandDropdown.classList.toggle('active'); });
             document.addEventListener('click', (e) => { if (!brandDropdown?.contains(e.target)) brandDropdown?.classList.remove('active'); });
+            
             const brandMenu = document.getElementById('brand-dropdown-menu');
             brandMenu?.addEventListener('click', (e) => {
                 const item = e.target.closest('.brand-dropdown-item');
                 if (item) {
                     currentBrandFilter = item.dataset.brand;
-                    brandToggle.innerHTML = `<i data-lucide="list-filter"></i> ${item.textContent}`;
+                    // 更新品牌按钮的HTML时，保持新的结构
+                    const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
+                    brandToggle.innerHTML = `<i data-lucide="list-filter"></i> <span class="nav-link">${textContent}</span>`;
                     lucide.createIcons();
                     applyFiltersAndRender();
                     brandDropdown.classList.remove('active');
