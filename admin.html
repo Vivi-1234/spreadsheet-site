@@ -37,7 +37,6 @@
         .sortable-ghost { background: #dbeafe; opacity: 0.5; }
         .sortable-chosen { cursor: grabbing; }
         
-        /* FIX: Hide underlying checkbox completely to remove border artifact */
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -52,7 +51,6 @@
         .add-form-row input[type="number"],
         .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
 
-        /* FIX: Dropdown positioning logic */
         .custom-dropdown { position: relative; }
         .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; }
         .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; margin-top: 4px;}
@@ -102,6 +100,7 @@
         let brandsCache = [];
         let navCache = [];
         let sortableInstance = null;
+        let sortableFlashSaleInstance = null;
         let newProductFiles = new Map();
         let newSocialFiles = new Map();
         let visitChart = null;
@@ -122,7 +121,7 @@
                     <h2 class="text-2xl font-bold text-gray-800">仪表盘</h2>
                     <div class="flex items-center gap-4">
                         <div class="flex items-center gap-2">
-                           <input id="date-range-picker" class="input bg-white" placeholder="选择日期范围">
+                            <input id="date-range-picker" class="input bg-white" placeholder="选择日期范围">
                         </div>
                         <button id="export-excel-btn" class="btn btn-secondary text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>导出详细数据</button>
                     </div>
@@ -161,10 +160,10 @@
             brands: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">品牌管理</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md max-w-2xl">
-                     <div class="flex items-center gap-2 mb-4">
+                    <div class="flex items-center gap-2 mb-4">
                         <input type="text" id="new-brand-input" class="input flex-grow" placeholder="输入新品牌名称 (例如 Nike)">
                         <button id="add-brand-btn" class="btn btn-secondary"><i data-lucide="plus" class="h-4 w-4"></i></button>
-                     </div>
+                    </div>
                     <div id="brand-list" class="space-y-3 mb-4 border-t pt-4"></div>
                     <div class="text-right mt-4"><button id="save-brands-btn" class="btn btn-primary">保存全部变更</button></div>
                 </div>`,
@@ -214,6 +213,43 @@
                         <div id="query-ref-result" class="mt-4 hidden"><p>此ID带来的访问次数: <span id="ref-visit-count" class="font-bold text-lg">0</span></p></div>
                     </div>
                 </div>`,
+            // 新增: 秒杀管理模板
+            flash_sale: `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">秒杀管理</h2>
+                    <button id="save-flash-sale-btn" class="btn btn-primary"><i data-lucide="save" class="mr-2 h-4 w-4"></i>保存更改</button>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                    <h3 class="text-lg font-semibold mb-4">活动设置</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <label for="flash-sale-end-time" class="label">倒计时结束时间</label>
+                            <input type="datetime-local" id="flash-sale-end-time" class="input mt-1">
+                        </div>
+                        <div class="flex items-center">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="flash-sale-active-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <label for="flash-sale-active-toggle" class="ml-3">开启秒杀活动</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-4">可选产品</h3>
+                        <div id="all-products-list" class="space-y-2 h-96 overflow-y-auto border p-2 rounded-md">
+                           <!-- 所有产品将在这里列出 -->
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-4">秒杀产品 (可拖拽排序)</h3>
+                        <div id="flash-sale-products-list" class="space-y-2 h-96 overflow-y-auto border p-2 rounded-md">
+                            <!-- 选中的秒杀产品将在这里列出 -->
+                        </div>
+                    </div>
+                </div>
+                `
         };
 
         // --- 核心模块 ---
@@ -228,6 +264,7 @@
                 case 'brands': loadBrands(); break;
                 case 'social': loadSocialLinks(); break;
                 case 'affiliate': initAffiliatePanel(); break;
+                case 'flash_sale': loadFlashSaleData(); break; // 新增
             }
         }
 
@@ -301,13 +338,13 @@
         }
 
         async function loadSocialLinks() {
-             const socialList = document.getElementById('social-links-list');
-             if (!socialList) return;
-             const { data } = await db.from('social_links').select('*').order('display_order');
-             socialList.innerHTML = '';
-             if (data) data.forEach(item => addSocialRow(item));
-             document.getElementById('add-social-btn').addEventListener('click', () => addSocialRow());
-             document.getElementById('save-social-btn').addEventListener('click', saveSocialLinks);
+            const socialList = document.getElementById('social-links-list');
+            if (!socialList) return;
+            const { data } = await db.from('social_links').select('*').order('display_order');
+            socialList.innerHTML = '';
+            if (data) data.forEach(item => addSocialRow(item));
+            document.getElementById('add-social-btn').addEventListener('click', () => addSocialRow());
+            document.getElementById('save-social-btn').addEventListener('click', saveSocialLinks);
         }
 
         async function loadProducts() {
@@ -765,19 +802,19 @@
             const target = e.target;
             const id = target.closest('[data-id]')?.dataset.id;
             if (target.closest('.dropdown-item')) {
-                 const menu = target.closest('.dropdown-menu');
-                 const trigger = menu.previousElementSibling;
-                 const productId = menu.dataset.id;
-                 if(menu.dataset.type === 'category') {
-                     const selected = Array.from(menu.querySelectorAll('input:checked')).map(cb => cb.value);
-                     trigger.textContent = selected.join(', ') || '选择分类';
-                     updateProductField(productId, 'category', selected.join(','));
-                 } else if (menu.dataset.type === 'brand') {
-                     const brandId = target.closest('.dropdown-item').dataset.brandId;
-                     trigger.textContent = target.textContent;
-                     updateProductField(productId, 'brand_id', brandId);
-                 }
-                 return;
+                const menu = target.closest('.dropdown-menu');
+                const trigger = menu.previousElementSibling;
+                const productId = menu.dataset.id;
+                if(menu.dataset.type === 'category') {
+                    const selected = Array.from(menu.querySelectorAll('input:checked')).map(cb => cb.value);
+                    trigger.textContent = selected.join(', ') || '选择分类';
+                    updateProductField(productId, 'category', selected.join(','));
+                } else if (menu.dataset.type === 'brand') {
+                    const brandId = target.closest('.dropdown-item').dataset.brandId;
+                    trigger.textContent = target.textContent;
+                    updateProductField(productId, 'brand_id', brandId);
+                }
+                return;
             }
             if (target.classList.contains('product-checkbox')) updateBulkActionBar();
             else if (target.classList.contains('discount-toggle')) toggleDiscount(id, target.checked);
@@ -828,6 +865,7 @@
         function setupSidebarNav() {
             sidebarNav.innerHTML = `
                 <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
+                <button data-target="flash_sale" class="tab-button"><i data-lucide="zap" class="mr-3 h-5 w-5"></i>秒杀管理</button>
                 <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
                 <button data-target="brands" class="tab-button"><i data-lucide="copyright" class="mr-3 h-5 w-5"></i>品牌管理</button>
                 <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
@@ -883,12 +921,12 @@
         }
         
         function processDataForChart(events, labels) {
-             const dataMap = labels.reduce((acc, label) => { acc[label] = 0; return acc; }, {});
-             events.forEach(event => {
+            const dataMap = labels.reduce((acc, label) => { acc[label] = 0; return acc; }, {});
+            events.forEach(event => {
                 const eventDate = new Date(event.created_at).toLocaleDateString('en-CA');
                 if(dataMap.hasOwnProperty(eventDate)) dataMap[eventDate]++;
-             });
-             return Object.values(dataMap);
+            });
+            return Object.values(dataMap);
         }
 
         function renderChart(canvasId, labels, data, label, chartInstance, color = 'rgba(37, 99, 235, 1)') {
@@ -931,6 +969,118 @@
             });
         }
         
+        // --- Flash Sale Panel Functions (新增) ---
+        async function loadFlashSaleData() {
+            showLoading(true);
+            const [settingsRes, allProductsRes, flashSaleProductsRes] = await Promise.all([
+                db.from('flash_sale_settings').select('*').single(),
+                db.from('products').select('*').order('name'),
+                db.from('flash_sale_products').select('product_id').order('display_order')
+            ]);
+            showLoading(false);
+
+            // Populate settings
+            const settings = settingsRes.data;
+            if (settings) {
+                document.getElementById('flash-sale-active-toggle').checked = settings.is_active;
+                const endTimeInput = document.getElementById('flash-sale-end-time');
+                if (settings.end_time) {
+                    const d = new Date(settings.end_time);
+                    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                    endTimeInput.value = d.toISOString().slice(0, 16);
+                } else {
+                    endTimeInput.value = '';
+                }
+            }
+
+            // Populate product lists
+            const allProductsList = document.getElementById('all-products-list');
+            const flashSaleProductsList = document.getElementById('flash-sale-products-list');
+            allProductsList.innerHTML = '';
+            flashSaleProductsList.innerHTML = '';
+
+            const allProducts = allProductsRes.data || [];
+            const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
+            
+            const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
+             // Re-order based on display_order from the junction table
+            const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
+                return flashSaleProducts.find(p => p.id === orderedItem.product_id);
+            }).filter(Boolean); // Filter out any undefined if product was deleted but junction entry remains
+
+
+            const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
+
+            availableProducts.forEach(p => renderProductSelectionItem(p, allProductsList, false));
+            orderedFlashSaleProducts.forEach(p => renderProductSelectionItem(p, flashSaleProductsList, true));
+            
+            if (sortableFlashSaleInstance) sortableFlashSaleInstance.destroy();
+            sortableFlashSaleInstance = new Sortable(flashSaleProductsList, { animation: 150, ghostClass: 'sortable-ghost' });
+
+            lucide.createIcons();
+            document.getElementById('save-flash-sale-btn').addEventListener('click', saveFlashSaleData);
+        }
+
+        function renderProductSelectionItem(product, container, isInSale) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-md border';
+            div.dataset.id = product.id;
+            div.innerHTML = `
+                <div class="flex items-center gap-2 overflow-hidden">
+                    ${isInSale ? '<i data-lucide="grip-vertical" class="cursor-move text-gray-400 mr-2"></i>' : ''}
+                    <img src="${product.image_url || 'https://placehold.co/32x32/f3f4f6/374151?text=Img'}" class="w-8 h-8 object-cover rounded">
+                    <span class="text-sm font-medium truncate">${product.name}</span>
+                </div>
+                <button class="flash-sale-product-btn p-1 rounded-full hover:bg-gray-200">
+                    ${isInSale ? '<i data-lucide="minus-circle" class="h-5 w-5 text-red-500"></i>' : '<i data-lucide="plus-circle" class="h-5 w-5 text-green-500"></i>'}
+                </button>
+            `;
+            container.appendChild(div);
+            div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
+                const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
+                renderProductSelectionItem(product, targetList, !isInSale);
+                div.remove();
+            });
+        }
+
+        async function saveFlashSaleData() {
+            showLoading(true);
+            const endTimeValue = document.getElementById('flash-sale-end-time').value;
+            const settingsUpdate = {
+                id: 1,
+                is_active: document.getElementById('flash-sale-active-toggle').checked,
+                end_time: endTimeValue ? new Date(endTimeValue).toISOString() : null,
+                updated_at: new Date().toISOString()
+            };
+
+            const selectedProductIds = Array.from(document.getElementById('flash-sale-products-list').children)
+                .map((el, index) => ({
+                    product_id: parseInt(el.dataset.id),
+                    display_order: index
+                }));
+
+            try {
+                const { error: settingsError } = await db.from('flash_sale_settings').upsert(settingsUpdate);
+                if (settingsError) throw settingsError;
+
+                // Simple approach: delete all and re-insert
+                const { error: deleteError } = await db.from('flash_sale_products').delete().neq('id', 0); // a trick to delete all rows
+                if (deleteError) throw deleteError;
+                
+                if(selectedProductIds.length > 0) {
+                    const { error: insertError } = await db.from('flash_sale_products').insert(selectedProductIds);
+                    if (insertError) throw insertError;
+                }
+
+                showAlert('秒杀设置已保存!');
+            } catch (error) {
+                showAlert('保存失败: ' + error.message, true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
         // --- Grand Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('password'), loginBtn = document.getElementById('login-btn');
