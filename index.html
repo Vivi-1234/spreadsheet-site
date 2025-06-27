@@ -78,370 +78,377 @@
     </footer>
 
     <script type="module">
-        const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
-        const BASE_URL = 'https://sigma-shoes.com/';
-        
-        const { createClient } = supabase;
-        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        let allProducts = [];
-        let currentCategoryFilter = 'all';
-        let currentBrandFilter = 'all';
-        let cnyToUsdRate = 0.14; 
-        let userCountryCode = null;
+  const BASE_URL = 'https://sigma-shoes.com/';
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const refId = urlParams.get('ref');
+  let allProducts = [];
+  let currentCategoryFilter = 'all';
+  let currentBrandFilter = 'all';
+  let cnyToUsdRate = 0.14;
+  let userCountryCode = null;
 
-        async function logEvent(eventType, eventValue = null) {
-            try {
-                const eventData = { event_type: eventType, event_value: eventValue, ref_id: refId, country_code: userCountryCode };
-                db.from('analytics_events').insert([eventData]).then(({ error }) => {
-                    if (error) console.error('Analytics event logging failed:', error);
-                });
-            } catch (error) { console.error('Error in logEvent:', error); }
+  const urlParams = new URLSearchParams(window.location.search);
+  const refId = urlParams.get('ref');
+
+  async function supabaseRequest({ table, method, data, id, query }) {
+    const response = await fetch('/api/supabase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, method, data, id, query }),
+    });
+    const result = await response.json();
+    if (result.error) throw new Error(result.error);
+    return result;
+  }
+
+  async function logEvent(eventType, eventValue = null) {
+    try {
+      await supabaseRequest({
+        table: 'analytics_events',
+        method: 'insert',
+        data: { event_type: eventType, event_value: eventValue, ref_id: refId, country_code: userCountryCode },
+      });
+    } catch (error) {
+      console.error('Error in logEvent:', error);
+    }
+  }
+
+  async function loadAndRender() {
+    try {
+      try {
+        const rateResponse = await fetch('https://api.frankfurter.app/latest?from=CNY&to=USD');
+        if (rateResponse.ok) {
+          const rateData = await rateResponse.json();
+          cnyToUsdRate = rateData.rates.USD;
         }
-        
-        function formatUrl(url) {
-            if (!url) return '#';
-            if (url.startsWith('http://') || url.startsWith('https://')) return url;
-            return `${BASE_URL}${url}`;
+      } catch (rateError) {
+        console.error('Error fetching exchange rate:', rateError, 'Using default fallback rate.');
+      }
+
+      const [settingsRes, navRes, socialRes, productsRes, brandsRes, flashSaleSettingsRes, flashSaleProductsRes] = await Promise.all([
+        supabaseRequest({ table: 'settings', method: 'select', query: '*' }).then(res => ({ data: res.data[0] })),
+        supabaseRequest({ table: 'navigation', method: 'select', query: '*' }).then(res => ({ data: res.data.sort((a, b) => a.display_order - b.display_order) })),
+        supabaseRequest({ table: 'social_links', method: 'select', query: '*' }).then(res => ({ data: res.data.sort((a, b) => a.display_order - b.display_order) })),
+        supabaseRequest({ table: 'products', method: 'select', query: '*, brands (*)', data: { is_active: true } }).then(res => ({ data: res.data.sort((a, b) => a.display_order - b.display_order) })),
+        supabaseRequest({ table: 'brands', method: 'select', query: '*' }).then(res => ({ data: res.data.sort((a, b) => a.name.localeCompare(b.name)) })),
+        supabaseRequest({ table: 'flash_sale_settings', method: 'select', query: '*' }).then(res => ({ data: res.data[0] })),
+        supabaseRequest({ table: 'flash_sale_products', method: 'select', query: '*, products(*, brands(*))' }).then(res => ({ data: res.data.sort((a, b) => a.display_order - b.display_order) })),
+      ]);
+
+      allProducts = productsRes.data || [];
+      const settings = settingsRes.data;
+      const navItems = navRes.data || [];
+      const socialLinks = socialRes.data;
+      const brands = brandsRes.data || [];
+      const flashSaleSettings = flashSaleSettingsRes.data;
+      const flashSaleProducts = (flashSaleProductsRes.data || []).map(item => item.products).filter(Boolean);
+
+      const flashSaleSection = document.getElementById('flash-sale-section');
+      if (flashSaleSettings && flashSaleSettings.is_active && flashSaleSettings.end_time) {
+        const endTime = new Date(flashSaleSettings.end_time);
+        if (endTime > new Date()) {
+          flashSaleSection.classList.remove('hidden');
+          setupCountdown(endTime);
+          renderProducts('flash-sale-product-list', flashSaleProducts);
         }
-        
-        function appendRefParam(url) {
-            if (!refId || !url) return url;
-            try {
-                const urlObj = new URL(url);
-                if (!urlObj.searchParams.has('ref')) {
-                    urlObj.searchParams.append('ref', refId);
-                }
-                return urlObj.toString();
-            } catch(e) { return url; }
+      }
+
+      if (settings) {
+        document.title = settings.site_title || 'Matrix SpreadSheet';
+        document.getElementById('site-title').innerHTML = (settings.site_title || 'Matrix SpreadSheet').replace('Next', '<br>Next');
+        document.getElementById('site-subtitle').textContent = settings.site_subtitle || 'Discover the Matrix';
+        const videoWrapper = document.getElementById('video-wrapper');
+        if (videoWrapper) {
+          const videoUrl = settings.video_url ? settings.video_url.replace('watch?v=', 'embed/').split('&')[0] : '';
+          videoWrapper.innerHTML = videoUrl ? `<iframe src="${videoUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : '';
         }
-        
-        function renderProducts(containerId, productArray) {
-            const productContainer = document.getElementById(containerId);
-            if (!productContainer) return;
-            
-            productContainer.innerHTML = '';
-            if (productArray.length > 0) {
-                productArray.forEach(p => {
-                    const now = new Date();
-                    const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
-                    const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
-                    
-                    const usdPrice = (p.price * cnyToUsdRate).toFixed(2);
-                    const usdDiscountPrice = p.discount_price ? (p.discount_price * cnyToUsdRate).toFixed(2) : null;
+      }
 
-                    let priceHTML = `<p class="font-bold text-lg md:text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
-                    if (showDiscount && usdDiscountPrice) {
-                        priceHTML = `<p class="font-bold text-lg md:text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
-                    }
+      const desktopNavContainer = document.getElementById('desktop-nav');
+      const mobileNavContainer = document.getElementById('mobile-nav');
+      if (desktopNavContainer && mobileNavContainer) {
+        const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
+        const brandDropdownHTML = `
+          <div class="brand-dropdown">
+            <button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300">
+              <i data-lucide="list-filter"></i>
+              <span class="nav-link">Brands</span>
+            </button>
+            <div class="brand-dropdown-menu">
+              <div class="brand-dropdown-item" data-brand="all">All Brands</div>
+              ${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}
+            </div>
+          </div>`;
+        desktopNavContainer.innerHTML = homeLink + brandDropdownHTML;
+        mobileNavContainer.innerHTML = homeLink + brandDropdownHTML;
+      }
 
-                    let discountBadgeHTML = '';
-                    if (showDiscount && p.discount_factor) {
-                        const percentageOff = Math.round((1 - p.discount_factor) * 100);
-                        if (percentageOff > 0) {
-                           discountBadgeHTML = `<div class="discount-badge">${percentageOff}% OFF</div>`;
-                        }
-                    }
-
-                    const productCard = `
-                        <a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative">
-                            <div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div>
-                            <div class="p-3 md:p-6">
-                                <h3 class="font-semibold text-base md:text-lg text-[#00FF00] truncate group-hover:text-[#00CC00] transition-colors">${p.name}</h3>
-                                ${priceHTML}
-                            </div>
-                            ${discountBadgeHTML}
-                        </a>`;
-                    productContainer.innerHTML += productCard;
-                });
-            } else {
-                productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products in this section.</p>`;
-            }
-        }
-        
-        function applyFiltersAndRender() {
-            let filteredProducts = allProducts;
-            
-            if (currentCategoryFilter !== 'all') {
-                filteredProducts = filteredProducts.filter(p => p.category && p.category.split(',').map(c => c.trim()).includes(currentCategoryFilter));
-            }
-
-            if (currentBrandFilter !== 'all') {
-                filteredProducts = filteredProducts.filter(p => p.brand_id == currentBrandFilter);
-            }
-            renderProducts('product-list-container', filteredProducts);
-        }
-
-        async function loadAndRender() {
-            try {
-                try {
-                    const rateResponse = await fetch('https://api.frankfurter.app/latest?from=CNY&to=USD');
-                    if (rateResponse.ok) {
-                        const rateData = await rateResponse.json();
-                        cnyToUsdRate = rateData.rates.USD;
-                    }
-                } catch (rateError) {
-                     console.error('Error fetching exchange rate:', rateError, 'Using default fallback rate.');
-                }
-
-                const [settingsRes, navRes, socialRes, productsRes, brandsRes, flashSaleSettingsRes, flashSaleProductsRes] = await Promise.all([
-                    db.from('settings').select('*').limit(1).single(),
-                    db.from('navigation').select('*').order('display_order'),
-                    db.from('social_links').select('*').order('display_order'),
-                    db.from('products').select(`*, brands (*)`).eq('is_active', true).order('display_order'),
-                    db.from('brands').select('*').order('name'),
-                    db.from('flash_sale_settings').select('*').single(),
-                    db.from('flash_sale_products').select('*, products(*, brands(*))').order('display_order')
-                ]);
-
-                allProducts = productsRes.data || [];
-                const settings = settingsRes.data;
-                const navItems = navRes.data || [];
-                const socialLinks = socialRes.data;
-                const brands = brandsRes.data || [];
-                const flashSaleSettings = flashSaleSettingsRes.data;
-                const flashSaleProducts = (flashSaleProductsRes.data || []).map(item => item.products).filter(Boolean);
-
-                const flashSaleSection = document.getElementById('flash-sale-section');
-                if (flashSaleSettings && flashSaleSettings.is_active && flashSaleSettings.end_time) {
-                    const endTime = new Date(flashSaleSettings.end_time);
-                    if (endTime > new Date()) {
-                        flashSaleSection.classList.remove('hidden');
-                        setupCountdown(endTime);
-                        renderProducts('flash-sale-product-list', flashSaleProducts);
-                    }
-                }
-
-                if (settings) {
-                    document.title = settings.site_title || 'Matrix SpreadSheet';
-                    document.getElementById('site-title').innerHTML = (settings.site_title || 'Matrix SpreadSheet').replace('Next', '<br>Next');
-                    document.getElementById('site-subtitle').textContent = settings.site_subtitle || 'Discover the Matrix';
-                    const videoWrapper = document.getElementById('video-wrapper');
-                    if (videoWrapper) {
-                        const videoUrl = settings.video_url ? settings.video_url.replace('watch?v=', 'embed/').split('&')[0] : '';
-                        videoWrapper.innerHTML = videoUrl ? `<iframe src="${videoUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : '';
-                    }
-                }
-                
-                const desktopNavContainer = document.getElementById('desktop-nav');
-                const mobileNavContainer = document.getElementById('mobile-nav');
-                if (desktopNavContainer && mobileNavContainer) {
-                    const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
-                    const brandDropdownHTML = `
-                        <div class="brand-dropdown">
-                            <button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300">
-                                <i data-lucide="list-filter"></i>
-                                <span class="nav-link">Brands</span>
-                            </button>
-                            <div class="brand-dropdown-menu">
-                                <div class="brand-dropdown-item" data-brand="all">All Brands</div>
-                                ${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}
-                            </div>
-                        </div>`;
-                    desktopNavContainer.innerHTML = homeLink + brandDropdownHTML;
-                    mobileNavContainer.innerHTML = homeLink + brandDropdownHTML;
-                }
-
-                const socialContainer = document.getElementById('social-icons-container');
-                if (socialContainer && socialLinks) {
-                    socialContainer.innerHTML = ''; 
-                    socialLinks.forEach(link => {
-                        const iconElement = link.icon_url 
-                            ? `<img src="${link.icon_url}" alt="${link.platform_name} logo" class="social-icon-image">` 
-                            : `<i data-lucide="${link.icon_svg_name || 'link'}" style="color: ${link.icon_color || '#00FF00'};"></i>`;
-                        
-                        let finalUrl = link.link_url || '#';
-                        if (finalUrl !== '#' && !finalUrl.startsWith('http')) {
-                            finalUrl = `https://${finalUrl}`;
-                        }
-
-                        socialContainer.innerHTML += `
-                            <a href="${finalUrl}" target="_blank" class="social-icon-bubble">
-                                ${iconElement}
-                            </a>`;
-                    });
-                }
-                
-                const categoryFilterContainer = document.getElementById('category-filter-container');
-                if (categoryFilterContainer) {
-                    let filterHTML = '<button class="filter-btn active" data-category="all">All</button>';
-                    const validNavItems = navItems.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home');
-                    filterHTML += validNavItems.map(link => `<button class="filter-btn" data-category="${link.link_text}">${link.link_text}</button>`).join('');
-                    categoryFilterContainer.innerHTML = filterHTML;
-                }
-                
-                applyFiltersAndRender();
-                
-            } catch (error) {
-                console.error('Error in loadAndRender:', error);
-                document.body.innerHTML = '<p class="text-center text-red-500 text-lg p-8">Error loading page content. Please try again later.</p>';
-            }
-
-            lucide.createIcons();
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
-            
-            setupEventListeners();
-        }
-        
-        function setupEventListeners() {
-            document.body.addEventListener('click', (e) => {
-                const card = e.target.closest('.product-card');
-                if (card && card.dataset.productName) {
-                    logEvent('product_click', card.dataset.productName);
-                }
-            });
-            
-            const categoryContainer = document.getElementById('category-filter-container');
-            categoryContainer?.addEventListener('click', (e) => {
-                const button = e.target.closest('.filter-btn');
-                if (button) {
-                    categoryContainer.querySelector('.active')?.classList.remove('active');
-                    button.classList.add('active');
-                    currentCategoryFilter = button.dataset.category;
-                    applyFiltersAndRender();
-                }
-            });
-            
-            document.querySelectorAll('.brand-dropdown').forEach(dropdown => {
-                const trigger = dropdown.querySelector('.nav-trigger');
-                const menu = dropdown.querySelector('.brand-dropdown-menu');
-                trigger?.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdown.classList.toggle('active');
-                });
-                menu?.addEventListener('click', (e) => {
-                    const item = e.target.closest('.brand-dropdown-item');
-                    if(item) {
-                        currentBrandFilter = item.dataset.brand;
-                        const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
-                        dropdown.querySelector('.nav-link').textContent = textContent;
-                        applyFiltersAndRender();
-                        dropdown.classList.remove('active');
-                        // also close mobile menu if open
-                        document.getElementById('mobile-nav').classList.add('hidden');
-                    }
-                });
-            });
-
-            document.addEventListener('click', (e) => {
-                document.querySelectorAll('.brand-dropdown.active').forEach(dropdown => {
-                    if (!dropdown.contains(e.target)) {
-                        dropdown.classList.remove('active');
-                    }
-                });
-            });
-
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileNav = document.getElementById('mobile-nav');
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileNav.classList.toggle('hidden');
-            });
-        }
-        
-        function setupCountdown(targetDate) {
-            const timerContainer = document.getElementById('countdown-timer');
-            if(!timerContainer) return;
-
-            timerContainer.innerHTML = `
-                <div class="timer-box"><span id="days" class="timer-value">00</span><span class="timer-label">Days</span></div>
-                <div class="timer-box"><span id="hours" class="timer-value">00</span><span class="timer-label">Hours</span></div>
-                <div class="timer-box"><span id="minutes" class="timer-value">00</span><span class="timer-label">Minutes</span></div>
-                <div class="timer-box"><span id="seconds" class="timer-value">00</span><span class="timer-label">Seconds</span></div>
-            `;
-            
-            const daysEl = document.getElementById('days');
-            const hoursEl = document.getElementById('hours');
-            const minutesEl = document.getElementById('minutes');
-            const secondsEl = document.getElementById('seconds');
-
-            if (!daysEl) return;
-
-            const countdownInterval = setInterval(() => {
-                const now = new Date().getTime();
-                const distance = targetDate - now;
-
-                if (distance < 0) {
-                    clearInterval(countdownInterval);
-                    timerContainer.innerHTML = '<div class="text-2xl font-bold text-red-500">SALE ENDED</div>';
-                    return;
-                }
-
-                daysEl.textContent = String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0');
-                hoursEl.textContent = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
-                minutesEl.textContent = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-                secondsEl.textContent = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
-            }, 1000);
-        }
-
-        function initMatrixRain() {
-            const canvas = document.querySelector('.matrix-rain');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const fontSize = 14;
-            const columns = canvas.width / fontSize;
-            const drops = Array(Math.floor(columns)).fill(1);
-
-            function draw() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#00FF00';
-                ctx.font = fontSize + 'px Consolas';
-                for (let i = 0; i < drops.length; i++) {
-                    const text = chars.charAt(Math.floor(Math.random() * chars.length));
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
-                    drops[i]++;
-                }
-            }
-            setInterval(draw, 33);
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
-        }
-
-        async function initGeoAndLog() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                if (response.ok) {
-                    const data = await response.json();
-                    userCountryCode = data.country_code || 'Unknown';
-                } else {
-                    console.error('GeoIP API request failed with status:', response.status);
-                    userCountryCode = 'API Error';
-                }
-            } catch (error) {
-                console.error('Could not fetch geolocation data:', error);
-                userCountryCode = 'Network Error';
-            } finally {
-                logEvent('site_visit'); 
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initMatrixRain();
-            loadAndRender();
-            initGeoAndLog();
+      const socialContainer = document.getElementById('social-icons-container');
+      if (socialContainer && socialLinks) {
+        socialContainer.innerHTML = '';
+        socialLinks.forEach(link => {
+          const iconElement = link.icon_url
+            ? `<img src="${link.icon_url}" alt="${link.platform_name} logo" class="social-icon-image">`
+            : `<i data-lucide="${link.icon_svg_name || 'link'}" style="color: ${link.icon_color || '#00FF00'};"></i>`;
+          let finalUrl = link.link_url || '#';
+          if (finalUrl !== '#' && !finalUrl.startsWith('http')) {
+            finalUrl = `https://${finalUrl}`;
+          }
+          socialContainer.innerHTML += `
+            <a href="${finalUrl}" target="_blank" class="social-icon-bubble">
+              ${iconElement}
+            </a>`;
         });
-    </script>
+      }
+
+      const categoryFilterContainer = document.getElementById('category-filter-container');
+      if (categoryFilterContainer) {
+        let filterHTML = '<button class="filter-btn active" data-category="all">All</button>';
+        const validNavItems = navItems.filter(item => item.link_text && item.link_text.toLowerCase() !== 'home');
+        filterHTML += validNavItems.map(link => `<button class="filter-btn" data-category="${link.link_text}">${link.link_text}</button>`).join('');
+        categoryFilterContainer.innerHTML = filterHTML;
+      }
+
+      applyFiltersAndRender();
+    } catch (error) {
+      console.error('Error in loadAndRender:', error);
+      document.body.innerHTML = '<p class="text-center text-red-500 text-lg p-8">Error loading page content. Please try again later.</p>';
+    }
+
+    lucide.createIcons();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+    setupEventListeners();
+  }
+
+  function setupCountdown(targetDate) {
+    const timerContainer = document.getElementById('countdown-timer');
+    if (!timerContainer) return;
+
+    timerContainer.innerHTML = `
+      <div class="timer-box"><span id="days" class="timer-value">00</span><span class="timer-label">Days</span></div>
+      <div class="timer-box"><span id="hours" class="timer-value">00</span><span class="timer-label">Hours</span></div>
+      <div class="timer-box"><span id="minutes" class="timer-value">00</span><span class="timer-label">Minutes</span></div>
+      <div class="timer-box"><span id="seconds" class="timer-value">00</span><span class="timer-label">Seconds</span></div>
+    `;
+
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
+
+    if (!daysEl) return;
+
+    const countdownInterval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance < 0) {
+        clearInterval(countdownInterval);
+        timerContainer.innerHTML = '<div class="text-2xl font-bold text-red-500">SALE ENDED</div>';
+        return;
+      }
+
+      daysEl.textContent = String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0');
+      hoursEl.textContent = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+      minutesEl.textContent = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+      secondsEl.textContent = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
+    }, 1000);
+  }
+
+  function initMatrixRain() {
+    const canvas = document.querySelector('.matrix-rain');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const fontSize = 14;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function draw() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00FF00';
+      ctx.font = fontSize + 'px Consolas';
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(draw, 33);
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  }
+
+  async function initGeoAndLog() {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      if (response.ok) {
+        const data = await response.json();
+        userCountryCode = data.country_code || 'Unknown';
+      } else {
+        console.error('GeoIP API request failed with status:', response.status);
+        userCountryCode = 'API Error';
+      }
+    } catch (error) {
+      console.error('Could not fetch geolocation data:', error);
+      userCountryCode = 'Network Error';
+    } finally {
+      logEvent('site_visit');
+    }
+  }
+
+  function formatUrl(url) {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${BASE_URL}${url}`;
+  }
+
+  function appendRefParam(url) {
+    if (!refId || !url) return url;
+    try {
+      const urlObj = new URL(url);
+      if (!urlObj.searchParams.has('ref')) {
+        urlObj.searchParams.append('ref', refId);
+      }
+      return urlObj.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function renderProducts(containerId, productArray) {
+    const productContainer = document.getElementById(containerId);
+    if (!productContainer) return;
+
+    productContainer.innerHTML = '';
+    if (productArray.length > 0) {
+      productArray.forEach(p => {
+        const now = new Date();
+        const expiry = p.discount_expires_at ? new Date(p.discount_expires_at) : null;
+        const showDiscount = p.discount_is_active && p.discount_price && (!expiry || expiry > now);
+
+        const usdPrice = (p.price * cnyToUsdRate).toFixed(2);
+        const usdDiscountPrice = p.discount_price ? (p.discount_price * cnyToUsdRate).toFixed(2) : null;
+
+        let priceHTML = `<p class="font-bold text-lg md:text-xl text-[#00FF00] mt-2">$${usdPrice}</p>`;
+        if (showDiscount && usdDiscountPrice) {
+          priceHTML = `<p class="font-bold text-lg md:text-xl text-red-500 mt-2">$${usdDiscountPrice} <span class="text-base text-[#00FF00] opacity-60 font-normal line-through ml-2">$${usdPrice}</span></p>`;
+        }
+
+        let discountBadgeHTML = '';
+        if (showDiscount && p.discount_factor) {
+          const percentageOff = Math.round((1 - p.discount_factor) * 100);
+          if (percentageOff > 0) {
+            discountBadgeHTML = `<div class="discount-badge">${percentageOff}% OFF</div>`;
+          }
+        }
+
+        const productCard = `
+          <a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative">
+            <div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div>
+            <div class="p-3 md:p-6">
+              <h3 class="font-semibold text-base md:text-lg text-[#00FF00] truncate group-hover:text-[#00CC00] transition-colors">${p.name}</h3>
+              ${priceHTML}
+            </div>
+            ${discountBadgeHTML}
+          </a>`;
+        productContainer.innerHTML += productCard;
+      });
+    } else {
+      productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products in this section.</p>`;
+    }
+  }
+
+  function applyFiltersAndRender() {
+    let filteredProducts = allProducts;
+
+    if (currentCategoryFilter !== 'all') {
+      filteredProducts = filteredProducts.filter(p => p.category && p.category.split(',').map(c => c.trim()).includes(currentCategoryFilter));
+    }
+
+    if (currentBrandFilter !== 'all') {
+      filteredProducts = filteredProducts.filter(p => p.brand_id == currentBrandFilter);
+    }
+    renderProducts('product-list-container', filteredProducts);
+  }
+
+  function setupEventListeners() {
+    document.body.addEventListener('click', (e) => {
+      const card = e.target.closest('.product-card');
+      if (card && card.dataset.productName) {
+        logEvent('product_click', card.dataset.productName);
+      }
+    });
+
+    const categoryContainer = document.getElementById('category-filter-container');
+    categoryContainer?.addEventListener('click', (e) => {
+      const button = e.target.closest('.filter-btn');
+      if (button) {
+        categoryContainer.querySelector('.active')?.classList.remove('active');
+        button.classList.add('active');
+        currentCategoryFilter = button.dataset.category;
+        applyFiltersAndRender();
+      }
+    });
+
+    document.querySelectorAll('.brand-dropdown').forEach(dropdown => {
+      const trigger = dropdown.querySelector('.nav-trigger');
+      const menu = dropdown.querySelector('.brand-dropdown-menu');
+      trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
+      });
+      menu?.addEventListener('click', (e) => {
+        const item = e.target.closest('.brand-dropdown-item');
+        if (item) {
+          currentBrandFilter = item.dataset.brand;
+          const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
+          dropdown.querySelector('.nav-link').textContent = textContent;
+          applyFiltersAndRender();
+          dropdown.classList.remove('active');
+          document.getElementById('mobile-nav').classList.add('hidden');
+        }
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      document.querySelectorAll('.brand-dropdown.active').forEach(dropdown => {
+        if (!dropdown.contains(e.target)) {
+          dropdown.classList.remove('active');
+        }
+      });
+    });
+
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileNav = document.getElementById('mobile-nav');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileNav.classList.toggle('hidden');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initMatrixRain();
+    loadAndRender();
+    initGeoAndLog();
+  });
+</script>
 </body>
 </html>
