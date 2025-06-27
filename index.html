@@ -23,8 +23,7 @@
     <header>
         <div class="container mx-auto px-4 md:px-12 py-4 flex justify-between items-center">
             <a href="/" class="text-xl md:text-2xl font-bold tracking-tighter text-[#00FF00] text-shadow">Matrix SpreadSheet</a>
-            <nav id="desktop-nav" class="hidden md:flex items-center space-x-8"></nav>
-            <div id="mobile-brand-nav" class="md:hidden"></div>
+            <div id="main-nav" class="flex items-center space-x-8"></div>
         </div>
     </header>
 
@@ -182,17 +181,12 @@
                     }
                 }
                 
-                const desktopNavContainer = document.getElementById('desktop-nav');
-                const mobileBrandNavContainer = document.getElementById('mobile-brand-nav');
-                if (desktopNavContainer) {
-                    const homeLink = `<a href="/" class="nav-link text-lg font-medium">Home</a>`;
-                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter"></i><span class="nav-link">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
-                    desktopNavContainer.innerHTML = homeLink + brandDropdownHTML;
+                const mainNavContainer = document.getElementById('main-nav');
+                if (mainNavContainer) {
+                    const homeLink = `<a href="/" class="nav-link text-lg font-medium hidden md:block">Home</a>`;
+                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter"></i><span class="nav-link hidden md:inline">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
+                    mainNavContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
-                if(mobileBrandNavContainer) {
-                    mobileBrandNavContainer.innerHTML = `<div class="brand-dropdown"><button class="nav-trigger p-2 text-[#00FF00]"><i data-lucide="list-filter" class="w-7 h-7"></i></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
-                }
-
 
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer && socialLinks) {
@@ -259,8 +253,6 @@
                     const item = e.target.closest('.brand-dropdown-item');
                     if(item) {
                         currentBrandFilter = item.dataset.brand;
-                        const textContent = item.textContent === 'All Brands' ? 'Brands' : item.textContent;
-                        dropdown.closest('nav, div').querySelectorAll('.nav-link').forEach(link => { if(link.textContent === 'Brands' || brandsCache.some(b => b.name === link.textContent)) link.textContent = textContent });
                         applyFiltersAndRender();
                         dropdown.classList.remove('active');
                     }
