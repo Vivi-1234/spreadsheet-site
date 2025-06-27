@@ -1035,14 +1035,28 @@
         renderChart('visits-chart', 'line', dateLabels, processDataForChart(siteVisits, dateLabels), '网站访问量');
         renderChart('product-clicks-chart', 'line', dateLabels, processDataForChart(productClicks, dateLabels), '产品点击量');
         
-        const countryCounts = siteVisits.reduce((acc, curr) => {
+        // --- 修改开始 ---
+        // 1. 筛选掉错误数据，只保留有效的访问记录
+        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error');
+        const totalValidVisits = validVisits.length;
+
+        // 2. 基于有效数据，统计每个国家的访问次数
+        const countryCounts = validVisits.reduce((acc, curr) => {
             const country = curr.country_code || 'Unknown';
             acc[country] = (acc[country] || 0) + 1;
             return acc;
         }, {});
-        const countryLabels = Object.keys(countryCounts);
+        
         const countryData = Object.values(countryCounts);
+
+        // 3. 创建新的标签，包含国家代码和百分比
+        const countryLabels = Object.keys(countryCounts).map(key => {
+            const percentage = totalValidVisits > 0 ? ((countryCounts[key] / totalValidVisits) * 100).toFixed(1) : 0;
+            return `${key} (${percentage}%)`;
+        });
+        
         renderChart('country-chart', 'pie', countryLabels, countryData, '访问来源');
+        // --- 修改结束 ---
     }
     
     function processDataForChart(events, labels) {
