@@ -1019,7 +1019,7 @@
         const siteVisits = data.filter(e => e.event_type === 'site_visit');
         const productClicks = data.filter(e => e.event_type === 'product_click');
         
-        document.getElementById('total-visits').textContent = siteVisits.length;
+        document.getElementById('total-visits').textContent = validVisits.length;
         document.getElementById('total-product-clicks').textContent = productClicks.length;
         document.getElementById('total-products').textContent = productCount || 0;
         document.getElementById('active-discounts').textContent = discountCount || 0;
