@@ -184,7 +184,7 @@
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
                     const homeLink = `<a href="/" class="nav-link text-lg font-medium hidden md:block">Home</a>`;
-                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter"></i><span class="nav-link">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
+                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
                     mainNavContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
 
@@ -254,6 +254,11 @@
                     const item = e.target.closest('.brand-dropdown-item');
                     if(item) {
                         currentBrandFilter = item.dataset.brand;
+                        const selectedText = item.textContent;
+                        const triggerTextSpan = trigger.querySelector('.nav-link');
+                        if(triggerTextSpan) {
+                           triggerTextSpan.textContent = selectedText === 'All Brands' ? 'Brands' : selectedText;
+                        }
                         applyFiltersAndRender();
                         brandDropdown.classList.remove('active');
                     }
