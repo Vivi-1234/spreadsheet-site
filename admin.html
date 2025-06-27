@@ -763,16 +763,26 @@
     }
 
     async function saveProductOrder(evt) {
-        const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
-        const updates = reorderedIds.map((id, index) => ({ id: id, display_order: index }));
-        showLoading(true);
-        const { error } = await db.from('products').upsert(updates);
+    const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
+    
+    // 创建一个更新操作的数组
+    const updates = reorderedIds.map((id, index) => {
+        // 对每个产品，我们都只更新它的 display_order 字段
+        return db.from('products').update({ display_order: index }).eq('id', id);
+    });
+
+    showLoading(true);
+    try {
+        // 使用 Promise.all 来同时执行所有独立的更新操作
+        await Promise.all(updates);
+    } catch (error) {
+        showAlert('排序失败: ' + error.message, true); 
+        // 如果出错，重新加载产品列表以恢复到之前的状态
+        await loadProducts();
+    } finally {
         showLoading(false);
-        if (error) { 
-            showAlert('排序失败: ' + error.message, true); 
-            await loadProducts(); 
-        }
     }
+}
     async function updateProductField(productId, field, value) {
         showLoading(true);
         const { error } = await db.from('products').update({ [field]: value }).eq('id', productId);
