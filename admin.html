@@ -39,7 +39,7 @@
             font-family: 'Quicksand', sans-serif;
             background-color: var(--bg-main);
             color: var(--text-primary);
-            overflow: hidden;
+            overflow-x: hidden;
         }
         
         #candy-background {
@@ -57,18 +57,17 @@
             text-shadow: 0 0 5px white;
         }
 
-        /* Generic Panel Style */
         .panel {
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
-            border-radius: 1.5rem; /* More rounded */
+            border-radius: 1.5rem;
             box-shadow: 0 10px 25px -5px rgba(192, 132, 252, 0.1), 0 8px 10px -6px rgba(192, 132, 252, 0.1);
         }
         
-        /* Sidebar Styling */
         aside {
             background: linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%);
             border-right: 1px solid var(--border-color);
+            transition: transform 0.3s ease-in-out;
         }
 
         .tab-button {
@@ -88,7 +87,6 @@
             transform: scale(1.03);
         }
 
-        /* General UI Elements */
         .label { font-weight: 600; color: #581C87; }
         .input, select.input, .dropdown-trigger { 
             width: 100%; 
@@ -107,7 +105,6 @@
             background-color: white;
         }
         
-        /* Button Styling */
         .btn { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 700; color: white; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: none; }
         .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
         .btn:disabled { background: #D1D5DB !important; color: #9CA3AF; cursor: not-allowed; box-shadow: none; transform: none; }
@@ -123,7 +120,6 @@
         .sortable-ghost { background: rgba(192, 132, 252, 0.1); border: 2px dashed var(--border-color); border-radius: 0.75rem; }
         .sortable-chosen { cursor: grabbing; }
 
-        /* Toggle Switch Styling */
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #D1D5DB; transition: .4s; border-radius: 34px; }
@@ -131,7 +127,6 @@
         input:checked + .toggle-slider { background: linear-gradient(45deg, var(--accent-pink), var(--accent-purple)); }
         input:checked + .toggle-slider:before { content: "💖"; transform: translateX(16px); }
         
-        /* Dropdown Styling */
         .custom-dropdown { position: relative; }
         .dropdown-trigger { 
             cursor: pointer;
@@ -157,7 +152,6 @@
         
         .flatpickr-input { background-color: #FAF5FF !important; color: var(--text-primary); border-color: #E9D5FF !important;}
         
-        /* Other Styles */
         .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.5rem; }
         .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #FAF5FF; border: 2px dashed #E9D5FF; }
         .nav-item-row .nav-url { pointer-events: none; background-color: #F3F4F6; }
@@ -170,7 +164,6 @@
             color: transparent;
         }
 
-        /* Table Styling */
         table thead { background-color: #FDF4FF; color: var(--accent-purple); }
         table tbody tr { border-bottom: 1px solid var(--border-color); }
         table tbody tr:last-child { border-bottom: none; }
@@ -182,10 +175,10 @@
         
     </style>
 </head>
-<body>
+<body class="bg-main">
     <div id="candy-background"></div>
 
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-main">
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-sm panel p-8">
             <h1 class="text-3xl font-bold text-center text-gradient mb-6">Spreadsheet后台</h1>
             <div class="space-y-4">
@@ -197,17 +190,31 @@
     </div>
 
     <div id="admin-panel" class="hidden">
-        <div class="flex h-screen bg-transparent">
-            <aside class="w-64 p-4 flex flex-col">
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between px-4 py-2 bg-white/80 backdrop-blur-sm sticky top-0 z-20 border-b border-pink-100">
+             <h1 class="text-xl font-bold text-gradient">Admin</h1>
+             <button id="mobile-menu-btn" class="p-2">
+                <i data-lucide="menu" class="h-6 w-6 text-pink-500"></i>
+             </button>
+        </header>
+
+        <div class="relative flex h-screen">
+            <!-- Overlay for mobile menu -->
+            <div id="mobile-menu-overlay" class="md:hidden fixed inset-0 bg-black/30 z-30 hidden"></div>
+            
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-64 p-4 flex-col fixed inset-y-0 left-0 z-40 transform -translate-x-full md:relative md:translate-x-0 md:flex">
                 <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-pink-100">SpreadSheet</h1>
-                <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav>
+                <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow overflow-y-auto"></nav>
                 <div class="pt-4 border-t border-pink-100">
                     <button id="logout-btn" class="w-full text-sm font-medium text-red-500 hover:text-danger-color text-left px-2 py-2 flex items-center">
                         <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录
                     </button>
                 </div>
             </aside>
-            <main class="flex-1 p-8 overflow-y-auto" id="main-content"></main>
+            
+            <!-- Main Content -->
+            <main class="flex-1 p-4 md:p-8 overflow-y-auto" id="main-content"></main>
         </div>
     </div>
 
@@ -229,19 +236,19 @@
                     </button>
                 </div>
                 <input type="file" id="edit-image-input" class="hidden" accept="image/*">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
                     <div><label class="label">品牌</label><select id="edit-product-brand" class="input mt-1"></select></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
                     <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
                 </div>
                 <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
                     <p class="font-semibold mb-2 text-purple-700">折扣设置 🍬</p>
-                    <div class="grid grid-cols-3 gap-4 items-center">
-                        <div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
-                        <div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                        <div class="sm:col-span-1"><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
+                        <div class="sm:col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
                     </div>
                     <div class="flex justify-between items-center mt-2">
                         <div class="flex items-center">
@@ -1373,6 +1380,27 @@
         if (existingToken) {
             initializeApp(existingToken);
         }
+        // --- 新增：移动端菜单逻辑 ---
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const overlay = document.getElementById('mobile-menu-overlay');
+
+        const toggleMenu = () => {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMenu);
+        }
+        if (overlay) {
+            overlay.addEventListener('click', toggleMenu);
+        }
+        // 在手机端点击菜单项后自动关闭菜单
+        sidebarNav.addEventListener('click', (e) => {
+            if (e.target.closest('.tab-button') && window.innerWidth < 768) {
+                toggleMenu();
+            }
     });
     </script>
 </body>
