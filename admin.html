@@ -155,7 +155,7 @@
                             <button id="bulk-delete-btn" class="btn btn-danger text-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3">分类</th><th class="p-3">品牌</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3" style="min-width: 150px;">分类</th><th class="p-3">品牌</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div>
                 </div>`,
             brands: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">品牌管理</h2>
@@ -279,21 +279,17 @@
             }, 3000);
         }
         
-        // 修改点: 改进下拉菜单的打开/关闭逻辑
         function setupDropdowns() {
             document.body.addEventListener('click', (e) => {
                 const trigger = e.target.closest('.dropdown-trigger');
                 const activeMenus = document.querySelectorAll('.dropdown-menu.active');
 
-                // Case 1: Clicked on a trigger
                 if (trigger) {
                     const menuToToggle = trigger.nextElementSibling;
-                    // Close all other menus
                     activeMenus.forEach(menu => {
                         if (menu !== menuToToggle) menu.classList.remove('active', 'up');
                     });
 
-                    // Toggle the clicked menu
                     if (menuToToggle) {
                         const isActive = menuToToggle.classList.toggle('active');
                         if (isActive) {
@@ -305,7 +301,6 @@
                     return;
                 }
 
-                // Case 2: Clicked outside of any active menu
                 if (!e.target.closest('.dropdown-menu.active')) {
                     activeMenus.forEach(menu => menu.classList.remove('active', 'up'));
                 }
@@ -326,12 +321,10 @@
         async function loadNavigation() {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
-            // 修改点: 移除固定的 "Home" 项的显示
             navList.innerHTML = '';
             const { data } = await db.from('navigation').select('*').order('display_order');
             if (data) {
                 navCache = data;
-                // The filter also removes "Home" from being rendered.
                 data.filter(item => item.link_text.toLowerCase() !== 'home').forEach(item => renderNavItem(item));
             }
             document.getElementById('add-nav-btn').addEventListener('click', () => renderNavItem({}, true));
@@ -382,7 +375,6 @@
                 tr.dataset.id = p.id;
                 const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
                 
-                // 修改点: 更新分类下拉菜单的HTML结构
                 const categoryDropdownItems = categories.map(cat => `
                     <label class="dropdown-item">
                         <input type="checkbox" value="${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''}>
@@ -410,7 +402,7 @@
                     <td class="p-3"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
                     <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
                     <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url || 'https://placehold.co/40x40/f3f4f6/374151?text=Img'}" class="w-10 h-10 object-cover rounded-md"><span class="font-semibold">${p.name}</span></div></td>
-                    <td class="p-3">${categoryDropdown}</td>
+                    <td class="p-3" style="min-width: 150px;">${categoryDropdown}</td>
                     <td class="p-3">${brandDropdown}</td>
                     <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
                     <td class="p-3">${p.target_url || '—'}</td>
@@ -420,7 +412,6 @@
                     <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button></td>`;
                 productListEl.appendChild(tr);
                 
-                // Populate brand dropdown (no changes here)
                 tr.querySelector('.dropdown-menu[data-type="brand"]').innerHTML = brandsCache.map(brand => `<div class="dropdown-item" data-brand-id="${brand.id}">${brand.name}</div>`).join('');
             });
             lucide.createIcons();
@@ -566,7 +557,6 @@
             showLoading(true);
             try {
                 if (idsToDelete.length > 0) await db.from('navigation').delete().in('id', idsToDelete);
-                // "Home" is managed automatically, not from the UI.
                 if (itemsToUpsert.length > 0) await db.from('navigation').upsert(itemsToUpsert);
                 if (itemsToInsert.length > 0) await db.from('navigation').insert(itemsToInsert);
                 showAlert('导航栏已更新！'); await loadNavigation();
@@ -837,15 +827,13 @@
             const target = e.target;
             const id = target.closest('[data-id]')?.dataset.id;
             
-            // Handle brand selection
             if (target.closest('.dropdown-menu[data-type="brand"] .dropdown-item')) {
                  const brandId = target.closest('.dropdown-item').dataset.brandId;
                  target.closest('.custom-dropdown').querySelector('.dropdown-trigger').textContent = target.textContent;
                  updateProductField(id, 'brand_id', brandId);
-                 return; // Prevent other handlers
+                 return;
             }
 
-            // Handle category "Apply" button
             if (target.classList.contains('save-category-btn')) {
                 const menu = target.closest('.dropdown-menu');
                 const trigger = menu.previousElementSibling;
@@ -1078,6 +1066,8 @@
             div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
                 const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
                 renderProductSelectionItem(product, targetList, !isInSale);
+                // 修改点: 确保移动后图标能正确渲染
+                lucide.createIcons();
                 div.remove();
             });
         }
