@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑曜石金后台面板</title>
+    <title>Spreadsheet管理后台面板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,145 +11,150 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Obsidian Gold Theme --- */
+        /* --- Sweet Candy Theme --- */
         :root {
-            --bg-main: #121212;
-            --bg-panel: #1e1e1e;
-            --border-color: #333333;
-            --accent-gold: #FFD700;
-            --accent-gold-dark: #cca300;
-            --text-primary: #EAEAEA;
-            --text-secondary: #A0A0A0;
-            --danger-color: #ef4444;
+            --bg-main: #FFF9FB;
+            --bg-panel: #FFFFFF;
+            --border-color: #FCE7F3;
+            --accent-pink: #F472B6;
+            --accent-purple: #C084FC;
+            --accent-blue: #60A5FA;
+            --text-primary: #4B5563;
+            --text-secondary: #9CA3AF;
+            --danger-color: #F87171;
         }
 
-        @keyframes subtle-pan {
-            100% { background-position: 15% 50%; }
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Quicksand', sans-serif;
             background-color: var(--bg-main);
             color: var(--text-primary);
             overflow: hidden;
         }
         
-        body::before {
-            content: '';
+        #candy-background {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: -1;
-            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.05) 0%, rgba(18, 18, 18, 0) 60%);
-            animation: subtle-pan 20s alternate infinite;
+            overflow: hidden;
+        }
+        .candy {
+            position: absolute;
+            font-size: 20px;
+            animation: fall linear infinite;
         }
 
         /* Generic Panel Style */
         .panel {
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(244, 114, 182, 0.1), 0 8px 10px -6px rgba(244, 114, 182, 0.1);
         }
         
         /* Sidebar Styling */
         aside {
-            background: #181818;
+            background: var(--bg-panel);
             border-right: 1px solid var(--border-color);
         }
 
         .tab-button {
             position: relative;
-            display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 500; color: var(--text-secondary); transition: all 0.3s ease;
+            display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-weight: 600; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .tab-button:hover {
-            background-color: rgba(255, 215, 0, 0.05);
-            color: var(--accent-gold);
+            background-color: #FEF2F2;
+            color: var(--accent-pink);
+            transform: scale(1.05);
         }
         .tab-button.active {
-            background-color: var(--accent-gold);
-            color: #121212; 
+            background: var(--accent-pink);
+            color: white; 
             font-weight: 700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 4px 14px rgba(244, 114, 182, 0.3);
+            transform: scale(1.05);
         }
 
         /* General UI Elements */
-        .label { font-weight: 500; color: var(--text-primary); }
+        .label { font-weight: 600; color: var(--text-primary); }
         .input, select.input, .dropdown-trigger { 
             width: 100%; 
-            border: 1px solid var(--border-color); 
-            border-radius: 0.5rem; 
+            border: 1px solid #E5E7EB; 
+            border-radius: 0.75rem; 
             padding: 0.5rem 0.75rem; 
             transition: all 0.2s ease;
-            background-color: #2a2a2a;
+            background-color: #F9FAFB;
             color: var(--text-primary);
         }
-        .input::placeholder { color: var(--text-secondary); opacity: 0.7; }
+        .input::placeholder { color: var(--text-secondary); }
         .input:focus, select.input:focus, .dropdown-trigger:focus { 
             outline: none; 
-            border-color: var(--accent-gold); 
-            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3); 
-            background-color: #333333;
+            border-color: var(--accent-pink); 
+            box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2); 
+            background-color: white;
         }
         
         /* Button Styling */
-        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; color: #121212; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 700; color: white; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; }
         .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
-        .btn:disabled { background: #4a4a4a !important; color: var(--text-secondary); cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn:disabled { background: #D1D5DB !important; color: #9CA3AF; cursor: not-allowed; box-shadow: none; transform: none; }
         .btn-primary { 
-            background-color: var(--accent-gold);
-            border-color: var(--accent-gold-dark);
+            background-color: var(--accent-pink);
         }
-        .btn-primary:hover:not(:disabled) { background-color: var(--accent-gold-dark); box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); transform: translateY(-1px); }
-        .btn-secondary { background-color: #333; color: var(--text-primary); border-color: #555; }
-        .btn-secondary:hover:not(:disabled) { background-color: #444; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
+        .btn-primary:hover:not(:disabled) { background-color: #EC4899; box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3); transform: translateY(-2px); }
+        .btn-secondary { background-color: #A78BFA; }
+        .btn-secondary:hover:not(:disabled) { background-color: #9333EA; }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover:not(:disabled) { background-color: #EF4444; }
 
-        .sortable-ghost { background: rgba(255, 215, 0, 0.1); border: 1px dashed var(--accent-gold); border-radius: 0.5rem; }
+        .sortable-ghost { background: rgba(244, 114, 182, 0.1); border: 2px dashed var(--border-color); border-radius: 0.75rem; }
         .sortable-chosen { cursor: grabbing; }
 
         /* Toggle Switch Styling */
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
-        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .toggle-slider { background-color: var(--accent-gold); }
-        input:checked + .toggle-slider:before { transform: translateX(16px); }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #D1D5DB; transition: .4s; border-radius: 34px; }
+        .toggle-slider:before { position: absolute; content: "🤍"; font-size: 12px; line-height: 16px; text-align: center; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: var(--accent-pink); }
+        input:checked + .toggle-slider:before { content: "💖"; transform: translateX(16px); }
         
         /* Dropdown Styling */
         .custom-dropdown { position: relative; }
         .dropdown-menu { 
             display: none;
             position: absolute; top: 100%; left: 0; right: 0; 
-            background-color: #2a2a2a;
+            background-color: white;
             border: 1px solid var(--border-color);
-            border-radius: 0.5rem; 
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            border-radius: 0.75rem; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             z-index: 10; margin-top: 4px;
         }
         .dropdown-menu.up { top: auto; bottom: 100%; }
         .dropdown-menu.active { display: block; }
         .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; color: var(--text-secondary); }
-        .dropdown-item:hover { background-color: #333; color: var(--text-primary); }
-        .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; background-color: #444; border-color: #666;}
+        .dropdown-item:hover { background-color: #FDF2F8; color: var(--text-primary); }
+        .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; border-radius: 0.25rem; border-color: #FBCFE8; color: var(--accent-pink); }
+        .dropdown-item input[type="checkbox"]:checked { background-color: var(--accent-pink); }
         
-        .flatpickr-input { background-color: #2a2a2a !important; color: var(--text-primary); border-color: var(--border-color) !important;}
+        .flatpickr-input { background-color: #F9FAFB !important; color: var(--text-primary); border-color: #E5E7EB !important;}
         
         /* Other Styles */
-        .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.25rem; }
-        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #2a2a2a; border: 2px dashed var(--border-color); }
-        .nav-item-row .nav-url { pointer-events: none; background-color: #2a2a2a; }
-        .home-nav-item { background-color: #374151; pointer-events: none; }
+        .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.5rem; }
+        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #F9FAFB; border: 2px dashed #FBCFE8; }
+        .nav-item-row .nav-url { pointer-events: none; background-color: #F3F4F6; }
         
         .text-gradient {
-            background: linear-gradient(90deg, #FFD700, #FBBF24);
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -157,10 +162,10 @@
         }
 
         /* Table Styling */
-        table thead { background-color: #2a2a2a; color: var(--text-secondary); }
+        table thead { background-color: #FFF1F2; color: var(--accent-pink); }
         table tbody tr { border-bottom: 1px solid var(--border-color); }
         table tbody tr:last-child { border-bottom: none; }
-        table tbody tr:hover { background-color: #2a2a2a; }
+        table tbody tr:hover { background-color: #FEF2F2; }
         
         .add-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.5rem;}
         .add-form-row .flex-1 { flex: 1 1 auto; min-width: 100px; }
@@ -169,11 +174,11 @@
     </style>
 </head>
 <body>
+    <div id="candy-background"></div>
+
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-main">
-        <div id="starry-background"></div>
-        <div id="twinkling"></div>
         <div class="w-full max-w-sm panel p-8">
-            <h1 class="text-3xl font-bold text-center text-gradient mb-6">黑曜石后台</h1>
+            <h1 class="text-3xl font-bold text-center text-gradient mb-6">甜心糖果屋 · 后台</h1>
             <div class="space-y-4">
                 <div><label for="password" class="label block mb-1">请输入密码:</label><input type="password" id="password" class="input" placeholder="••••••••"></div>
                 <button id="login-btn" class="w-full btn btn-primary">登录</button>
@@ -183,14 +188,12 @@
     </div>
 
     <div id="admin-panel" class="hidden">
-        <div id="starry-background"></div>
-        <div id="twinkling"></div>
         <div class="flex h-screen bg-transparent">
             <aside class="w-64 p-4 flex flex-col">
-                <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-slate-700">SpreadSheet</h1>
+                <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-pink-100">SpreadSheet</h1>
                 <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav>
-                <div class="pt-4 border-t border-slate-700">
-                    <button id="logout-btn" class="w-full text-sm font-medium text-red-400 hover:text-danger-color text-left px-2 py-2 flex items-center">
+                <div class="pt-4 border-t border-pink-100">
+                    <button id="logout-btn" class="w-full text-sm font-medium text-red-500 hover:text-danger-color text-left px-2 py-2 flex items-center">
                         <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录
                     </button>
                 </div>
@@ -199,20 +202,20 @@
         </div>
     </div>
 
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="panel w-full max-w-2xl">
-            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+            <div class="p-6 border-b border-pink-100 flex justify-between items-center">
                 <h3 class="text-lg font-semibold">编辑产品</h3>
-                <button id="close-modal-btn" class="p-1 rounded-full hover:bg-slate-700">
-                    <i data-lucide="x" class="h-5 w-5 text-slate-400 hover:text-white"></i>
+                <button id="close-modal-btn" class="p-1 rounded-full hover:bg-pink-100">
+                    <i data-lucide="x" class="h-5 w-5 text-gray-500 hover:text-pink-500"></i>
                 </button>
             </div>
             <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <input type="hidden" id="edit-product-id">
-                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-slate-800/50 text-center cursor-pointer text-slate-400 border-2 border-dashed border-slate-600 hover:border-accent-gold">
+                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-pink-50 text-center cursor-pointer text-pink-400 border-2 border-dashed border-pink-200 hover:border-accent-pink">
                     <p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p>
                     <img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2">
-                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700">
+                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
                         <i data-lucide="trash-2" class="h-4 w-4"></i>
                     </button>
                 </div>
@@ -225,8 +228,8 @@
                     <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
                     <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
                 </div>
-                <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <p class="font-semibold mb-2">折扣设置</p>
+                <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                    <p class="font-semibold mb-2 text-purple-700">折扣设置 🍬</p>
                     <div class="grid grid-cols-3 gap-4 items-center">
                         <div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
                         <div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
@@ -237,24 +240,21 @@
                             <label for="edit-product-discount-active" class="ml-2">开启折扣</label>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold text-accent-gold"></span></p>
+                            <p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold text-accent-purple"></span></p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="p-6 bg-slate-800/50 rounded-b-xl text-right border-t border-slate-700">
+            <div class="p-6 bg-pink-50/50 rounded-b-xl text-right border-t border-pink-100">
                 <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
             </div>
         </div>
     </div>
 
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100]">
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-[100]">
         <div class="flex items-center">
-            <svg class="animate-spin h-8 w-8 text-accent-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="ml-4 text-lg font-semibold">处理中...</p>
+            <div class="w-8 h-8 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
+            <p class="ml-4 text-lg font-semibold text-gray-700">处理中...</p>
         </div>
     </div>
     
