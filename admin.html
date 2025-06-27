@@ -84,12 +84,14 @@
     <div id="loading-overlay" class="hidden fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[100]"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-blue-600"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
 
     <script type="module">
-        const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
-        const ADMIN_PASSWORD = 'mulebuy123';
-        const BASE_URL = 'https://sigma-shoes.com/';
-
         const { createClient } = supabase;
+
+        // 从环境变量中读取敏感信息，默认值用于本地测试
+        const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xfkattyyvnbmgnqqsvms.supabase.co';
+        const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
+        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'mulebuy123';
+        const BASE_URL = process.env.BASE_URL || 'https://sigma-shoes.com/';
+
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let productsCache = [];
         let brandsCache = [];
@@ -1066,120 +1068,120 @@
                     const d = new Date(settings.end_time);
                     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                     endTimeInput.value = d.toISOString().slice(0, 16);
-                } else {
-                    endTimeInput.value = '';
+                                   } else {
+                        endTimeInput.value = '';
+                    }
                 }
-            }
 
-            const allProductsList = document.getElementById('all-products-list');
-            const flashSaleProductsList = document.getElementById('flash-sale-products-list');
-            allProductsList.innerHTML = '';
-            flashSaleProductsList.innerHTML = '';
+                const allProductsList = document.getElementById('all-products-list');
+                const flashSaleProductsList = document.getElementById('flash-sale-products-list');
+                allProductsList.innerHTML = '';
+                flashSaleProductsList.innerHTML = '';
 
-            const allProducts = allProductsRes.data || [];
-            const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
-            
-            const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
-            const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
-                return flashSaleProducts.find(p => p.id === orderedItem.product_id);
-            }).filter(Boolean); 
-
-            const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
-
-            availableProducts.forEach(p => renderProductSelectionItem(p, allProductsList, false));
-            orderedFlashSaleProducts.forEach(p => renderProductSelectionItem(p, flashSaleProductsList, true));
-            
-            if (sortableFlashSaleInstance) sortableFlashSaleInstance.destroy();
-            sortableFlashSaleInstance = new Sortable(flashSaleProductsList, { animation: 150, ghostClass: 'sortable-ghost' });
-
-            lucide.createIcons();
-            document.getElementById('save-flash-sale-btn').addEventListener('click', saveFlashSaleData);
-        }
-
-        function renderProductSelectionItem(product, container, isInSale) {
-            const div = document.createElement('div');
-            div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-md border';
-            div.dataset.id = product.id;
-            div.innerHTML = `
-                <div class="flex items-center gap-2 overflow-hidden">
-                    ${isInSale ? '<i data-lucide="grip-vertical" class="cursor-move text-gray-400 mr-2"></i>' : ''}
-                    <img src="${product.image_url || 'https://placehold.co/32x32/f3f4f6/374151?text=Img'}" class="w-8 h-8 object-cover rounded">
-                    <span class="text-sm font-medium truncate">${product.name}</span>
-                </div>
-                <button class="flash-sale-product-btn p-1 rounded-full hover:bg-gray-200">
-                    ${isInSale ? '<i data-lucide="minus-circle" class="h-5 w-5 text-red-500"></i>' : '<i data-lucide="plus-circle" class="h-5 w-5 text-green-500"></i>'}
-                </button>
-            `;
-            container.appendChild(div);
-            div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
-                const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
-                div.remove();
-                renderProductSelectionItem(product, targetList, !isInSale);
-                lucide.createIcons();
-            });
-        }
-
-        async function saveFlashSaleData() {
-            showLoading(true);
-            const endTimeValue = document.getElementById('flash-sale-end-time').value;
-            const settingsUpdate = {
-                id: 1,
-                is_active: document.getElementById('flash-sale-active-toggle').checked,
-                end_time: endTimeValue ? new Date(endTimeValue).toISOString() : null,
-                updated_at: new Date().toISOString()
-            };
-
-            const selectedProductIds = Array.from(document.getElementById('flash-sale-products-list').children)
-                .map((el, index) => ({
-                    product_id: parseInt(el.dataset.id),
-                    display_order: index
-                }));
-
-            try {
-                const { error: settingsError } = await db.from('flash_sale_settings').upsert(settingsUpdate);
-                if (settingsError) throw settingsError;
-
-                const { error: deleteError } = await db.from('flash_sale_products').delete().neq('id', 0);
-                if (deleteError) throw deleteError;
+                const allProducts = allProductsRes.data || [];
+                const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
                 
-                if(selectedProductIds.length > 0) {
-                    const { error: insertError } = await db.from('flash_sale_products').insert(selectedProductIds);
-                    if (insertError) throw insertError;
+                const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
+                const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
+                    return flashSaleProducts.find(p => p.id === orderedItem.product_id);
+                }).filter(Boolean); 
+
+                const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
+
+                availableProducts.forEach(p => renderProductSelectionItem(p, allProductsList, false));
+                orderedFlashSaleProducts.forEach(p => renderProductSelectionItem(p, flashSaleProductsList, true));
+                
+                if (sortableFlashSaleInstance) sortableFlashSaleInstance.destroy();
+                sortableFlashSaleInstance = new Sortable(flashSaleProductsList, { animation: 150, ghostClass: 'sortable-ghost' });
+
+                lucide.createIcons();
+                document.getElementById('save-flash-sale-btn').addEventListener('click', saveFlashSaleData);
+            }
+
+            function renderProductSelectionItem(product, container, isInSale) {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-md border';
+                div.dataset.id = product.id;
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        ${isInSale ? '<i data-lucide="grip-vertical" class="cursor-move text-gray-400 mr-2"></i>' : ''}
+                        <img src="${product.image_url || 'https://placehold.co/32x32/f3f4f6/374151?text=Img'}" class="w-8 h-8 object-cover rounded">
+                        <span class="text-sm font-medium truncate">${product.name}</span>
+                    </div>
+                    <button class="flash-sale-product-btn p-1 rounded-full hover:bg-gray-200">
+                        ${isInSale ? '<i data-lucide="minus-circle" class="h-5 w-5 text-red-500"></i>' : '<i data-lucide="plus-circle" class="h-5 w-5 text-green-500"></i>'}
+                    </button>
+                `;
+                container.appendChild(div);
+                div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
+                    const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
+                    div.remove();
+                    renderProductSelectionItem(product, targetList, !isInSale);
+                    lucide.createIcons();
+                });
+            }
+
+            async function saveFlashSaleData() {
+                showLoading(true);
+                const endTimeValue = document.getElementById('flash-sale-end-time').value;
+                const settingsUpdate = {
+                    id: 1,
+                    is_active: document.getElementById('flash-sale-active-toggle').checked,
+                    end_time: endTimeValue ? new Date(endTimeValue).toISOString() : null,
+                    updated_at: new Date().toISOString()
+                };
+
+                const selectedProductIds = Array.from(document.getElementById('flash-sale-products-list').children)
+                    .map((el, index) => ({
+                        product_id: parseInt(el.dataset.id),
+                        display_order: index
+                    }));
+
+                try {
+                    const { error: settingsError } = await db.from('flash_sale_settings').upsert(settingsUpdate);
+                    if (settingsError) throw settingsError;
+
+                    const { error: deleteError } = await db.from('flash_sale_products').delete().neq('id', 0);
+                    if (deleteError) throw deleteError;
+                    
+                    if(selectedProductIds.length > 0) {
+                        const { error: insertError } = await db.from('flash_sale_products').insert(selectedProductIds);
+                        if (insertError) throw insertError;
+                    }
+
+                    showAlert('秒杀设置已保存!');
+                } catch (error) {
+                    showAlert('保存失败: ' + error.message, true);
+                } finally {
+                    showLoading(false);
                 }
-
-                showAlert('秒杀设置已保存!');
-            } catch (error) {
-                showAlert('保存失败: ' + error.message, true);
-            } finally {
-                showLoading(false);
             }
-        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const passwordInput = document.getElementById('password'), loginBtn = document.getElementById('login-btn');
-            const attemptLogin = () => {
-                if (passwordInput.value === ADMIN_PASSWORD) { sessionStorage.setItem('isLoggedIn', 'true'); checkAuth(); }
-                else { document.getElementById('auth-error').textContent = '密码错误，请重试。'; }
-            }
-            loginBtn.addEventListener('click', attemptLogin);
-            passwordInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') attemptLogin(); });
-            document.getElementById('logout-btn').addEventListener('click', () => { sessionStorage.removeItem('isLoggedIn'); location.reload(); });
-            document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
-            document.getElementById('save-product-changes-btn').addEventListener('click', saveProductChanges);
-            const imagePasteBox = document.getElementById('edit-image-paste-box'), imageInput = document.getElementById('edit-image-input'), deleteImageBtn = document.getElementById('delete-image-btn'), previewImage = document.getElementById('edit-preview-image'), imagePlaceholder = document.getElementById('edit-image-placeholder');
-            imagePasteBox.addEventListener('click', () => imageInput.click());
-            imageInput.addEventListener('change', (e) => {
-                if (e.target.files?.[0]) { currentEditFile = e.target.files[0]; previewImage.src = URL.createObjectURL(currentEditFile); previewImage.classList.remove('hidden'); deleteImageBtn.classList.remove('hidden'); imagePlaceholder.classList.add('hidden'); }
+            document.addEventListener('DOMContentLoaded', () => {
+                const passwordInput = document.getElementById('password'), loginBtn = document.getElementById('login-btn');
+                const attemptLogin = () => {
+                    if (passwordInput.value === ADMIN_PASSWORD) { sessionStorage.setItem('isLoggedIn', 'true'); checkAuth(); }
+                    else { document.getElementById('auth-error').textContent = '密码错误，请重试。'; }
+                }
+                loginBtn.addEventListener('click', attemptLogin);
+                passwordInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') attemptLogin(); });
+                document.getElementById('logout-btn').addEventListener('click', () => { sessionStorage.removeItem('isLoggedIn'); location.reload(); });
+                document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
+                document.getElementById('save-product-changes-btn').addEventListener('click', saveProductChanges);
+                const imagePasteBox = document.getElementById('edit-image-paste-box'), imageInput = document.getElementById('edit-image-input'), deleteImageBtn = document.getElementById('delete-image-btn'), previewImage = document.getElementById('edit-preview-image'), imagePlaceholder = document.getElementById('edit-image-placeholder');
+                imagePasteBox.addEventListener('click', () => imageInput.click());
+                imageInput.addEventListener('change', (e) => {
+                    if (e.target.files?.[0]) { currentEditFile = e.target.files[0]; previewImage.src = URL.createObjectURL(currentEditFile); previewImage.classList.remove('hidden'); deleteImageBtn.classList.remove('hidden'); imagePlaceholder.classList.add('hidden'); }
+                });
+                deleteImageBtn.addEventListener('click', (e) => { e.stopPropagation(); currentEditFile = null; currentEditImageUrl = null; previewImage.src = ''; previewImage.classList.add('hidden'); deleteImageBtn.classList.add('hidden'); imagePlaceholder.classList.remove('hidden'); imageInput.value = ''; });
+                const checkAuth = () => {
+                    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                        authScreen.classList.add('hidden'); adminPanel.classList.remove('hidden');
+                        setupSidebarNav(); renderPanel('dashboard'); setupDropdowns();
+                    }
+                };
+                checkAuth();
             });
-            deleteImageBtn.addEventListener('click', (e) => { e.stopPropagation(); currentEditFile = null; currentEditImageUrl = null; previewImage.src = ''; previewImage.classList.add('hidden'); deleteImageBtn.classList.add('hidden'); imagePlaceholder.classList.remove('hidden'); imageInput.value = ''; });
-            const checkAuth = () => {
-                if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                    authScreen.classList.add('hidden'); adminPanel.classList.remove('hidden');
-                    setupSidebarNav(); renderPanel('dashboard'); setupDropdowns();
-                }
-            };
-            checkAuth();
-        });
-    </script>
+        </script>
 </body>
 </html>
