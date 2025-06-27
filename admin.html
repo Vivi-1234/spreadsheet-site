@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
-    <!-- ADDED: New Libraries for Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -27,6 +26,7 @@
         .input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; transition: all 0.2s ease; }
         .input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
         .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; color: white; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
         .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .btn-primary { background-color: #2563eb; }
         .btn-primary:hover:not(:disabled) { background-color: #1d4ed8; }
@@ -53,7 +53,7 @@
 
         .custom-dropdown { position: relative; }
         .dropdown-trigger { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background-color: white; cursor: pointer; }
-        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 200px; overflow-y: auto; margin-top: 4px;}
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 10; margin-top: 4px;}
         .dropdown-menu.up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 4px; }
         .dropdown-menu.active { display: block; }
         .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; }
@@ -170,6 +170,7 @@
             navigation: `
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">导航栏管理 (分类)</h2>
                 <div class="bg-white p-6 rounded-xl shadow-md max-w-2xl">
+                    <p class="text-sm text-gray-500 mb-4">在这里管理前端页面产品区上方的分类筛选按钮。可以拖拽进行排序。</p>
                     <div id="navigation-list" class="space-y-3 mb-4"></div>
                     <div class="mt-4"><button id="add-nav-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加导航项</button></div>
                     <div class="text-right mt-4"><button id="save-nav-btn" class="btn btn-primary">保存全部变更</button></div>
@@ -180,7 +181,6 @@
                     <div><label for="siteTitle" class="label">主标题</label><input type="text" id="siteTitle" class="input mt-1"></div>
                     <div><label for="siteSubtitle" class="label">副标题</label><textarea id="siteSubtitle" class="input mt-1" rows="2"></textarea></div>
                     <div><label for="videoUrl" class="label">教程视频链接</label><input type="text" id="videoUrl" class="input mt-1"><p class="text-xs text-gray-500 mt-1">提示: 请使用 YouTube 的 "embed" 格式链接。</p></div>
-                    <div><label for="productSectionTitle" class="label">产品区标题</label><input type="text" id="productSectionTitle" class="input mt-1"></div>
                     <div class="text-right"><button id="save-settings-btn" class="btn btn-primary">保存设置</button></div>
                 </div>`,
             social: `
@@ -213,7 +213,6 @@
                         <div id="query-ref-result" class="mt-4 hidden"><p>此ID带来的访问次数: <span id="ref-visit-count" class="font-bold text-lg">0</span></p></div>
                     </div>
                 </div>`,
-            // 新增: 秒杀管理模板
             flash_sale: `
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">秒杀管理</h2>
@@ -264,7 +263,7 @@
                 case 'brands': loadBrands(); break;
                 case 'social': loadSocialLinks(); break;
                 case 'affiliate': initAffiliatePanel(); break;
-                case 'flash_sale': loadFlashSaleData(); break; // 新增
+                case 'flash_sale': loadFlashSaleData(); break;
             }
         }
 
@@ -280,20 +279,35 @@
             }, 3000);
         }
         
+        // 修改点: 改进下拉菜单的打开/关闭逻辑
         function setupDropdowns() {
             document.body.addEventListener('click', (e) => {
                 const trigger = e.target.closest('.dropdown-trigger');
-                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                    if (menu !== trigger?.nextElementSibling) menu.classList.remove('active', 'up');
-                });
-                if (!trigger) return;
-                const menu = trigger.nextElementSibling;
-                if (!menu) return;
-                const isActive = menu.classList.toggle('active');
-                if (isActive) {
-                    const rect = trigger.getBoundingClientRect();
-                    const spaceBelow = window.innerHeight - rect.bottom;
-                    menu.classList.toggle('up', spaceBelow < menu.offsetHeight + 10);
+                const activeMenus = document.querySelectorAll('.dropdown-menu.active');
+
+                // Case 1: Clicked on a trigger
+                if (trigger) {
+                    const menuToToggle = trigger.nextElementSibling;
+                    // Close all other menus
+                    activeMenus.forEach(menu => {
+                        if (menu !== menuToToggle) menu.classList.remove('active', 'up');
+                    });
+
+                    // Toggle the clicked menu
+                    if (menuToToggle) {
+                        const isActive = menuToToggle.classList.toggle('active');
+                        if (isActive) {
+                            const rect = trigger.getBoundingClientRect();
+                            const spaceBelow = window.innerHeight - rect.bottom;
+                            menuToToggle.classList.toggle('up', spaceBelow < menuToToggle.offsetHeight + 10);
+                        }
+                    }
+                    return;
+                }
+
+                // Case 2: Clicked outside of any active menu
+                if (!e.target.closest('.dropdown-menu.active')) {
+                    activeMenus.forEach(menu => menu.classList.remove('active', 'up'));
                 }
             });
         }
@@ -305,7 +319,6 @@
                 document.getElementById('siteTitle').value = data.site_title;
                 document.getElementById('siteSubtitle').value = data.site_subtitle;
                 document.getElementById('videoUrl').value = data.video_url;
-                document.getElementById('productSectionTitle').value = data.product_section_title;
             }
             document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
         }
@@ -313,10 +326,12 @@
         async function loadNavigation() {
             const navList = document.getElementById('navigation-list');
             if (!navList) return;
-            navList.innerHTML = `<div class="flex items-center gap-2 nav-item-row home-nav-item p-2 rounded"><input type="text" value="Home" class="input nav-text w-1/3" disabled><input type="text" value="${BASE_URL}" class="input nav-url w-2/3" disabled></div>`;
+            // 修改点: 移除固定的 "Home" 项的显示
+            navList.innerHTML = '';
             const { data } = await db.from('navigation').select('*').order('display_order');
             if (data) {
                 navCache = data;
+                // The filter also removes "Home" from being rendered.
                 data.filter(item => item.link_text.toLowerCase() !== 'home').forEach(item => renderNavItem(item));
             }
             document.getElementById('add-nav-btn').addEventListener('click', () => renderNavItem({}, true));
@@ -366,7 +381,27 @@
                 tr.className = 'bg-white border-b product-row';
                 tr.dataset.id = p.id;
                 const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
-                const categoryDropdown = `<div class="custom-dropdown"><div class="dropdown-trigger" data-type="category" data-id="${p.id}">${selectedCategories.join(', ') || '选择分类'}</div><div class="dropdown-menu" data-type="category" data-id="${p.id}"></div></div>`;
+                
+                // 修改点: 更新分类下拉菜单的HTML结构
+                const categoryDropdownItems = categories.map(cat => `
+                    <label class="dropdown-item">
+                        <input type="checkbox" value="${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''}>
+                        <span>${cat}</span>
+                    </label>`).join('');
+                
+                const categoryDropdown = `
+                    <div class="custom-dropdown">
+                        <div class="dropdown-trigger" data-type="category" data-id="${p.id}">${selectedCategories.join(', ') || '选择分类'}</div>
+                        <div class="dropdown-menu" data-type="category" data-id="${p.id}">
+                            <div class="p-2 space-y-1 max-h-48 overflow-y-auto">
+                                ${categoryDropdownItems}
+                            </div>
+                            <div class="p-2 border-t mt-1">
+                                <button class="btn btn-primary btn-xs w-full save-category-btn">应用</button>
+                            </div>
+                        </div>
+                    </div>`;
+
                 const brandDropdown = `<div class="custom-dropdown"><div class="dropdown-trigger" data-type="brand" data-id="${p.id}">${p.brands?.name || '选择品牌'}</div><div class="dropdown-menu" data-type="brand" data-id="${p.id}"></div></div>`;
                 const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
                 const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
@@ -384,7 +419,8 @@
                     <td class="p-3">${expiryDate}</td>
                     <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-gray-200 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-blue-600"></i></button></td>`;
                 productListEl.appendChild(tr);
-                tr.querySelector('.dropdown-menu[data-type="category"]').innerHTML = categories.map(cat => `<div class="dropdown-item"><input type="checkbox" id="cat-${p.id}-${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''} value="${cat}"><label for="cat-${p.id}-${cat}">${cat}</label></div>`).join('');
+                
+                // Populate brand dropdown (no changes here)
                 tr.querySelector('.dropdown-menu[data-type="brand"]').innerHTML = brandsCache.map(brand => `<div class="dropdown-item" data-brand-id="${brand.id}">${brand.name}</div>`).join('');
             });
             lucide.createIcons();
@@ -500,7 +536,6 @@
                 site_title: document.getElementById('siteTitle').value,
                 site_subtitle: document.getElementById('siteSubtitle').value,
                 video_url: document.getElementById('videoUrl').value,
-                product_section_title: document.getElementById('productSectionTitle').value,
             };
             const { error } = await db.from('settings').upsert(updates);
             if (error) showAlert('保存失败: ' + error.message, true);
@@ -531,7 +566,7 @@
             showLoading(true);
             try {
                 if (idsToDelete.length > 0) await db.from('navigation').delete().in('id', idsToDelete);
-                itemsToUpsert.push({ id: 1, link_text: 'Home', link_url: BASE_URL, display_order: 0 });
+                // "Home" is managed automatically, not from the UI.
                 if (itemsToUpsert.length > 0) await db.from('navigation').upsert(itemsToUpsert);
                 if (itemsToInsert.length > 0) await db.from('navigation').insert(itemsToInsert);
                 showAlert('导航栏已更新！'); await loadNavigation();
@@ -801,21 +836,29 @@
         function handleProductListClicks(e) {
             const target = e.target;
             const id = target.closest('[data-id]')?.dataset.id;
-            if (target.closest('.dropdown-item')) {
+            
+            // Handle brand selection
+            if (target.closest('.dropdown-menu[data-type="brand"] .dropdown-item')) {
+                 const brandId = target.closest('.dropdown-item').dataset.brandId;
+                 target.closest('.custom-dropdown').querySelector('.dropdown-trigger').textContent = target.textContent;
+                 updateProductField(id, 'brand_id', brandId);
+                 return; // Prevent other handlers
+            }
+
+            // Handle category "Apply" button
+            if (target.classList.contains('save-category-btn')) {
                 const menu = target.closest('.dropdown-menu');
                 const trigger = menu.previousElementSibling;
                 const productId = menu.dataset.id;
-                if(menu.dataset.type === 'category') {
-                    const selected = Array.from(menu.querySelectorAll('input:checked')).map(cb => cb.value);
-                    trigger.textContent = selected.join(', ') || '选择分类';
-                    updateProductField(productId, 'category', selected.join(','));
-                } else if (menu.dataset.type === 'brand') {
-                    const brandId = target.closest('.dropdown-item').dataset.brandId;
-                    trigger.textContent = target.textContent;
-                    updateProductField(productId, 'brand_id', brandId);
-                }
+                const selected = Array.from(menu.querySelectorAll('input:checked')).map(cb => cb.value);
+                
+                trigger.textContent = selected.join(', ') || '选择分类';
+                updateProductField(productId, 'category', selected.join(','));
+                
+                menu.classList.remove('active', 'up');
                 return;
             }
+
             if (target.classList.contains('product-checkbox')) updateBulkActionBar();
             else if (target.classList.contains('discount-toggle')) toggleDiscount(id, target.checked);
             else if (target.closest('.edit-product-btn')) openEditModal(id);
@@ -969,7 +1012,7 @@
             });
         }
         
-        // --- Flash Sale Panel Functions (新增) ---
+        // --- Flash Sale Panel Functions ---
         async function loadFlashSaleData() {
             showLoading(true);
             const [settingsRes, allProductsRes, flashSaleProductsRes] = await Promise.all([
@@ -979,7 +1022,6 @@
             ]);
             showLoading(false);
 
-            // Populate settings
             const settings = settingsRes.data;
             if (settings) {
                 document.getElementById('flash-sale-active-toggle').checked = settings.is_active;
@@ -993,7 +1035,6 @@
                 }
             }
 
-            // Populate product lists
             const allProductsList = document.getElementById('all-products-list');
             const flashSaleProductsList = document.getElementById('flash-sale-products-list');
             allProductsList.innerHTML = '';
@@ -1003,11 +1044,9 @@
             const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
             
             const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
-             // Re-order based on display_order from the junction table
             const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
                 return flashSaleProducts.find(p => p.id === orderedItem.product_id);
-            }).filter(Boolean); // Filter out any undefined if product was deleted but junction entry remains
-
+            }).filter(Boolean); 
 
             const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
 
@@ -1063,8 +1102,7 @@
                 const { error: settingsError } = await db.from('flash_sale_settings').upsert(settingsUpdate);
                 if (settingsError) throw settingsError;
 
-                // Simple approach: delete all and re-insert
-                const { error: deleteError } = await db.from('flash_sale_products').delete().neq('id', 0); // a trick to delete all rows
+                const { error: deleteError } = await db.from('flash_sale_products').delete().neq('id', 0);
                 if (deleteError) throw deleteError;
                 
                 if(selectedProductIds.length > 0) {
@@ -1079,7 +1117,6 @@
                 showLoading(false);
             }
         }
-
 
         // --- Grand Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
