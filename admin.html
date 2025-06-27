@@ -1068,7 +1068,7 @@
         return Object.values(dataMap);
     }
 
-    function renderChart(canvasId, type, labels, data, label) {
+   function renderChart(canvasId, type, labels, data, label) {
         const ctx = document.getElementById(canvasId)?.getContext('2d');
         if (!ctx) return;
     
@@ -1078,24 +1078,35 @@
 
         const chartOptions = {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: 'var(--text-primary)' } } },
+            plugins: { 
+                legend: { 
+                    labels: { 
+                        color: 'var(--text-primary)',
+                        font: {
+                            family: "'Quicksand', sans-serif"
+                        }
+                    } 
+                } 
+            },
             scales: { 
-                x: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, beginAtZero: true }
+                x: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'rgba(233, 213, 255, 0.2)' } },
+                y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'rgba(233, 213, 255, 0.2)' }, beginAtZero: true }
             }
         };
         
-        const pastelColors = ['#f472b6', '#c084fc', '#60a5fa', '#fde047', '#4ade80', '#fb923c'];
+        const pastelColors = ['#f472b6', '#c084fc', '#60a5fa', '#fde047', '#4ade80', '#fb923c', '#eab308', '#f87171'];
 
         let chartData = {};
 
         if (type === 'line') {
             const lineColor = label === '网站访问量' ? 'var(--accent-purple)' : 'var(--accent-pink)';
             const bgColor = label === '网站访问量' ? 'rgba(192, 132, 252, 0.2)' : 'rgba(244, 114, 182, 0.2)';
-            chartData = { labels, datasets: [{ label, data, borderColor: lineColor, backgroundColor: bgColor, fill: true, tension: 0.3, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointHoverRadius: 6 }] };
+            chartData = { labels, datasets: [{ label, data, borderColor: lineColor, backgroundColor: bgColor, fill: true, tension: 0.4, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointHoverRadius: 6, pointHoverBorderWidth: 2 }] };
         } else if (type === 'pie') {
-            chartData = { labels, datasets: [{ label, data, backgroundColor: pastelColors, hoverOffset: 4, borderColor: 'var(--bg-panel)' }] };
-            delete chartOptions.scales; // No scales for pie chart
+            chartData = { labels, datasets: [{ label, data, backgroundColor: pastelColors, hoverOffset: 8, borderColor: 'var(--bg-panel)', hoverBorderWidth: 4 }] };
+            delete chartOptions.scales; // 饼图不需要坐标轴
+            // --- 新增：将图例放在右边 ---
+            chartOptions.plugins.legend.position = 'right';
         }
     
         new Chart(ctx, { type, data: chartData, options: chartOptions });
