@@ -738,7 +738,7 @@
         const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
         const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
         const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
-        const expires_at = form.querySelector('input[type="datetime-local"]').value ? new Date(form.querySelector('input[type="datetime-local"]').value).toISOString() : null;
+        const expires_at = form.querySelector('input[placeholder="折扣到期时间"]').value ? new Date(form.querySelector('input[placeholder="折扣到期时间"]').value).toISOString() : null;
         
         if (!name || isNaN(price) || !target_url) { 
             showLoading(false); 
