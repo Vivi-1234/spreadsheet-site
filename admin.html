@@ -169,9 +169,31 @@
         table tbody tr:last-child { border-bottom: none; }
         table tbody tr:hover { background-color: #FAF5FF; }
         
-        .add-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.5rem;}
-        .add-form-row .flex-1 { flex: 1 1 auto; min-width: 100px; }
-        .add-form-row .add-image-box { flex: 0 0 80px; height: 80px; }
+     .add-form-row { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    flex-wrap: nowrap; 
+    margin-bottom: 1rem; 
+    padding-bottom: 0.5rem;
+}
+
+/* 在小屏幕上应用 overflow-x: auto */
+@media (max-width: 767px) {
+    .add-form-row {
+        overflow-x: auto;
+    }
+}
+
+.add-form-row .flex-1 { 
+    flex: 1 1 auto; 
+    min-width: 100px; 
+}
+
+.add-form-row .add-image-box { 
+    flex: 0 0 80px; 
+    height: 80px; 
+}
         
     </style>
 </head>
