@@ -184,7 +184,7 @@
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
                     const homeLink = `<a href="/" class="nav-link text-lg font-medium hidden md:block">Home</a>`;
-                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter"></i><span class="nav-link hidden md:inline">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
+                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter"></i><span class="nav-link">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
                     mainNavContainer.innerHTML = homeLink + brandDropdownHTML;
                 }
 
@@ -245,24 +245,26 @@
                 }
             });
             
-            document.querySelectorAll('.brand-dropdown').forEach(dropdown => {
-                const trigger = dropdown.querySelector('.nav-trigger');
-                const menu = dropdown.querySelector('.brand-dropdown-menu');
-                trigger?.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+            const brandDropdown = document.querySelector('.brand-dropdown');
+            if (brandDropdown) {
+                const trigger = brandDropdown.querySelector('.nav-trigger');
+                const menu = brandDropdown.querySelector('.brand-dropdown-menu');
+                trigger?.addEventListener('click', e => { e.stopPropagation(); brandDropdown.classList.toggle('active'); });
                 menu?.addEventListener('click', e => {
                     const item = e.target.closest('.brand-dropdown-item');
                     if(item) {
                         currentBrandFilter = item.dataset.brand;
                         applyFiltersAndRender();
-                        dropdown.classList.remove('active');
+                        brandDropdown.classList.remove('active');
                     }
                 });
-            });
+            }
 
             document.addEventListener('click', e => {
-                document.querySelectorAll('.brand-dropdown.active').forEach(dropdown => {
-                    if (!dropdown.contains(e.target)) dropdown.classList.remove('active');
-                });
+                const brandDropdown = document.querySelector('.brand-dropdown');
+                if (brandDropdown && !brandDropdown.contains(e.target)) {
+                    brandDropdown.classList.remove('active');
+                }
             });
         }
         
