@@ -930,18 +930,32 @@
         }
     }
     
-    async function bulkToggleDiscount() {
-        const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => parseInt(cb.dataset.id));
-        if (selectedIds.length === 0) return showAlert('请先选择要操作的产品。', true);
-        const productsToUpdate = productsCache.filter(p => selectedIds.includes(p.id));
-        const turnOn = productsToUpdate.some(p => !p.discount_is_active);
-        if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
-            showLoading(true);
-            await db.from('products').upsert(productsToUpdate.map(p => ({id: p.id, discount_is_active: turnOn})));
+   async function bulkToggleDiscount() {
+    const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => parseInt(cb.dataset.id));
+    if (selectedIds.length === 0) return showAlert('请先选择要操作的产品。', true);
+    
+    const productsToUpdate = productsCache.filter(p => selectedIds.includes(p.id));
+    const turnOn = productsToUpdate.some(p => !p.discount_is_active);
+
+    if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
+        showLoading(true);
+        try {
+            // 为每个选中的产品创建一个独立的更新操作
+            const updatePromises = selectedIds.map(id => 
+                db.from('products').update({ discount_is_active: turnOn }).eq('id', id)
+            );
+            // 同时执行所有更新
+            await Promise.all(updatePromises);
+            
+            // 操作成功后重新加载产品列表
             await loadProducts();
+        } catch (error) {
+            showAlert('批量更新折扣状态失败: ' + error.message, true);
+        } finally {
             showLoading(false);
         }
     }
+}
 
     async function toggleDiscount(id, isActive) {
         await db.from('products').update({ discount_is_active: isActive }).eq('id', id);
