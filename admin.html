@@ -1,8 +1,8 @@
-<html lang="en-US">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>后台管理面板</title>
+    <title>琉光玻璃后台面板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -17,126 +17,256 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Starry Night Theme --- */
+        /* --- Aurora Glass Theme --- */
         :root {
-            --bg-dark: #0f172a; /* Deep blue background */
-            --bg-panel: #1e293b; /* Slightly lighter panel background */
-            --border-color: #334155;
-            --accent-blue: #38bdf8;
-            --accent-purple: #818cf8;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
+            --bg-color: #111827;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --blur-strength: 15px;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-pink: #f472b6;
+            --danger-color: #fb7185;
         }
 
-        @keyframes move-twink-back {
-            from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
+        @keyframes aurora-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-color);
             color: var(--text-primary);
+            overflow: hidden; /* Prevent scrollbars from the main body */
         }
-
-        #starry-background, #twinkling {
+        
+        #aurora-background {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
             width: 100%;
             height: 100%;
-            display: block;
             z-index: -1;
+            background: linear-gradient(45deg, var(--accent-cyan), var(--bg-color), var(--accent-purple), var(--accent-pink));
+            background-size: 400% 400%;
+            animation: aurora-gradient 15s ease infinite;
+            filter: blur(50px);
+            opacity: 0.5;
         }
 
-        #starry-background {
-            background: #000 url(https://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
-        }
-
-        #twinkling {
-            background: transparent url(https://www.script-tutorials.com/demos/360/images/twinkling.png) repeat top center;
-            animation: move-twink-back 200s linear infinite;
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
         
+        /* Sidebar Styling */
+        aside {
+            background: rgba(17, 24, 39, 0.7); /* Darker, more solid glass */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+        }
+
         .tab-button {
-            display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 500; color: var(--text-secondary); transition: all 0.2s ease; border: 1px solid transparent;
+            position: relative;
+            display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 500; color: var(--text-secondary); transition: all 0.3s ease;
         }
         .tab-button:hover {
-            background-color: rgba(129, 140, 248, 0.1);
-            color: var(--accent-purple);
+            background-color: var(--glass-bg);
+            color: var(--text-primary);
         }
         .tab-button.active {
-            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
-            color: white; box-shadow: 0 4px 15px -5px rgba(129, 140, 248, 0.5);
-            border-color: var(--accent-purple);
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            color: white; 
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
         }
+
+        /* General UI Elements */
         .label { font-weight: 500; color: var(--text-primary); }
-        .input, .dropdown-trigger {
-            width: 100%; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 0.75rem; transition: all 0.2s ease; background-color: #334155; color: var(--text-primary);
+        .input, select.input { 
+            width: 100%; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 0.75rem; 
+            transition: all 0.2s ease;
+            background-color: var(--glass-bg);
+            color: var(--text-primary);
+            backdrop-filter: blur(5px);
         }
-        .input:focus, .dropdown-trigger:focus {
-            outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
+        .input::placeholder { color: var(--text-secondary); opacity: 0.7; }
+        .input:focus, select.input:focus { 
+            outline: none; 
+            border-color: var(--accent-cyan); 
+            box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.4); 
+            background-color: rgba(30, 41, 59, 0.5);
         }
+        
+        /* Button Styling */
         .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; color: white; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; }
         .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
-        .btn:disabled { background-color: #4b5563; cursor: not-allowed; opacity: 0.5; }
-        .btn-primary { background: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); border-color: var(--accent-purple); }
-        .btn-primary:hover:not(:disabled) { box-shadow: 0 0 15px var(--accent-purple); transform: translateY(-1px); }
-        .btn-secondary { background-color: #475569; border-color: #64748b; }
-        .btn-secondary:hover:not(:disabled) { background-color: #64748b; }
-        .btn-danger { background-color: #be123c; border-color: #fda4af; }
-        .btn-danger:hover:not(:disabled) { background-color: #e11d48; }
-        .sortable-ghost { background: rgba(56, 189, 248, 0.2); }
-        
-        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        .btn:disabled { background: #4b5563 !important; cursor: not-allowed; opacity: 0.5; box-shadow: none; transform: none; }
+        .btn-primary { 
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+        }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 0 20px rgba(167, 139, 250, 0.6); transform: translateY(-2px); }
+        .btn-secondary { background-color: #4b5563; }
+        .btn-secondary:hover:not(:disabled) { background-color: #6b7280; }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover:not(:disabled) { background-color: #f43f5e; }
+
+        .sortable-ghost { background: rgba(34, 211, 238, 0.2); border-radius: 0.5rem; }
+        .sortable-chosen { cursor: grabbing; }
+
+        /* Toggle Switch Styling */
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
         .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .toggle-slider { background-color: var(--accent-purple); }
+        input:checked + .toggle-slider { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); }
         input:checked + .toggle-slider:before { transform: translateX(16px); }
-
-        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #334155; border: 1px solid var(--border-color); border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3); z-index: 10; margin-top: 4px; }
-        .dropdown-menu.up { top: auto; bottom: 100%; }
-        .dropdown-menu.active { display: block; }
-        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; color: var(--text-primary); }
-        .dropdown-item:hover { background-color: rgba(129, 140, 248, 0.2); }
+        
+        /* Dropdown Styling */
+        .custom-dropdown { position: relative; }
+        .dropdown-trigger { background-color: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-primary); }
+        .dropdown-menu { 
+            background-color: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            z-index: 10; margin-top: 4px;
+        }
+        .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; color: var(--text-secondary); }
+        .dropdown-item:hover { background-color: var(--glass-bg); color: var(--text-primary); }
         .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; }
         
-        .flatpickr-input { background-color: #334155 !important; }
-        .card { background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .text-gradient { background: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        .add-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 1rem; }
-        .add-form-row .flex-1 { flex: 1 0 auto; min-width: 0; }
-        .add-form-row .add-image-box { flex: 0 0 80px; height: 80px; }
-        .add-form-row input[type="text"],
-        .add-form-row input[type="number"],
-        .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
+        .flatpickr-input { background-color: var(--glass-bg) !important; color: var(--text-primary); border-color: var(--glass-border) !important;}
+        
+        /* Other Styles */
         .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.25rem; }
-        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: var(--glass-bg); border: 2px dashed var(--glass-border); }
+        .nav-item-row .nav-url { pointer-events: none; background-color: rgba(17, 24, 39, 0.5); }
+        .home-nav-item { background-color: #374151; pointer-events: none; }
+        
+        .text-gradient {
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Table Styling */
+        table thead { background-color: rgba(51, 65, 85, 0.5); color: var(--text-secondary); }
+        table tbody tr { border-bottom: 1px solid var(--border-color); }
+        table tbody tr:last-child { border-bottom: none; }
+        table tbody tr:hover { background-color: var(--glass-bg); }
+        
+        .add-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 1rem; }
+        .add-form-row .flex-1 { flex: 1 0 auto; min-width: 0; }
+        .add-form-row .add-image-box { flex: 0 0 80px; height: 80px; }
+        .add-form-row input[type="text"],
+        .add-form-row input[type="number"],
+        .add-form-row input[type="datetime-local"] { flex: 1; min-width: 100px; }
 
     </style>
 </head>
 <body>
-    <div id="starry-background"></div>
-    <div id="twinkling"></div>
+    <div id="aurora-background"></div>
 
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-sm card p-8"><h1 class="text-3xl font-bold text-center text-gradient mb-6">星夜 · 后台</h1><div class="space-y-4"><div><label for="password" class="label block mb-1">请输入密码:</label><input type="password" id="password" class="input" placeholder="••••••••"></div><button id="login-btn" class="w-full btn btn-primary">登录</button></div><p id="auth-error" class="text-red-400 text-sm text-center mt-4"></p></div>
+        <div class="w-full max-w-sm glass-panel p-8">
+            <h1 class="text-3xl font-bold text-center text-gradient mb-6">琉光 · 后台</h1>
+            <div class="space-y-4">
+                <div><label for="password" class="label block mb-1">请输入密码:</label><input type="password" id="password" class="input" placeholder="••••••••"></div>
+                <button id="login-btn" class="w-full btn btn-primary">登录</button>
+            </div>
+            <p id="auth-error" class="text-red-400 text-sm text-center mt-4"></p>
+        </div>
     </div>
 
-    <div id="admin-panel" class="hidden"><div class="flex h-screen"><aside class="w-64 bg-slate-900/70 backdrop-blur-lg p-4 flex flex-col border-r border-slate-700"><h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-slate-700">SpreadSheet</h1><nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav><div class="pt-4 border-t border-slate-700"><button id="logout-btn" class="w-full text-sm font-medium text-red-400 hover:underline text-left px-2 py-2 flex items-center"><i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录</button></div></aside><main class="flex-1 p-8 overflow-y-auto" id="main-content"></main></div></div>
+    <div id="admin-panel" class="hidden">
+        <div class="flex h-screen bg-transparent">
+            <aside class="w-64 p-4 flex flex-col">
+                <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-slate-700">SpreadSheet</h1>
+                <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav>
+                <div class="pt-4 border-t border-slate-700">
+                    <button id="logout-btn" class="w-full text-sm font-medium text-red-400 hover:text-danger-color text-left px-2 py-2 flex items-center">
+                        <i data-lucide="log-out" class="mr-2 h-4 w-4"></i>退出登录
+                    </button>
+                </div>
+            </aside>
+            <main class="flex-1 p-8 overflow-y-auto" id="main-content"></main>
+        </div>
+    </div>
+
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="glass-panel w-full max-w-2xl">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">编辑产品</h3>
+                <button id="close-modal-btn" class="p-1 rounded-full hover:bg-slate-700">
+                    <i data-lucide="x" class="h-5 w-5 text-slate-400 hover:text-white"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <input type="hidden" id="edit-product-id">
+                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-slate-800/50 text-center cursor-pointer text-slate-400 border-2 border-dashed border-slate-600 hover:border-accent-blue">
+                    <p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p>
+                    <img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2">
+                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                    </button>
+                </div>
+                <input type="file" id="edit-image-input" class="hidden" accept="image/*">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
+                    <div><label class="label">品牌</label><select id="edit-product-brand" class="input mt-1"></select></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
+                    <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
+                </div>
+                <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                    <p class="font-semibold mb-2">折扣设置</p>
+                    <div class="grid grid-cols-3 gap-4 items-center">
+                        <div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
+                        <div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="flex items-center">
+                            <label class="toggle-switch"><input type="checkbox" id="edit-product-discount-active"><span class="toggle-slider"></span></label>
+                            <label for="edit-product-discount-active" class="ml-2">开启折扣</label>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold text-accent-purple"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 bg-slate-800/50 rounded-b-xl text-right border-t border-slate-700">
+                <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100]">
+        <div class="flex items-center">
+            <svg class="animate-spin h-8 w-8 text-accent-cyan" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="ml-4 text-lg font-semibold">处理中...</p>
+        </div>
+    </div>
     
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div class="card w-full max-w-2xl"><div class="p-6 border-b border-slate-700 flex justify-between items-center"><h3 class="text-lg font-semibold">编辑产品</h3><button id="close-modal-btn"><i data-lucide="x" class="h-5 w-5 text-slate-400 hover:text-white"></i></button></div><div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto"><input type="hidden" id="edit-product-id"><div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-slate-800 text-center cursor-pointer text-slate-400 border-2 border-dashed border-slate-600 hover:border-accent-blue"><p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p><img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2"><button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div><input type="file" id="edit-image-input" class="hidden" accept="image/*">
-    <div class="grid grid-cols-2 gap-4">
-        <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
-        <div><label class="label">品牌</label><select id="edit-product-brand" class="input mt-1"></select></div>
-    </div>
-    <div class="grid grid-cols-2 gap-4"><div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div><div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div></div><div class="p-4 rounded-lg bg-slate-800 border border-slate-700"><p class="font-semibold mb-2">折扣设置</p><div class="grid grid-cols-3 gap-4 items-center"><div><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div><div class="col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div></div><div class="flex justify-between items-center mt-2"><div class="flex items-center"><label class="toggle-switch"><input type="checkbox" id="edit-product-discount-active"><span class="toggle-slider"></span></label><label for="edit-product-discount-active" class="ml-2">开启折扣</label></div><div class="text-right"><p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold text-accent-purple"></span></p></div></div></div></div><div class="p-6 bg-slate-800/50 rounded-b-xl text-right border-t border-slate-700"><button id="save-product-changes-btn" class="btn btn-primary">保存更改</button></div></div></div>
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100]"><div class="flex items-center"><i data-lucide="loader-2" class="animate-spin h-8 w-8 text-accent-blue"></i><p class="ml-4 text-lg font-semibold">处理中...</p></div></div>
-
     <script type="module">
         // --- Configuration ---
         const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
