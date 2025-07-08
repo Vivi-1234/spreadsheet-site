@@ -1,20 +1,16 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/products",
+      "destination": "/products.html"
     },
     {
       "source": "/admin",
       "destination": "/admin.html"
     },
     {
-      "source": "/products",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/",
-      "destination": "/how-to-buy.html"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ]
 }
