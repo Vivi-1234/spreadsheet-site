@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>How to Buy - Matrix SpreadSheet</title>
-    <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3QK8Z3H');</script>
-    <!-- End Google Tag Manager -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -136,10 +134,7 @@
     </style>
 </head>
 <body class="antialiased">
-    <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3QK8Z3H"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-
     <canvas class="matrix-rain"></canvas>
 
     <header>
@@ -150,8 +145,7 @@
     </header>
     
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10" id="main-container">
-        <!-- Content will be dynamically injected here -->
-    </main>
+        </main>
 
     <footer class="mt-20 md:mt-28 bg-transparent border-t border-border-color">
         <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
@@ -165,6 +159,27 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref');
+
+        function prepareUrl(url) {
+            if (!refId || !url) return url;
+            // Don't add ref to external links
+            if (url.startsWith('http')) return url;
+            try {
+                // Use a base URL to correctly parse relative URLs like "/products" or "/"
+                const urlObj = new URL(url, window.location.origin);
+                if (!urlObj.searchParams.has('ref')) {
+                    urlObj.searchParams.append('ref', refId);
+                }
+                // Return just the path and search params, which is what we need for href attributes
+                return urlObj.pathname + urlObj.search + urlObj.hash;
+            } catch (e) {
+                console.error('Error preparing URL:', e);
+                return url; // return original on error
+            }
+        }
 
         function slugify(text) {
             if (!text) return '';
@@ -197,9 +212,9 @@
                 // --- Build Navigation ---
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
-                    const howToBuyLink = `<a href="/" class="nav-link active">How-to-buy</a>`;
-                    const productsLink = `<a href="/products" class="nav-link">Products</a>`;
-                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><a href="/products?brand=all" class="brand-dropdown-item" data-brand="all">All Brands</a>${brands.map(brand => `<a href="/products?brand=${brand.id}" class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</a>`).join('')}</div></div>`;
+                    const howToBuyLink = `<a href="${prepareUrl('/')}" class="nav-link active">How-to-buy</a>`;
+                    const productsLink = `<a href="${prepareUrl('/products')}" class="nav-link">Products</a>`;
+                    const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><a href="${prepareUrl('/products?brand=all')}" class="brand-dropdown-item" data-brand="all">All Brands</a>${brands.map(brand => `<a href="${prepareUrl(`/products?brand=${brand.id}`)}" class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</a>`).join('')}</div></div>`;
                     mainNavContainer.innerHTML = howToBuyLink + productsLink + brandDropdownHTML;
                 }
                 
@@ -293,6 +308,7 @@
                 trigger?.addEventListener('click', e => { e.stopPropagation(); brandDropdown.classList.toggle('active'); });
             }
             document.addEventListener('click', e => {
+                const brandDropdown = document.querySelector('.brand-dropdown');
                 if (brandDropdown && !brandDropdown.contains(e.target)) {
                     brandDropdown.classList.remove('active');
                 }
