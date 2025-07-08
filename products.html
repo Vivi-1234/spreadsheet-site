@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products - Matrix SpreadSheet</title>
-    <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3QK8Z3H');</script>
-    <!-- End Google Tag Manager -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -21,10 +19,7 @@
     </style>
 </head>
 <body class="text-[#00FF00] antialiased">
-    <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3QK8Z3H"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-
     <canvas class="matrix-rain"></canvas>
     <div id="social-icons-container" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center space-y-2 md:space-y-4 mr-2 md:mr-8"></div>
 
@@ -91,13 +86,23 @@
             } catch (error) { console.error('Error in logEvent:', error); }
         }
         
-        function appendRefParam(url) {
+        function prepareUrl(url) {
             if (!refId || !url) return url;
             try {
-                const urlObj = new URL(url);
-                if (!urlObj.searchParams.has('ref')) urlObj.searchParams.append('ref', refId);
+                // Use a base URL to correctly parse relative URLs like "/" or absolute ones
+                const urlObj = new URL(url, window.location.origin);
+                if (!urlObj.searchParams.has('ref')) {
+                    urlObj.searchParams.append('ref', refId);
+                }
+                // If original URL was relative, return relative path. Otherwise, return full URL.
+                if (url.startsWith('/')) {
+                    return urlObj.pathname + urlObj.search + urlObj.hash;
+                }
                 return urlObj.toString();
-            } catch(e) { return url; }
+            } catch(e) {
+                console.error('Error preparing URL:', e);
+                return url; // return original on error
+            }
         }
         
         function renderProducts(containerId, productArray) {
@@ -121,7 +126,7 @@
                         const percentageOff = Math.round((1 - p.discount_factor) * 100);
                         if (percentageOff > 0) discountBadgeHTML = `<div class="discount-badge">${percentageOff}% OFF</div>`;
                     }
-                    productContainer.innerHTML += `<a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative"><div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div><div class="p-3 pt-2 pb-3 md:p-4 md:pt-3 md:pb-4"><h3 class="product-title font-semibold text-base md:text-lg text-[#00FF00] group-hover:text-[#00CC00] transition-colors">${p.name}</h3>${priceHTML}</div>${discountBadgeHTML}</a>`;
+                    productContainer.innerHTML += `<a href="${prepareUrl(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative"><div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div><div class="p-3 pt-2 pb-3 md:p-4 md:pt-3 md:pb-4"><h3 class="product-title font-semibold text-base md:text-lg text-[#00FF00] group-hover:text-[#00CC00] transition-colors">${p.name}</h3>${priceHTML}</div>${discountBadgeHTML}</a>`;
                 });
             } else {
                 productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products in this section.</p>`;
@@ -181,8 +186,8 @@
                 
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
-                    const howToBuyLink = `<a href="/" class="nav-link">How-to-buy</a>`;
-                    const productsLink = `<a href="/products" class="nav-link active">Products</a>`;
+                    const howToBuyLink = `<a href="${prepareUrl('/')}" class="nav-link">How-to-buy</a>`;
+                    const productsLink = `<a href="${prepareUrl('/products')}" class="nav-link active">Products</a>`;
                     const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
                     mainNavContainer.innerHTML = howToBuyLink + productsLink + brandDropdownHTML;
                 }
@@ -263,6 +268,14 @@
                     const item = e.target.closest('.brand-dropdown-item');
                     if(item) {
                         currentBrandFilter = item.dataset.brand;
+                        
+                        // When a brand is selected, we need to update the URL to reflect the new state, including the refId
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('brand', currentBrandFilter);
+                        // The refId is already in the URL, so this preserves it.
+                        // We use history.pushState to change the URL without a full page reload for a smoother experience.
+                        history.pushState({}, '', newUrl);
+
                         const selectedText = item.textContent;
                         const triggerTextSpan = trigger.querySelector('.nav-link');
                         if(triggerTextSpan) {
