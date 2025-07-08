@@ -131,11 +131,17 @@
             color: var(--text-primary);
         }
         .brand-dropdown-item:hover { background: #00ff00; color: #000; }
+        .social-icon-bubble{transition:all .3s ease;width:40px;height:40px;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);border:2px solid #00ff00}
+        .social-icon-bubble:hover{transform:scale(1.15);box-shadow:0 0 15px #00ff00}
+        .social-icon-image{width:100%;height:100%;object-fit:cover;border-radius:50%}
+        @media (min-width: 768px) { .social-icon-bubble{width:56px;height:56px} }
     </style>
 </head>
 <body class="antialiased">
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3QK8Z3H"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <canvas class="matrix-rain"></canvas>
+    <div id="social-icons-container" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center space-y-2 md:space-y-4 mr-2 md:mr-8"></div>
+
 
     <header>
         <div class="container mx-auto px-4 md:px-12 py-4 flex justify-between items-center h-[var(--header-height)]">
@@ -150,7 +156,6 @@
     <footer class="mt-20 md:mt-28 bg-transparent border-t border-border-color">
         <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
             <p class="font-bold text-lg md:text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
-            <div id="social-footer-container" class="flex justify-center items-center space-x-4 mt-6"></div>
         </div>
     </footer>
 
@@ -214,11 +219,29 @@
                     mainNavContainer.innerHTML = howToBuyLink + productsLink + brandDropdownHTML;
                 }
                 
+                 // --- Build Social Icons ---
+                const socialContainer = document.getElementById('social-icons-container');
+                if (socialContainer && socialLinks) {
+                    socialContainer.innerHTML = ''; 
+                    socialLinks.forEach(link => {
+                        const iconElement = link.icon_url ? `<img src="${link.icon_url}" alt="${link.platform_name} logo" class="social-icon-image">` : `<i data-lucide="${link.icon_svg_name || 'link'}" style="color: ${link.icon_color || '#00FF00'};"></i>`;
+                        let finalUrl = link.link_url || '#';
+                        if (finalUrl !== '#' && !finalUrl.startsWith('http')) finalUrl = `https://${finalUrl}`;
+                        socialContainer.innerHTML += `<a href="${finalUrl}" target="_blank" class="social-icon-bubble">${iconElement}</a>`;
+                    });
+                }
+
                 // --- Build Main Content ---
+                let signUpButtonHTML = '';
+                if (settings && settings.signup_url) {
+                    signUpButtonHTML = `<div class="mt-8"><a href="${settings.signup_url}" target="_blank" class="btn btn-primary text-lg">立即注册 (Sign Up)</a></div>`;
+                }
+                
                 let mainHTML = `
                     <section class="text-center pt-0 pb-12 md:pb-16 fade-in-up">
                         <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter leading-tight text-shadow-glow">How to Buy</h1>
                         <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-text-secondary">Follow these simple steps to get the best products sourced and shipped directly to you.</p>
+                        ${signUpButtonHTML}
                     </section>
                 `;
 
@@ -242,7 +265,6 @@
                         const childStepsHTML = subSteps
                             .filter(sub => sub.section_title === mainStep.title)
                             .map(subStep => {
-                                // This is the updated, more robust check for a valid image URL.
                                 const hasImage = subStep.image_url && subStep.image_url.trim() !== '';
                                 return `
                                     <div class="grid grid-cols-1 ${hasImage ? 'lg:grid-cols-2' : ''} gap-8 lg:gap-12 items-center">
@@ -279,14 +301,6 @@
 
                 mainContainer.innerHTML = mainHTML;
 
-                // --- Build Footer ---
-                const socialFooter = document.getElementById('social-footer-container');
-                if (socialLinks.length > 0) {
-                    socialFooter.innerHTML = socialLinks.map(link => {
-                        const finalUrl = link.link_url.startsWith('http') ? link.link_url : `https://${link.link_url}`;
-                        return `<a href="${finalUrl}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><div class="w-8 h-8"><img src="${link.icon_url}" alt="${link.platform_name}" class="w-full h-full object-cover rounded-full border-2 border-transparent hover:border-accent-color transition-all"></div></a>`;
-                    }).join('');
-                }
 
             } catch (error) {
                 console.error('Error initializing page:', error);
