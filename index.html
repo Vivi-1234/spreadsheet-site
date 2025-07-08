@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>How to Buy - Matrix SpreadSheet</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3QK8Z3H');</script>
+    <!-- End Google Tag Manager -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -133,6 +136,10 @@
     </style>
 </head>
 <body class="antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3QK8Z3H"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <canvas class="matrix-rain"></canvas>
 
     <header>
@@ -172,7 +179,6 @@
         async function initializePage() {
             const mainContainer = document.getElementById('main-container');
             try {
-                // Correctly query the new tables
                 const [settingsRes, stepsRes, brandsRes, socialRes] = await Promise.all([
                     db.from('how_to_buy_settings').select('video_url, signup_url').limit(1).single(),
                     db.from('how_to_buy_steps').select('*').order('display_order'),
@@ -180,10 +186,9 @@
                     db.from('social_links').select('*').order('display_order')
                 ]);
 
-                // Gracefully handle errors
                 if (brandsRes.error) throw brandsRes.error;
                 if (socialRes.error) throw socialRes.error;
-                
+
                 const settings = settingsRes.data;
                 const allSteps = stepsRes.data || [];
                 const brands = brandsRes.data || [];
@@ -192,8 +197,10 @@
                 // --- Build Navigation ---
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
+                    const howToBuyLink = `<a href="/" class="nav-link active">How-to-buy</a>`;
+                    const productsLink = `<a href="/products" class="nav-link">Products</a>`;
                     const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><a href="/products?brand=all" class="brand-dropdown-item" data-brand="all">All Brands</a>${brands.map(brand => `<a href="/products?brand=${brand.id}" class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</a>`).join('')}</div></div>`;
-                    mainNavContainer.innerHTML = `<a href="/products" class="nav-link">Products</a>${brandDropdownHTML}<a href="/" class="nav-link active">How-to-buy</a>`;
+                    mainNavContainer.innerHTML = howToBuyLink + productsLink + brandDropdownHTML;
                 }
                 
                 // --- Build Main Content ---
