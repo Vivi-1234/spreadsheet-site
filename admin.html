@@ -18,60 +18,34 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Sweetie Shake Theme (Existing) --- */
         :root {
-            --bg-main: #FEF9FF; /* A very light lavender background */
+            --bg-main: #FEF9FF;
             --bg-panel: #FFFFFF;
-            --border-color: #F5D0FE; /* Light purple border */
+            --border-color: #F5D0FE;
             --accent-pink: #F472B6;
             --accent-purple: #C084FC;
             --accent-blue: #60A5FA;
             --text-primary: #4B5563;
             --text-secondary: #9CA3AF;
             --danger-color: #F87171;
-            --success-color: #34D399;
         }
-
-        @keyframes fall {
-            0% { transform: translateY(-50px) rotate(0deg); opacity: 0.8; }
-            100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
-        }
-
         body {
             font-family: 'Quicksand', sans-serif;
             background-color: var(--bg-main);
             color: var(--text-primary);
             overflow-x: hidden;
         }
-        
-        #candy-background {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-        .candy {
-            position: absolute;
-            font-size: 16px;
-            animation: fall linear infinite;
-            color: var(--accent-pink);
-            text-shadow: 0 0 5px white;
-        }
-
         .panel {
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px -5px rgba(192, 132, 252, 0.1), 0 8px 10px -6px rgba(192, 132, 252, 0.1);
         }
-        
         aside {
             background: linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%);
             border-right: 1px solid var(--border-color);
             transition: transform 0.3s ease-in-out;
         }
-
         .tab-button {
             position: relative;
             display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-weight: 600; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -88,7 +62,6 @@
             box-shadow: 0 4px 14px rgba(192, 132, 252, 0.4);
             transform: scale(1.03);
         }
-
         .label { font-weight: 600; color: #581C87; }
         .input, select.input, .dropdown-trigger { 
             width: 100%; 
@@ -106,7 +79,6 @@
             box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.2); 
             background-color: white;
         }
-        
         .btn { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 700; color: white; transition: all 0.2s ease; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: none; }
         .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; line-height: 1rem; }
         .btn:disabled { background: #D1D5DB !important; color: #9CA3AF; cursor: not-allowed; box-shadow: none; transform: none; }
@@ -118,24 +90,21 @@
         .btn-secondary:hover:not(:disabled) { background-color: #3B82F6; }
         .btn-danger { background-color: var(--danger-color); }
         .btn-danger:hover:not(:disabled) { background-color: #EF4444; }
-
         .sortable-ghost { background: rgba(192, 132, 252, 0.1); border: 2px dashed var(--border-color); border-radius: 0.75rem; }
-        .sortable-chosen { cursor: grabbing; }
-
+        .text-gradient {
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-switch { position: relative; display: inline-block; width: 40px; height: 24px; }
         .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #D1D5DB; transition: .4s; border-radius: 34px; }
         .toggle-slider:before { position: absolute; content: "🤍"; font-size: 12px; line-height: 16px; text-align: center; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         input:checked + .toggle-slider { background: linear-gradient(45deg, var(--accent-pink), var(--accent-purple)); }
         input:checked + .toggle-slider:before { content: "💖"; transform: translateX(16px); }
-        
         .custom-dropdown { position: relative; }
-        .dropdown-trigger { 
-            cursor: pointer;
-        }
-        .dropdown-trigger:hover {
-            background-color: #FDF4FF;
-        }
         .dropdown-menu { 
             display: none;
             position: absolute; top: 100%; left: 0; right: 0; 
@@ -145,56 +114,20 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             z-index: 10; margin-top: 4px;
         }
-        .dropdown-menu.up { top: auto; bottom: 100%; }
         .dropdown-menu.active { display: block; }
         .dropdown-item { padding: 0.5rem 0.75rem; cursor: pointer; display: flex; align-items: center; color: var(--text-secondary); }
         .dropdown-item:hover { background-color: #FDF4FF; color: var(--text-primary); }
         .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; border-radius: 0.25rem; border-color: #FBCFE8; color: var(--accent-pink); }
         .dropdown-item input[type="checkbox"]:checked { background-color: var(--accent-pink); }
-        
-        .flatpickr-input { background-color: #FAF5FF !important; color: var(--text-primary); border-color: #E9D5FF !important;}
-        
-        .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.5rem; }
-        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #FAF5FF; border: 2px dashed #E9D5FF; }
-        
-        .text-gradient {
-            background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: transparent;
-        }
-
-        table thead { background-color: #FDF4FF; color: var(--accent-purple); }
-        table tbody tr { border-bottom: 1px solid var(--border-color); }
-        table tbody tr:last-child { border-bottom: none; }
-        table tbody tr:hover { background-color: #FAF5FF; }
-        
-        .add-form-row { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-            flex-wrap: nowrap; 
-            margin-bottom: 1rem; 
-            padding-bottom: 0.5rem;
-        }
-        @media (max-width: 767px) {
-            .add-form-row { overflow-x: auto; }
-        }
-        .add-form-row .flex-1 { flex: 1 1 auto; min-width: 100px; }
-        .add-form-row .add-image-box { flex: 0 0 80px; height: 80px; }
-
         /* How-to-buy specific styles */
         .main-step-card { background-color: #FDF4FF; border: 1px solid var(--border-color); border-radius: 1rem; }
         .sub-step-row { background-color: #FFFFFF; border: 1px solid #FBCFE8; border-radius: 0.75rem; }
         .main-step-drag-handle, .sub-step-drag-handle { cursor: move; color: var(--text-secondary); }
-        .step-image-upload-box { background-color: #FAF5FF; border: 2px dashed #E9D5FF; border-radius: 0.75rem; }
+        .step-image-upload-box { background-color: #FAF5FF; border: 2px dashed #E9D5FF; border-radius: 0.75rem; cursor: pointer; }
         .step-image-preview { max-height: 128px; border-radius: 0.5rem; }
     </style>
 </head>
 <body class="bg-main">
-    <div id="candy-background"></div>
-
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-sm panel p-8">
             <h1 class="text-3xl font-bold text-center text-gradient mb-6">Spreadsheet后台</h1>
@@ -213,10 +146,7 @@
                 <i data-lucide="menu" class="h-6 w-6 text-pink-500"></i>
              </button>
         </header>
-
         <div class="relative flex h-screen">
-            <div id="mobile-menu-overlay" class="md:hidden fixed inset-0 bg-black/30 z-30 hidden"></div>
-            
             <aside id="sidebar" class="w-64 p-4 flex-col fixed inset-y-0 left-0 z-40 transform -translate-x-full md:relative md:translate-x-0 md:flex">
                 <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-pink-100">SpreadSheet</h1>
                 <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav>
@@ -226,57 +156,7 @@
                     </button>
                 </div>
             </aside>
-            
             <main class="flex-1 p-4 md:p-8 overflow-y-auto" id="main-content"></main>
-        </div>
-    </div>
-
-    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="panel w-full max-w-2xl">
-            <div class="p-6 border-b border-pink-100 flex justify-between items-center">
-                <h3 class="text-lg font-semibold">编辑产品</h3>
-                <button id="close-modal-btn" class="p-1 rounded-full hover:bg-pink-100">
-                    <i data-lucide="x" class="h-5 w-5 text-gray-500 hover:text-pink-500"></i>
-                </button>
-            </div>
-            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <input type="hidden" id="edit-product-id">
-                <div id="edit-image-paste-box" class="relative p-4 rounded-lg bg-pink-50 text-center cursor-pointer text-pink-400 border-2 border-dashed border-pink-200 hover:border-accent-pink">
-                    <p id="edit-image-placeholder">点击选择、拖拽或粘贴图片</p>
-                    <img id="edit-preview-image" src="" class="hidden max-h-32 mx-auto rounded mt-2">
-                    <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
-                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                    </button>
-                </div>
-                <input type="file" id="edit-image-input" class="hidden" accept="image/*">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
-                    <div><label class="label">品牌</label><select id="edit-product-brand" class="input mt-1"></select></div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label class="label">原价</label><input type="number" id="edit-product-price" class="input mt-1"></div>
-                    <div><label class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1" placeholder="https://mulebuy.com/..."></div>
-                </div>
-                <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
-                    <p class="font-semibold mb-2 text-purple-700">折扣设置 🍬</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                        <div class="sm:col-span-1"><label class="label">折扣率 (如0.7)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
-                        <div class="sm:col-span-2"><label class="label">折扣到期时间</label><input type="datetime-local" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <div class="flex items-center">
-                            <label class="toggle-switch"><input type="checkbox" id="edit-product-discount-active"><span class="toggle-slider"></span></label>
-                            <label for="edit-product-discount-active" class="ml-2">开启折扣</label>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm">折扣价: <span id="calculated-discount-price" class="font-bold text-accent-purple"></span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6 bg-pink-50/50 rounded-b-xl text-right border-t border-pink-100">
-                <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
-            </div>
         </div>
     </div>
 
@@ -288,29 +168,22 @@
     </div>
 
     <script type="module">
-    // --- Configuration ---
     const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhma2F0dHl5dm5ibWducXFzdm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NjYzNzQsImV4cCI6MjA2NjQ0MjM3NH0.z21tfMKKMYB66juOKIYui2uRM5xUjRE_VisNJcxCsWw';
     const BASE_URL = 'https://sigma-shoes.com/';
-
     const { createClient } = supabase;
     let db; 
 
-    // --- Global State ---
+    // Global State
     let productsCache = [], brandsCache = [], navCache = [], currentAnalyticsData = [], socialLinksCache = [];
-    let sortableInstance = null, sortableFlashSaleInstance = null, mainStepsSortable = null;
+    let sortableInstance = null, sortableFlashSaleInstance = null, sortableNavInstance = null, mainStepsSortable = null;
     let newProductFiles = new Map(), newSocialFiles = new Map(), newHowToBuyStepFiles = new Map();
     let currentEditFile = null, currentEditImageUrl = '', howToBuySettingsCache = null;
 
-    // --- DOM Elements ---
-    const authScreen = document.getElementById('auth-screen');
-    const adminPanel = document.getElementById('admin-panel');
     const mainContent = document.getElementById('main-content');
-    const sidebarNav = document.getElementById('sidebar-nav');
-    const modal = document.getElementById('edit-product-modal');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // --- HTML Templates ---
+    // HTML Templates
     const templates = {
         dashboard: `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gradient">仪表盘 🌟</h2><div class="flex items-center gap-4"><div class="flex items-center gap-2"><input id="date-range-picker" class="input" placeholder="选择日期范围"></div><button id="export-excel-btn" class="btn btn-secondary text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>导出详细数据</button></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"><div class="panel p-5"><p class="text-sm text-text-secondary">网站总访问</p><p id="total-visits" class="text-2xl font-bold text-purple-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">产品点击总数</p><p id="total-product-clicks" class="text-2xl font-bold text-pink-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">总产品数</p><p id="total-products" class="text-2xl font-bold text-blue-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">进行中的折扣</p><p id="active-discounts" class="text-2xl font-bold text-amber-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">点击最高产品</p><p id="top-product" class="text-lg font-bold truncate text-pink-600">N/A</p></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">网站访问趋势 📈</h3><div class="h-64"><canvas id="visits-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">产品点击趋势 💖</h3><div class="h-64"><canvas id="product-clicks-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">访问来源分布 🌍</h3><div class="h-64 flex items-center justify-center"><canvas id="country-chart"></canvas></div></div></div>`,
         products: `<h2 class="text-2xl font-bold text-gradient mb-6">产品管理 🛍️</h2><div class="panel p-6"><div class="mb-6 border-b border-pink-100 pb-6"><h3 class="font-semibold mb-2 text-lg">添加新产品</h3><div id="add-product-forms-container" class="space-y-4"></div><div class="mt-4 flex justify-between"><button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加</button><button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部</button></div></div><div id="bulk-actions-bar" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center justify-between"><div><span id="selected-count">0</span> 个产品已选中</div><div class="flex items-center gap-2"><button id="bulk-toggle-discount-btn" class="btn btn-secondary btn-xs"><i data-lucide="power" class="mr-1 h-4 w-4"></i>切换折扣状态</button><button id="bulk-delete-btn" class="btn btn-danger btn-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-pink-50 text-pink-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products" class="rounded border-pink-300 text-pink-500 focus:ring-pink-500"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3" style="min-width: 150px;">分类</th><th class="p-3">品牌</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div></div>`,
@@ -324,8 +197,17 @@
     };
 
     // --- Core Logic ---
+    function showLoading(show) { loadingOverlay.classList.toggle('hidden', !show); }
+    function showAlert(message, isError = false) {
+        const alertBox = document.createElement('div');
+        alertBox.className = `fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-green-500'} z-[101]`;
+        alertBox.textContent = message;
+        document.body.appendChild(alertBox);
+        setTimeout(() => { alertBox.remove(); }, 3000);
+    }
+
     function renderPanel(panelName) {
-        if (mainContent) mainContent.innerHTML = templates[panelName] || `<p>未找到模块: ${panelName}</p>`;
+        mainContent.innerHTML = templates[panelName] || `<p>未找到模块: ${panelName}</p>`;
         lucide.createIcons();
         switch (panelName) {
             case 'dashboard': initDashboard(); break;
@@ -339,21 +221,13 @@
             case 'how_to_buy': initHowToBuyPanel(); break;
         }
     }
-    function showLoading(show) { loadingOverlay.classList.toggle('hidden', !show); }
-    function showAlert(message, isError = false) {
-        const alertBox = document.createElement('div');
-        alertBox.className = `fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-green-500'} z-[101]`;
-        alertBox.textContent = message;
-        document.body.appendChild(alertBox);
-        setTimeout(() => { alertBox.remove(); }, 3000);
-    }
-    
+
     // --- Panel Initializers & Data Loaders ---
     async function loadSettings() {
         const { data } = await db.from('settings').select('*').limit(1).single();
         if (data) {
-            document.getElementById('siteTitle').value = data.site_title;
-            document.getElementById('siteSubtitle').value = data.site_subtitle;
+            document.getElementById('siteTitle').value = data.site_title || '';
+            document.getElementById('siteSubtitle').value = data.site_subtitle || '';
         }
         document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
     }
@@ -369,6 +243,8 @@
         }
         document.getElementById('add-nav-btn').addEventListener('click', () => renderNavItem({}, true));
         document.getElementById('save-nav-btn').addEventListener('click', saveNavigation);
+        if (sortableNavInstance) sortableNavInstance.destroy();
+        sortableNavInstance = new Sortable(navList, { animation: 150, ghostClass: 'sortable-ghost' });
         lucide.createIcons();
     }
 
@@ -401,7 +277,7 @@
     async function loadProducts() {
         const productListEl = document.getElementById('product-list');
         if (!productListEl) return;
-        productListEl.innerHTML = '';
+        productListEl.innerHTML = '<tr><td colspan="11" class="text-center p-8">加载中...</td></tr>';
         const [productsRes, navRes, brandsRes] = await Promise.all([
             db.from('products').select(`*, brands (*)`).eq('is_active', true).order('display_order'),
             db.from('navigation').select('link_text').order('display_order'),
@@ -410,46 +286,13 @@
         productsCache = productsRes.data || [];
         brandsCache = brandsRes.data || [];
         navCache = navRes.data || [];
-        const categories = navCache.filter(item => item.link_text.toLowerCase() !== 'home').map(item => item.link_text);
+        
+        if (productsCache.length === 0) {
+            productListEl.innerHTML = '<tr><td colspan="11" class="text-center p-8">没有产品，请添加一个。</td></tr>';
+            return;
+        }
 
-        productListEl.innerHTML = productsCache.map(p => {
-            const selectedCategories = p.category ? p.category.split(',').map(cat => cat.trim()) : [];
-            const categoryDropdownItems = categories.map(cat => `
-                <label class="dropdown-item">
-                    <input type="checkbox" value="${cat}" ${selectedCategories.includes(cat) ? 'checked' : ''}>
-                    <span>${cat}</span>
-                </label>`).join('');
-            const categoryDropdown = `
-                <div class="custom-dropdown">
-                    <div class="dropdown-trigger" data-type="category" data-id="${p.id}">${selectedCategories.join(', ') || '选择分类'}</div>
-                    <div class="dropdown-menu" data-type="category" data-id="${p.id}">
-                        <div class="p-2 space-y-1 max-h-48 overflow-y-auto">
-                            ${categoryDropdownItems}
-                        </div>
-                        <div class="p-2 border-t border-pink-100 mt-1">
-                            <button class="btn btn-primary btn-xs w-full save-category-btn">应用</button>
-                        </div>
-                    </div>
-                </div>`;
-            const brandDropdown = `<div class="custom-dropdown"><div class="dropdown-trigger" data-type="brand" data-id="${p.id}">${p.brands?.name || '选择品牌'}</div><div class="dropdown-menu" data-type="brand" data-id="${p.id}">${brandsCache.map(brand => `<div class="dropdown-item" data-brand-id="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
-            const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).slice(0, -3) : '—';
-            const discountFactorText = p.discount_factor ? `${p.discount_factor * 10}折` : '—';
-            
-            return `
-                <tr class="product-row" data-id="${p.id}">
-                    <td class="p-3"><input type="checkbox" class="product-checkbox rounded border-pink-300 text-pink-500 focus:ring-pink-500" data-id="${p.id}"></td>
-                    <td class="p-3"><i data-lucide="grip-vertical" class="cursor-move text-gray-400"></i></td>
-                    <td class="p-3"><div class="flex items-center gap-3"><img src="${p.image_url || 'https://placehold.co/40x40/FDF2F8/F472B6?text=??'}" class="w-10 h-10 object-cover rounded-lg"><span class="font-semibold">${p.name}</span></div></td>
-                    <td class="p-3" style="min-width: 150px;">${categoryDropdown}</td>
-                    <td class="p-3">${brandDropdown}</td>
-                    <td class="p-3 font-medium text-gray-700">¥${p.price}</td>
-                    <td class="p-3">${p.target_url || '—'}</td>
-                    <td class="p-3">${discountFactorText}</td>
-                    <td class="p-3"><label class="toggle-switch"><input type="checkbox" class="discount-toggle" data-id="${p.id}" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label></td>
-                    <td class="p-3">${expiryDate}</td>
-                    <td class="p-3 text-right"><button data-id="${p.id}" class="edit-product-btn p-2 hover:bg-pink-100 rounded-full"><i data-lucide="edit-2" class="h-4 w-4 text-pink-500"></i></button></td>
-                </tr>`;
-        }).join('');
+        productListEl.innerHTML = productsCache.map(p => generateProductRowHtml(p)).join('');
 
         lucide.createIcons();
         if (sortableInstance) sortableInstance.destroy();
@@ -466,19 +309,18 @@
     async function loadHowToBuyData() {
         showLoading(true);
         const [settingsRes, stepsRes] = await Promise.all([
-            db.from('how_to_buy_settings').select('*').limit(1).single(),
+            db.from('how_to_buy_settings').select('video_url, signup_url').limit(1).single(),
             db.from('how_to_buy_steps').select('*').order('display_order')
         ]);
         showLoading(false);
 
-        if (settingsRes.error || stepsRes.error) {
-            return showAlert('加载 "How-to-Buy" 数据失败。', true);
-        }
+        if (settingsRes.error) showAlert('加载页面设置失败: ' + settingsRes.error.message, true);
+        if (stepsRes.error) showAlert('加载教程步骤失败: ' + stepsRes.error.message, true);
         
-        howToBuySettingsCache = settingsRes.data;
-        if (howToBuySettingsCache) {
-            document.getElementById('how-to-buy-video-url').value = howToBuySettingsCache.video_url || '';
-            document.getElementById('how-to-buy-signup-url').value = howToBuySettingsCache.signup_url || '';
+        const settingsData = settingsRes.data;
+        if (settingsData) {
+            document.getElementById('how-to-buy-video-url').value = settingsData.video_url || '';
+            document.getElementById('how-to-buy-signup-url').value = settingsData.signup_url || '';
         }
 
         const stepsContainer = document.getElementById('how-to-buy-steps-container');
@@ -503,6 +345,134 @@
             ghostClass: 'sortable-ghost',
             handle: '.main-step-drag-handle',
         });
+    }
+
+    function initDashboard() {
+        const datePicker = document.getElementById('date-range-picker');
+        if(datePicker) {
+            flatpickr(datePicker, {
+                mode: "range", dateFormat: "Y-m-d",
+                defaultDate: [new Date(new Date().setDate(new Date().getDate() - 29)), new Date()],
+                onChange: (selectedDates) => { if (selectedDates.length === 2) loadDashboardData(selectedDates[0], selectedDates[1]); },
+            });
+            document.getElementById('export-excel-btn').addEventListener('click', exportAnalyticsToExcel);
+            loadDashboardData(new Date(new Date().setDate(new Date().getDate() - 29)), new Date());
+        }
+    }
+
+    async function loadDashboardData(startDate, endDate) {
+        showLoading(true);
+        const startStr = startDate.toISOString();
+        const endStr = new Date(endDate.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString();
+        
+        const { data, error } = await db.from('analytics_events').select('*').gte('created_at', startStr).lt('created_at', endStr);
+        if (error) {
+            showLoading(false);
+            return showAlert('分析数据加载失败: ' + error.message, true);
+        }
+        currentAnalyticsData = data;
+
+        const { count: productCount } = await db.from('products').select('*', { count: 'exact', head: true });
+        const { count: discountCount } = await db.from('products').select('*', { count: 'exact', head: true }).eq('discount_is_active', true);
+        showLoading(false);
+
+        const siteVisits = data.filter(e => e.event_type === 'site_visit');
+        const productClicks = data.filter(e => e.event_type === 'product_click');
+        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
+
+        document.getElementById('total-visits').textContent = validVisits.length;
+        document.getElementById('total-product-clicks').textContent = productClicks.length;
+        document.getElementById('total-products').textContent = productCount || 0;
+        document.getElementById('active-discounts').textContent = discountCount || 0;
+
+        const productClickCounts = productClicks.reduce((acc, curr) => { acc[curr.event_value] = (acc[curr.event_value] || 0) + 1; return acc; }, {});
+        const topProduct = Object.keys(productClickCounts).length ? Object.entries(productClickCounts).sort((a,b) => b[1] - a[1])[0][0] : 'N/A';
+        document.getElementById('top-product').textContent = topProduct;
+
+        const dateLabels = [];
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            dateLabels.push(d.toLocaleDateString('en-CA'));
+        }
+        
+        renderChart('visits-chart', 'line', dateLabels, processDataForChart(validVisits, dateLabels), '网站访问量');
+        renderChart('product-clicks-chart', 'line', dateLabels, processDataForChart(productClicks, dateLabels), '产品点击量');
+        
+        const totalValidVisits = validVisits.length;
+        const countryCounts = validVisits.reduce((acc, curr) => {
+            const country = curr.country_code || 'Unknown';
+            acc[country] = (acc[country] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const countryData = Object.values(countryCounts);
+        const countryLabels = Object.keys(countryCounts).map(key => {
+            const percentage = totalValidVisits > 0 ? ((countryCounts[key] / totalValidVisits) * 100).toFixed(1) : 0;
+            return `${key} (${percentage}%)`;
+        });
+        
+        renderChart('country-chart', 'pie', countryLabels, countryData, '访问来源');
+    }
+
+    function initAffiliatePanel() {
+        document.getElementById('generate-ref-link-btn').addEventListener('click', () => {
+            const id = document.getElementById('ref-id-input').value.trim();
+            if (!id) return showAlert('请输入ID', true);
+            document.getElementById('generated-ref-link').value = `${BASE_URL}?ref=${id}`;
+            document.getElementById('ref-link-result').classList.remove('hidden');
+        });
+        document.getElementById('copy-ref-link-btn').addEventListener('click', () => {
+            navigator.clipboard.writeText(document.getElementById('generated-ref-link').value).then(() => showAlert('复制成功!'), () => showAlert('复制失败', true));
+        });
+        document.getElementById('query-ref-btn').addEventListener('click', async () => {
+            const id = document.getElementById('query-ref-id-input').value.trim();
+            if (!id) return showAlert('请输入要查询的ID', true);
+            showLoading(true);
+            const { count, error } = await db.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'site_visit').eq('ref_id', id);
+            showLoading(false);
+            if (error) return showAlert('查询失败: ' + error.message, true);
+            document.getElementById('ref-visit-count').textContent = count;
+            document.getElementById('query-ref-result').classList.remove('hidden');
+        });
+    }
+    
+    async function loadFlashSaleData() {
+        showLoading(true);
+        const [settingsRes, allProductsRes, flashSaleProductsRes] = await Promise.all([
+            db.from('flash_sale_settings').select('*').single(),
+            db.from('products').select('*').order('name'),
+            db.from('flash_sale_products').select('product_id').order('display_order')
+        ]);
+        showLoading(false);
+
+        const settings = settingsRes.data;
+        if (settings) {
+            document.getElementById('flash-sale-active-toggle').checked = settings.is_active;
+            initFlatpickr(document.getElementById('flash-sale-end-time'), settings.end_time);
+        }
+
+        const allProductsList = document.getElementById('all-products-list');
+        const flashSaleProductsList = document.getElementById('flash-sale-products-list');
+        allProductsList.innerHTML = '';
+        flashSaleProductsList.innerHTML = '';
+
+        const allProducts = allProductsRes.data || [];
+        const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
+        
+        const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
+        const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
+            return flashSaleProducts.find(p => p.id === orderedItem.product_id);
+        }).filter(Boolean); 
+
+        const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
+
+        availableProducts.forEach(p => renderProductSelectionItem(p, allProductsList, false));
+        orderedFlashSaleProducts.forEach(p => renderProductSelectionItem(p, flashSaleProductsList, true));
+        
+        if (sortableFlashSaleInstance) sortableFlashSaleInstance.destroy();
+        sortableFlashSaleInstance = new Sortable(flashSaleProductsList, { animation: 150, ghostClass: 'sortable-ghost' });
+
+        lucide.createIcons();
+        document.getElementById('save-flash-sale-btn').addEventListener('click', saveFlashSaleData);
     }
 
     // --- HTML Element Renderers ---
@@ -658,16 +628,18 @@
     // --- Data Saving Functions ---
     async function saveSettings(e) { 
         const button = e.target;
-        button.disabled = true; button.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+        button.disabled = true;
+        showLoading(true);
         const updates = {
             id: 1,
             site_title: document.getElementById('siteTitle').value,
             site_subtitle: document.getElementById('siteSubtitle').value,
         };
         const { error } = await db.from('settings').upsert(updates);
+        showLoading(false);
         if (error) showAlert('保存失败: ' + error.message, true);
         else showAlert('网站设置已保存！');
-        button.disabled = false; button.innerHTML = '保存设置';
+        button.disabled = false;
     }
 
     async function saveNavigation(e) { 
@@ -940,7 +912,7 @@
 
         try {
             const settingsUpdate = {
-                id: 1, // Assuming there's only one row for settings
+                id: 1,
                 video_url: document.getElementById('how-to-buy-video-url').value.trim() || null,
                 signup_url: document.getElementById('how-to-buy-signup-url').value.trim() || null,
                 updated_at: new Date().toISOString()
@@ -956,32 +928,37 @@
                 if (!mainStepTitle) continue;
 
                 const mainStepId = mainCard.dataset.id;
-                allPayloads.push({
-                    id: mainStepId.startsWith('new_') ? undefined : parseInt(mainStepId),
+                const mainStepPayload = {
                     title: mainStepTitle,
                     section_title: null,
+                    description: null,
+                    image_url: null,
                     display_order: displayOrderCounter++
-                });
+                };
+                if (!mainStepId.startsWith('new_')) mainStepPayload.id = parseInt(mainStepId);
+                allPayloads.push(mainStepPayload);
 
                 const subStepRows = mainCard.querySelectorAll('.sub-step-row');
                 for (const subRow of subStepRows) {
                     const subStepId = subRow.dataset.id;
                     const imageFile = newHowToBuyStepFiles.get(subStepId);
                     let imageUrl = subRow.querySelector('.step-image-preview').src;
+                    
                     if (imageFile) {
                         imageUrl = await uploadImage(imageFile, 'how-to-buy-steps');
-                    } else if (imageUrl.startsWith('blob:')) {
+                    } else if (!imageUrl || imageUrl.startsWith('blob:')) {
                         imageUrl = null;
                     }
                     
-                    allPayloads.push({
-                        id: subStepId.startsWith('new_') ? undefined : parseInt(subStepId),
+                    const subStepPayload = {
                         title: subRow.querySelector('.sub-step-title').value.trim(),
                         description: subRow.querySelector('.sub-step-description').value.trim(),
                         image_url: imageUrl,
                         section_title: mainStepTitle,
                         display_order: displayOrderCounter++
-                    });
+                    };
+                    if (!subStepId.startsWith('new_')) subStepPayload.id = parseInt(subStepId);
+                    allPayloads.push(subStepPayload);
                 }
             }
             
@@ -994,9 +971,10 @@
                 await db.from('how_to_buy_steps').delete().in('id', idsToDelete);
             }
             
-            const recordsToUpsert = allPayloads.map(p => p.id ? p : { ...p, id: undefined });
-            const { error } = await db.from('how_to_buy_steps').upsert(recordsToUpsert, { onConflict: 'id' });
-            if (error) throw error;
+            if (allPayloads.length > 0) {
+                const { error } = await db.from('how_to_buy_steps').upsert(allPayloads, { onConflict: 'id' });
+                if (error) throw error;
+            }
 
             showAlert('成功保存 "How-to-Buy" 页面！');
             newHowToBuyStepFiles.clear();
@@ -1193,6 +1171,7 @@
     }
 
     function setupSidebarNav() {
+        const sidebarNav = document.getElementById('sidebar-nav');
         sidebarNav.innerHTML = `
             <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
             <button data-target="flash_sale" class="tab-button"><i data-lucide="zap" class="mr-3 h-5 w-5"></i>秒杀管理</button>
@@ -1207,7 +1186,7 @@
         sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const targetPanel = e.currentTarget.dataset.target;
-                sidebarNav.querySelector('.active').classList.remove('active');
+                sidebarNav.querySelector('.active')?.classList.remove('active');
                 e.currentTarget.classList.add('active');
                 renderPanel(targetPanel);
             });
@@ -1229,69 +1208,7 @@
         flatpickr(element, options);
     }
 
-    async function loadDashboardData(startDate, endDate) {
-        showLoading(true);
-        const startStr = startDate.toISOString();
-        const endStr = new Date(endDate.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString();
-        
-        const { data, error } = await db.from('analytics_events').select('*').gte('created_at', startStr).lt('created_at', endStr);
-        if (error) {
-            showLoading(false);
-            return showAlert('分析数据加载失败: ' + error.message, true);
-        }
-        currentAnalyticsData = data;
-
-        const { count: productCount } = await db.from('products').select('*', { count: 'exact', head: true });
-        const { count: discountCount } = await db.from('products').select('*', { count: 'exact', head: true }).eq('discount_is_active', true);
-        showLoading(false);
-
-        const siteVisits = data.filter(e => e.event_type === 'site_visit');
-        const productClicks = data.filter(e => e.event_type === 'product_click');
-        const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
-
-        document.getElementById('total-visits').textContent = validVisits.length;
-        document.getElementById('total-product-clicks').textContent = productClicks.length;
-        document.getElementById('total-products').textContent = productCount || 0;
-        document.getElementById('active-discounts').textContent = discountCount || 0;
-
-        const productClickCounts = productClicks.reduce((acc, curr) => { acc[curr.event_value] = (acc[curr.event_value] || 0) + 1; return acc; }, {});
-        const topProduct = Object.keys(productClickCounts).length ? Object.entries(productClickCounts).sort((a,b) => b[1] - a[1])[0][0] : 'N/A';
-        document.getElementById('top-product').textContent = topProduct;
-
-        const dateLabels = [];
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            dateLabels.push(d.toLocaleDateString('en-CA'));
-        }
-        
-        renderChart('visits-chart', 'line', dateLabels, processDataForChart(validVisits, dateLabels), '网站访问量');
-        renderChart('product-clicks-chart', 'line', dateLabels, processDataForChart(productClicks, dateLabels), '产品点击量');
-        
-        const totalValidVisits = validVisits.length;
-        const countryCounts = validVisits.reduce((acc, curr) => {
-            const country = curr.country_code || 'Unknown';
-            acc[country] = (acc[country] || 0) + 1;
-            return acc;
-        }, {});
-        
-        const countryData = Object.values(countryCounts);
-        const countryLabels = Object.keys(countryCounts).map(key => {
-            const percentage = totalValidVisits > 0 ? ((countryCounts[key] / totalValidVisits) * 100).toFixed(1) : 0;
-            return `${key} (${percentage}%)`;
-        });
-        
-        renderChart('country-chart', 'pie', countryLabels, countryData, '访问来源');
-    }
-    
-    function processDataForChart(events, labels) {
-        const dataMap = labels.reduce((acc, label) => { acc[label] = 0; return acc; }, {});
-        events.forEach(event => {
-            const eventDate = new Date(event.created_at).toLocaleDateString('en-CA');
-            if(dataMap.hasOwnProperty(eventDate)) dataMap[eventDate]++;
-        });
-        return Object.values(dataMap);
-    }
-
-   function renderChart(canvasId, type, labels, data, label) {
+    function renderChart(canvasId, type, labels, data, label) {
         const ctx = document.getElementById(canvasId)?.getContext('2d');
         if (!ctx) return;
     
@@ -1354,68 +1271,6 @@
         }
     }
 
-    function initAffiliatePanel() {
-        document.getElementById('generate-ref-link-btn').addEventListener('click', () => {
-            const id = document.getElementById('ref-id-input').value.trim();
-            if (!id) return showAlert('请输入ID', true);
-            document.getElementById('generated-ref-link').value = `${BASE_URL}?ref=${id}`;
-            document.getElementById('ref-link-result').classList.remove('hidden');
-        });
-        document.getElementById('copy-ref-link-btn').addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('generated-ref-link').value).then(() => showAlert('复制成功!'), () => showAlert('复制失败', true));
-        });
-        document.getElementById('query-ref-btn').addEventListener('click', async () => {
-            const id = document.getElementById('query-ref-id-input').value.trim();
-            if (!id) return showAlert('请输入要查询的ID', true);
-            showLoading(true);
-            const { count, error } = await db.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'site_visit').eq('ref_id', id);
-            showLoading(false);
-            if (error) return showAlert('查询失败: ' + error.message, true);
-            document.getElementById('ref-visit-count').textContent = count;
-            document.getElementById('query-ref-result').classList.remove('hidden');
-        });
-    }
-    
-    async function loadFlashSaleData() {
-        showLoading(true);
-        const [settingsRes, allProductsRes, flashSaleProductsRes] = await Promise.all([
-            db.from('flash_sale_settings').select('*').single(),
-            db.from('products').select('*').order('name'),
-            db.from('flash_sale_products').select('product_id').order('display_order')
-        ]);
-        showLoading(false);
-
-        const settings = settingsRes.data;
-        if (settings) {
-            document.getElementById('flash-sale-active-toggle').checked = settings.is_active;
-            initFlatpickr(document.getElementById('flash-sale-end-time'), settings.end_time);
-        }
-
-        const allProductsList = document.getElementById('all-products-list');
-        const flashSaleProductsList = document.getElementById('flash-sale-products-list');
-        allProductsList.innerHTML = '';
-        flashSaleProductsList.innerHTML = '';
-
-        const allProducts = allProductsRes.data || [];
-        const flashSaleProductIds = new Set((flashSaleProductsRes.data || []).map(p => p.product_id));
-        
-        const flashSaleProducts = allProducts.filter(p => flashSaleProductIds.has(p.id));
-        const orderedFlashSaleProducts = (flashSaleProductsRes.data || []).map(orderedItem => {
-            return flashSaleProducts.find(p => p.id === orderedItem.product_id);
-        }).filter(Boolean); 
-
-        const availableProducts = allProducts.filter(p => !flashSaleProductIds.has(p.id));
-
-        availableProducts.forEach(p => renderProductSelectionItem(p, allProductsList, false));
-        orderedFlashSaleProducts.forEach(p => renderProductSelectionItem(p, flashSaleProductsList, true));
-        
-        if (sortableFlashSaleInstance) sortableFlashSaleInstance.destroy();
-        sortableFlashSaleInstance = new Sortable(flashSaleProductsList, { animation: 150, ghostClass: 'sortable-ghost' });
-
-        lucide.createIcons();
-        document.getElementById('save-flash-sale-btn').addEventListener('click', saveFlashSaleData);
-    }
-
     function renderProductSelectionItem(product, container, isInSale) {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between p-2 bg-purple-100/50 rounded-lg border border-purple-200';
@@ -1460,7 +1315,7 @@
             candy.style.animationDelay = `${Math.random() * 5}s`;
             candy.style.opacity = Math.random() * 0.7 + 0.2;
             candy.style.fontSize = `${10 + Math.random() * 10}px`;
-            candyContainer.appendChild(candy);
+            if(candyContainer) candyContainer.appendChild(candy);
         }
 
         const attemptLogin = async () => {
@@ -1511,8 +1366,8 @@
                 }
             });
 
-            authScreen.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
             setupSidebarNav();
             renderPanel('dashboard');
         };
@@ -1525,40 +1380,11 @@
             location.reload();
         });
         
-        document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
-        document.getElementById('save-product-changes-btn').addEventListener('click', saveProductChanges);
-        
-        const imagePasteBox = document.getElementById('edit-image-paste-box');
-        const imageInput = document.getElementById('edit-image-input');
-        const deleteImageBtn = document.getElementById('delete-image-btn');
-        const previewImage = document.getElementById('edit-preview-image');
-        const imagePlaceholder = document.getElementById('edit-image-placeholder');
-        
-        imagePasteBox.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files?.[0]) {
-                currentEditFile = e.target.files[0];
-                previewImage.src = URL.createObjectURL(currentEditFile);
-                previewImage.classList.remove('hidden');
-                deleteImageBtn.classList.remove('hidden');
-                imagePlaceholder.classList.add('hidden');
-            }
-        });
-        deleteImageBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            currentEditFile = null;
-            currentEditImageUrl = null;
-            previewImage.src = '';
-            previewImage.classList.add('hidden');
-            deleteImageBtn.classList.add('hidden');
-            imagePlaceholder.classList.remove('hidden');
-            imageInput.value = '';
-        });
-
         const existingToken = sessionStorage.getItem('supabase_admin_token');
         if (existingToken) {
             initializeApp(existingToken);
         }
+        
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const overlay = document.getElementById('mobile-menu-overlay');
@@ -1574,7 +1400,7 @@
         if (overlay) {
             overlay.addEventListener('click', toggleMenu);
         }
-        sidebarNav.addEventListener('click', (e) => {
+        document.getElementById('sidebar-nav').addEventListener('click', (e) => {
             if (e.target.closest('.tab-button') && window.innerWidth < 768) {
                 toggleMenu();
             }
