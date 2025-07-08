@@ -168,6 +168,52 @@
             <p class="ml-4 text-lg font-semibold text-gray-700">处理中...</p>
         </div>
     </div>
+    
+    <div id="edit-product-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="panel w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-4 border-b border-pink-100">
+                <h3 class="text-lg font-bold text-gradient">编辑产品</h3>
+                <button id="close-modal-btn" class="p-2 rounded-full hover:bg-pink-100"><i data-lucide="x" class="h-5 w-5 text-pink-500"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-1">
+                        <label class="label mb-1 block">产品图片</label>
+                        <div id="edit-image-box" class="relative aspect-square w-full bg-pink-50 rounded-lg border-2 border-dashed border-pink-200 cursor-pointer flex items-center justify-center">
+                            <img id="edit-preview-image" src="" class="absolute inset-0 w-full h-full object-cover rounded-lg">
+                            <div id="edit-image-placeholder" class="text-center text-pink-400 text-sm">
+                                <i data-lucide="upload-cloud" class="mx-auto h-8 w-8"></i>
+                                <p>点击上传</p>
+                            </div>
+                            <button id="delete-image-btn" class="hidden absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+                        </div>
+                        <input type="file" id="edit-image-input" class="hidden" accept="image/*">
+                    </div>
+                    <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label for="edit-product-name" class="label">产品名称</label><input type="text" id="edit-product-name" class="input mt-1"></div>
+                        <div><label for="edit-product-brand" class="label">品牌</label><select id="edit-product-brand" class="input mt-1"></select></div>
+                        <div><label for="edit-product-price" class="label">原价 (CNY)</label><input type="number" id="edit-product-price" class="input mt-1"></div>
+                        <div><label for="edit-product-discount-factor" class="label">折扣率 (0-1)</label><input type="number" id="edit-product-discount-factor" class="input mt-1" step="0.01" min="0" max="1"></div>
+                        <div class="sm:col-span-2"><label for="edit-product-target-url" class="label">跳转链接</label><input type="text" id="edit-product-target-url" class="input mt-1"></div>
+                        <div class="sm:col-span-2"><label for="edit-product-discount-expires" class="label">折扣到期日</label><input type="text" id="edit-product-discount-expires" class="input mt-1 flatpickr-input"></div>
+                        <div class="flex items-center gap-4">
+                            <label class="toggle-switch"><input type="checkbox" id="edit-product-discount-active"><span class="toggle-slider"></span></label>
+                            <label for="edit-product-discount-active">开启折扣</label>
+                        </div>
+                        <div>
+                            <label class="label">折后价</label>
+                            <p id="calculated-discount-price" class="font-bold text-lg text-pink-500 mt-1">N/A</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-pink-50/50 border-t border-pink-100 text-right">
+                <button id="save-product-changes-btn" class="btn btn-primary">保存更改</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
     const SUPABASE_URL = 'https://xfkattyyvnbmgnqqsvms.supabase.co';
@@ -184,10 +230,12 @@
 
     const mainContent = document.getElementById('main-content');
     const loadingOverlay = document.getElementById('loading-overlay');
+    const modal = document.getElementById('edit-product-modal');
+
 
     // HTML Templates
     const templates = {
-        dashboard: `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gradient">仪表盘 🌟</h2><div class="flex items-center gap-4"><div class="flex items-center gap-2"><input id="date-range-picker" class="input" placeholder="选择日期范围"></div><button id="export-excel-btn" class="btn btn-secondary text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>导出详细数据</button></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"><div class="panel p-5"><p class="text-sm text-text-secondary">网站总访问</p><p id="total-visits" class="text-2xl font-bold text-purple-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">产品点击总数</p><p id="total-product-clicks" class="text-2xl font-bold text-pink-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">总产品数</p><p id="total-products" class="text-2xl font-bold text-blue-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">进行中的折扣</p><p id="active-discounts" class="text-2xl font-bold text-amber-500">0</p></div><div class="panel p-5"><p class="text-sm text-text-secondary">点击最高产品</p><p id="top-product" class="text-lg font-bold truncate text-pink-600">N/A</p></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">网站访问趋势 📈</h3><div class="h-64"><canvas id="visits-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">产品点击趋势 💖</h3><div class="h-64"><canvas id="product-clicks-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">访问来源分布 🌍</h3><div class="h-64 flex items-center justify-center"><canvas id="country-chart"></canvas></div></div></div>`,
+        dashboard: `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gradient">仪表盘 🌟</h2><div class="flex items-center gap-4"><div class="flex items-center gap-2"><input id="date-range-picker" class="input" placeholder="选择日期范围"></div><button id="export-excel-btn" class="btn btn-secondary text-sm"><i data-lucide="download" class="mr-2 h-4 w-4"></i>导出详细数据</button></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"><div class="panel p-5 flex items-center gap-4"><i data-lucide="eye" class="w-8 h-8 text-purple-400"></i><div><p class="text-sm text-text-secondary">网站总访问</p><p id="total-visits" class="text-2xl font-bold text-purple-500">0</p></div></div><div class="panel p-5 flex items-center gap-4"><i data-lucide="mouse-pointer-click" class="w-8 h-8 text-pink-400"></i><div><p class="text-sm text-text-secondary">产品点击总数</p><p id="total-product-clicks" class="text-2xl font-bold text-pink-500">0</p></div></div><div class="panel p-5 flex items-center gap-4"><i data-lucide="package" class="w-8 h-8 text-blue-400"></i><div><p class="text-sm text-text-secondary">总产品数</p><p id="total-products" class="text-2xl font-bold text-blue-500">0</p></div></div><div class="panel p-5 flex items-center gap-4"><i data-lucide="tag" class="w-8 h-8 text-amber-400"></i><div><p class="text-sm text-text-secondary">进行中的折扣</p><p id="active-discounts" class="text-2xl font-bold text-amber-500">0</p></div></div><div class="panel p-5 flex items-center gap-4"><i data-lucide="trophy" class="w-8 h-8 text-pink-600"></i><div><p class="text-sm text-text-secondary">点击最高产品</p><p id="top-product" class="text-lg font-bold truncate text-pink-600">N/A</p></div></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">网站访问趋势 📈</h3><div class="h-64"><canvas id="visits-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">产品点击趋势 💖</h3><div class="h-64"><canvas id="product-clicks-chart"></canvas></div></div><div class="panel p-6"><h3 class="font-semibold mb-4 text-text-primary">访问来源分布 🌍</h3><div class="h-64 flex items-center justify-center"><canvas id="country-chart"></canvas></div></div></div>`,
         products: `<h2 class="text-2xl font-bold text-gradient mb-6">产品管理 🛍️</h2><div class="panel p-6"><div class="mb-6 border-b border-pink-100 pb-6"><h3 class="font-semibold mb-2 text-lg">添加新产品</h3><div id="add-product-forms-container" class="space-y-4"></div><div class="mt-4 flex justify-between"><button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加</button><button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部</button></div></div><div id="bulk-actions-bar" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center justify-between"><div><span id="selected-count">0</span> 个产品已选中</div><div class="flex items-center gap-2"><button id="bulk-toggle-discount-btn" class="btn btn-secondary btn-xs"><i data-lucide="power" class="mr-1 h-4 w-4"></i>切换折扣状态</button><button id="bulk-delete-btn" class="btn btn-danger btn-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-pink-50 text-pink-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products" class="rounded border-pink-300 text-pink-500 focus:ring-pink-500"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3" style="min-width: 150px;">分类</th><th class="p-3">品牌</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div></div>`,
         brands: `<h2 class="text-2xl font-bold text-gradient mb-6">品牌管理 🎀</h2><div class="panel p-6 max-w-2xl"><div class="flex items-center gap-2 mb-4"><input type="text" id="new-brand-input" class="input flex-grow" placeholder="输入新品牌名称 (例如 Nike)"><button id="add-brand-btn" class="btn btn-secondary"><i data-lucide="plus" class="h-4 w-4"></i></button></div><div id="brand-list" class="space-y-3 mb-4 border-t border-pink-100 pt-4"></div><div class="text-right mt-4"><button id="save-brands-btn" class="btn btn-primary">保存全部变更</button></div></div>`,
         navigation: `<h2 class="text-2xl font-bold text-gradient mb-6">导航栏管理 (分类) 📜</h2><div class="panel p-6 max-w-2xl"><p class="text-sm text-text-secondary mb-4">在这里管理前端页面产品区上方的分类筛选按钮。可以拖拽进行排序。</p><div id="navigation-list" class="space-y-3 mb-4"></div><div class="mt-4"><button id="add-nav-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加导航项</button></div><div class="text-right mt-4"><button id="save-nav-btn" class="btn btn-primary">保存全部变更</button></div></div>`,
@@ -291,11 +339,14 @@
         
         if (productsCache.length === 0) {
             productListEl.innerHTML = '<tr><td colspan="11" class="text-center p-8">没有产品，请添加一个。</td></tr>';
+            addProductFormRow();
+            setupProductEventListeners();
             return;
         }
 
         productListEl.innerHTML = productsCache.map(p => generateProductRowHtml(p)).join('');
-
+        
+        addProductFormRow();
         lucide.createIcons();
         if (sortableInstance) sortableInstance.destroy();
         sortableInstance = new Sortable(productListEl, { animation: 150, ghostClass: 'sortable-ghost', handle: '.cursor-move', onEnd: saveProductOrder });
@@ -413,6 +464,7 @@
         });
         
         renderChart('country-chart', 'pie', countryLabels, countryData, '访问来源');
+        lucide.createIcons();
     }
 
     function initAffiliatePanel() {
@@ -478,6 +530,56 @@
     }
 
     // --- HTML Element Renderers ---
+    function generateProductRowHtml(p) {
+        const brandName = p.brands ? p.brands.name : 'N/A';
+        const expiryDate = p.discount_expires_at ? new Date(p.discount_expires_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A';
+        const categoryDropdownHtml = `
+            <div class="custom-dropdown">
+                <button class="dropdown-trigger text-left p-2 border rounded-md w-full truncate">${p.category || '选择分类'}</button>
+                <div class="dropdown-menu" data-id="${p.id}">
+                    ${navCache.filter(n => n.link_text.toLowerCase() !== 'home').map(nav => `
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="${nav.link_text}" ${p.category && p.category.includes(nav.link_text) ? 'checked' : ''}>
+                            <span>${nav.link_text}</span>
+                        </label>
+                    `).join('')}
+                    <div class="p-2 text-right"><button class="btn btn-secondary btn-xs save-category-btn">保存</button></div>
+                </div>
+            </div>`;
+        const brandDropdownHtml = `
+            <div class="custom-dropdown">
+                <button class="dropdown-trigger text-left p-2 border rounded-md w-full truncate">${brandName}</button>
+                <div class="dropdown-menu" data-type="brand">
+                    <div class="dropdown-item" data-brand-id="">-- 无品牌 --</div>
+                    ${brandsCache.map(b => `<div class="dropdown-item" data-brand-id="${b.id}">${b.name}</div>`).join('')}
+                </div>
+            </div>`;
+
+        return `
+        <tr data-id="${p.id}" class="border-b border-pink-100 hover:bg-pink-50/50">
+            <td class="p-3"><input type="checkbox" data-id="${p.id}" class="product-checkbox rounded border-pink-300 text-pink-500 focus:ring-pink-500"></td>
+            <td class="p-3 cursor-move text-center text-gray-400"><i data-lucide="grip-vertical"></i></td>
+            <td class="p-3">
+                <div class="flex items-center gap-3">
+                    <img src="${p.image_url || 'https://placehold.co/40x40/F3F4F6/9CA3AF?text=??'}" class="w-10 h-10 object-cover rounded-md">
+                    <span class="font-semibold">${p.name}</span>
+                </div>
+            </td>
+            <td class="p-3">${categoryDropdownHtml}</td>
+            <td class="p-3">${brandDropdownHtml}</td>
+            <td class="p-3">¥${p.price}</td>
+            <td class="p-3"><a href="${p.target_url}" target="_blank" class="text-blue-500 hover:underline truncate" style="max-width: 150px; display: inline-block;">${p.target_url}</a></td>
+            <td class="p-3">${p.discount_factor || 'N/A'}</td>
+            <td class="p-3">
+                <label class="toggle-switch"><input type="checkbox" class="discount-toggle" ${p.discount_is_active ? 'checked' : ''}><span class="toggle-slider"></span></label>
+            </td>
+            <td class="p-3">${expiryDate}</td>
+            <td class="p-3 text-right">
+                <button class="edit-product-btn p-2 hover:bg-pink-100 rounded-full"><i data-lucide="edit" class="h-4 w-4 text-purple-600"></i></button>
+            </td>
+        </tr>`;
+    }
+
     function renderNavItem(item = {}, isNew = false) {
         const navList = document.getElementById('navigation-list');
         if (!navList) return;
@@ -526,13 +628,24 @@
         if (!container) return;
         const formId = `new-form-${Date.now()}`;
         const div = document.createElement('div');
-        div.className = 'add-form-row';
+        div.className = 'add-form-row grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 items-center';
         div.id = formId;
-        div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
+        div.innerHTML = `
+            <div class="add-image-box relative p-2 h-16 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200 col-span-2 sm:col-span-1">
+                <p class="text-xs text-pink-400">添加图片</p>
+                <img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image">
+            </div>
+            <input type="file" class="hidden add-image-input" accept="image/*">
+            <input type="text" placeholder="产品名称" class="input flex-1 col-span-2 sm:col-span-3 md:col-span-1">
+            <input type="number" placeholder="原价" class="input flex-1">
+            <input type="text" placeholder="跳转链接" class="input flex-1 md:col-span-2">
+            <input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1">
+            <div class="flex items-center justify-end">
+                <button class="p-2 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>`;
         
         container.appendChild(div);
         lucide.createIcons();
-        initFlatpickr(div.querySelector('input[type="datetime-local"]'));
         const imageBox = div.querySelector('.add-image-box'), 
               imageInput = div.querySelector('.add-image-input'), 
               previewImage = div.querySelector('.add-preview-image');
@@ -804,16 +917,20 @@
             const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
             const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
             const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
-            const expires_at = form.querySelector('input[placeholder="折扣到期时间"]').value ? new Date(form.querySelector('input[placeholder="折扣到期时间"]').value).toISOString() : null;
             
             if (!name || isNaN(price) || !target_url) { 
-                showLoading(false); 
-                return showAlert(`请填写必填项 (名称, 原价, 跳转链接)。`, true); 
+                continue; // Skip empty rows
             }
             
             const discountPrice = (discount_factor && !isNaN(price)) ? (price * parseFloat(discount_factor)).toFixed(2) : null;
-            productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: '' });
+            productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_is_active: !!discount_factor, category: '' });
         }
+
+        if(productsToUpload.length === 0) {
+            showLoading(false);
+            return showAlert('没有有效的产品信息被填写。');
+        }
+
         const { error } = await db.from('products').insert(productsToUpload);
         showLoading(false);
         if (error) showAlert("批量添加失败: " + error.message, true);
@@ -821,7 +938,6 @@
             showAlert(`成功添加 ${productsToUpload.length} 个新产品！`); 
             document.getElementById('add-product-forms-container').innerHTML = ''; 
             newProductFiles.clear(); 
-            addProductFormRow(); 
             await loadProducts(); 
         }
     }
@@ -875,7 +991,7 @@
         const { error } = await db.from('products').update({ [field]: value }).eq('id', productId);
         showLoading(false);
         if (error) { showAlert('更新失败: ' + error.message, true); await loadProducts(); }
-        else { const product = productsCache.find(p => p.id == productId); if(product) product[field] = value; }
+        else { const product = productsCache.find(p => p.id == productId); if(product) product[field] = value; showAlert('更新成功!'); }
     }
 
     async function saveFlashSaleData() {
@@ -991,6 +1107,20 @@
     }
 
     // --- Utility Functions ---
+    function processDataForChart(data, dateLabels) {
+        const countsByDay = dateLabels.reduce((acc, label) => {
+            acc[label] = 0;
+            return acc;
+        }, {});
+        data.forEach(event => {
+            const eventDate = new Date(event.created_at).toLocaleDateString('en-CA');
+            if (countsByDay.hasOwnProperty(eventDate)) {
+                countsByDay[eventDate]++;
+            }
+        });
+        return Object.values(countsByDay);
+    }
+
     async function uploadImage(file, bucket = 'product-images') {
         if (!file) return null;
         const fileName = `public/${Date.now()}-${file.name}`;
@@ -1034,6 +1164,7 @@
         placeholder.classList.toggle('hidden', hasImage);
         
         initFlatpickr(document.getElementById('edit-product-discount-expires'), product.discount_expires_at);
+        lucide.createIcons();
         modal.classList.remove('hidden');
     }
 
@@ -1045,6 +1176,32 @@
         document.getElementById('bulk-delete-btn')?.addEventListener('click', bulkDelete);
         document.getElementById('bulk-toggle-discount-btn')?.addEventListener('click', bulkToggleDiscount);
         document.getElementById('product-list')?.addEventListener('click', handleProductListClicks);
+    }
+
+    function setupModalEventListeners() {
+        document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('edit-image-box').addEventListener('click', () => document.getElementById('edit-image-input').click());
+        document.getElementById('edit-image-input').addEventListener('change', (e) => {
+            if (e.target.files?.[0]) {
+                currentEditFile = e.target.files[0];
+                const preview = document.getElementById('edit-preview-image');
+                preview.src = URL.createObjectURL(currentEditFile);
+                preview.classList.remove('hidden');
+                document.getElementById('delete-image-btn').classList.remove('hidden');
+                document.getElementById('edit-image-placeholder').classList.add('hidden');
+            }
+        });
+        document.getElementById('delete-image-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentEditFile = null;
+            currentEditImageUrl = null;
+            document.getElementById('edit-preview-image').src = '';
+            document.getElementById('edit-preview-image').classList.add('hidden');
+            document.getElementById('delete-image-btn').classList.add('hidden');
+            document.getElementById('edit-image-placeholder').classList.remove('hidden');
+            document.getElementById('edit-image-input').value = '';
+        });
+        document.getElementById('save-product-changes-btn').addEventListener('click', saveProductChanges);
     }
     
     function setupStepRowListeners(row) {
@@ -1095,12 +1252,31 @@
 
     function handleProductListClicks(e) {
         const target = e.target;
+        const dropdown = target.closest('.custom-dropdown');
+        if (dropdown) {
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const isActive = menu.classList.contains('active');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active', 'up'));
+
+            if (!isActive) {
+                menu.classList.add('active');
+                const rect = menu.getBoundingClientRect();
+                if (rect.bottom > window.innerHeight) {
+                    menu.classList.add('up');
+                }
+            }
+        }
+        
         const id = target.closest('[data-id]')?.dataset.id;
+        if (!id) return;
         
         if (target.closest('.dropdown-menu[data-type="brand"] .dropdown-item')) {
-             const brandId = target.closest('.dropdown-item').dataset.brandId;
+             const brandId = target.closest('.dropdown-item').dataset.brandId || null;
              target.closest('.custom-dropdown').querySelector('.dropdown-trigger').textContent = target.textContent;
-             updateProductField(id, 'brand_id', brandId);
+             updateProductField(id, 'brand_id', brandId === 'null' ? null : brandId);
+             target.closest('.dropdown-menu').classList.remove('active', 'up');
              return;
         }
 
@@ -1189,7 +1365,7 @@
             btn.addEventListener('click', (e) => {
                 const targetPanel = e.currentTarget.dataset.target;
                 sidebarNav.querySelector('.active')?.classList.remove('active');
-                e.currentTarget.classList.add('active');
+e.currentTarget.classList.add('active');
                 renderPanel(targetPanel);
             });
         });
@@ -1306,20 +1482,6 @@
 
     // --- Authentication and Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        const candyContainer = document.getElementById('candy-background');
-        const candies = ['💖', '✨', '🌸', '🍬', '🍭', '🎀'];
-        for (let i = 0; i < 30; i++) {
-            const candy = document.createElement('div');
-            candy.className = 'candy';
-            candy.innerText = candies[Math.floor(Math.random() * candies.length)];
-            candy.style.left = `${Math.random() * 100}vw`;
-            candy.style.animationDuration = `${5 + Math.random() * 10}s`;
-            candy.style.animationDelay = `${Math.random() * 5}s`;
-            candy.style.opacity = Math.random() * 0.7 + 0.2;
-            candy.style.fontSize = `${10 + Math.random() * 10}px`;
-            if(candyContainer) candyContainer.appendChild(candy);
-        }
-
         const attemptLogin = async () => {
             const passwordInput = document.getElementById('password');
             const loginBtn = document.getElementById('login-btn');
@@ -1371,6 +1533,7 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('admin-panel').classList.remove('hidden');
             setupSidebarNav();
+            setupModalEventListeners();
             renderPanel('dashboard');
         };
         
@@ -1389,22 +1552,26 @@
         
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const overlay = document.getElementById('mobile-menu-overlay');
+        const main = document.getElementById('main-content');
 
-        const toggleMenu = () => {
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        };
+        const toggleMenu = () => sidebar.classList.toggle('-translate-x-full');
 
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', toggleMenu);
-        }
-        if (overlay) {
-            overlay.addEventListener('click', toggleMenu);
-        }
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMenu);
+        main.addEventListener('click', () => {
+            if(!sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
         document.getElementById('sidebar-nav').addEventListener('click', (e) => {
             if (e.target.closest('.tab-button') && window.innerWidth < 768) {
                 toggleMenu();
+            }
+        });
+        
+        // Global click listener to close dropdowns
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active', 'up'));
             }
         });
     });
