@@ -164,20 +164,16 @@
         const refId = urlParams.get('ref');
 
         function prepareUrl(url) {
-            if (!refId || !url) return url;
-            // Don't add ref to external links
-            if (url.startsWith('http')) return url;
+            if (!refId || !url || url.startsWith('http')) return url;
             try {
-                // Use a base URL to correctly parse relative URLs like "/products" or "/"
                 const urlObj = new URL(url, window.location.origin);
                 if (!urlObj.searchParams.has('ref')) {
                     urlObj.searchParams.append('ref', refId);
                 }
-                // Return just the path and search params, which is what we need for href attributes
                 return urlObj.pathname + urlObj.search + urlObj.hash;
             } catch (e) {
                 console.error('Error preparing URL:', e);
-                return url; // return original on error
+                return url;
             }
         }
 
@@ -246,7 +242,8 @@
                         const childStepsHTML = subSteps
                             .filter(sub => sub.section_title === mainStep.title)
                             .map(subStep => {
-                                const hasImage = !!subStep.image_url;
+                                // This is the updated, more robust check for a valid image URL.
+                                const hasImage = subStep.image_url && subStep.image_url.trim() !== '';
                                 return `
                                     <div class="grid grid-cols-1 ${hasImage ? 'lg:grid-cols-2' : ''} gap-8 lg:gap-12 items-center">
                                         <div class="${hasImage && index % 2 !== 0 ? 'lg:order-last' : ''}">
