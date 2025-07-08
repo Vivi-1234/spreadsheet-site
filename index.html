@@ -234,7 +234,8 @@
                 // --- Build Main Content ---
                 let signUpButtonHTML = '';
                 if (settings && settings.signup_url) {
-                    signUpButtonHTML = `<div class="mt-8"><a href="${settings.signup_url}" target="_blank" class="btn btn-primary text-lg">立即注册 (Sign Up)</a></div>`;
+                    // This is the updated button code
+                    signUpButtonHTML = `<div class="mt-8"><a href="${settings.signup_url}" target="_blank" class="btn btn-primary">Sign Up Now</a></div>`;
                 }
                 
                 let mainHTML = `
