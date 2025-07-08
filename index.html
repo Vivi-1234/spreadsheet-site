@@ -153,9 +153,13 @@
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10" id="main-container">
         </main>
 
-    <footer class="mt-20 md:mt-28 bg-transparent border-t border-border-color">
+    <footer class="bg-transparent mt-20 md:mt-28">
         <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
             <p class="font-bold text-lg md:text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
+            <p class="text-sm md:text-base text-[#00FF00] opacity-60 max-w-lg mx-auto">A community dedicated to discovering Mulebuy's finest goods. Join us to find your next perfect pair.</p>
+            <div class="mt-8 pt-8 md:mt-10 md:pt-10 border-t border-[#00FF00] opacity-40 text-xs md:text-sm">
+                <p>© 2025 Matrix SpreadSheet. All Rights Reserved.</p>
+            </div>
         </div>
     </footer>
 
@@ -234,7 +238,6 @@
                 // --- Build Main Content ---
                 let signUpButtonHTML = '';
                 if (settings && settings.signup_url) {
-                    // This is the updated button code
                     signUpButtonHTML = `<div class="mt-8"><a href="${settings.signup_url}" target="_blank" class="btn btn-primary">Sign Up Now</a></div>`;
                 }
                 
