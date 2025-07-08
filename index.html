@@ -107,23 +107,6 @@
         .btn-primary:hover {
             box-shadow: 0 0 15px var(--accent-color);
         }
-        #sticky-step-nav {
-            position: sticky;
-            top: var(--header-height);
-            z-index: 20;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .step-nav-link {
-            color: var(--text-secondary);
-            transition: color 0.2s ease-in-out;
-            white-space: nowrap;
-        }
-        .step-nav-link.active, .step-nav-link:hover {
-            color: var(--text-primary);
-            text-shadow: 0 0 5px var(--accent-color);
-        }
         .step-number {
             width: 3.5rem;
             height: 3.5rem;
@@ -159,26 +142,14 @@
         </div>
     </header>
     
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10">
-        <section class="text-center pt-0 pb-12 md:pb-16 fade-in-up">
-            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter leading-tight text-shadow-glow">How to Buy</h1>
-            <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-text-secondary">Follow these simple steps to get the best products sourced and shipped directly to you.</p>
-        </section>
-
-        <section id="video-section" class="my-12 md:my-16 fade-in-up hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="aspect-video bg-black rounded-lg overflow-hidden border border-border-color shadow-[0_0_15px_#00FF00]">
-                    <iframe id="video-player" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-            </div>
-        </section>
-
-        <div id="steps-section"></div>
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative z-10" id="main-container">
+        <!-- Content will be dynamically injected here -->
     </main>
 
     <footer class="mt-20 md:mt-28 bg-transparent border-t border-border-color">
         <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
             <p class="font-bold text-lg md:text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
+            <div id="social-footer-container" class="flex justify-center items-center space-x-4 mt-6"></div>
         </div>
     </footer>
 
@@ -188,37 +159,68 @@
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function slugify(text) {
+            if (!text) return '';
+            return text.toString().toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+        }
+
         async function initializePage() {
+            const mainContainer = document.getElementById('main-container');
             try {
-                const [settingsRes, stepsRes, brandsRes] = await Promise.all([
+                // Correctly query the new tables
+                const [settingsRes, stepsRes, brandsRes, socialRes] = await Promise.all([
                     db.from('how_to_buy_settings').select('video_url, signup_url').limit(1).single(),
                     db.from('how_to_buy_steps').select('*').order('display_order'),
-                    db.from('brands').select('*').order('name')
+                    db.from('brands').select('*').order('name'),
+                    db.from('social_links').select('*').order('display_order')
                 ]);
 
+                // Gracefully handle errors
+                if (brandsRes.error) throw brandsRes.error;
+                if (socialRes.error) throw socialRes.error;
+                
                 const settings = settingsRes.data;
-                const allSteps = stepsRes.data;
+                const allSteps = stepsRes.data || [];
                 const brands = brandsRes.data || [];
+                const socialLinks = socialRes.data || [];
 
+                // --- Build Navigation ---
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
                     const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><a href="/products?brand=all" class="brand-dropdown-item" data-brand="all">All Brands</a>${brands.map(brand => `<a href="/products?brand=${brand.id}" class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</a>`).join('')}</div></div>`;
                     mainNavContainer.innerHTML = `<a href="/products" class="nav-link">Products</a>${brandDropdownHTML}<a href="/" class="nav-link active">How-to-buy</a>`;
                 }
+                
+                // --- Build Main Content ---
+                let mainHTML = `
+                    <section class="text-center pt-0 pb-12 md:pb-16 fade-in-up">
+                        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter leading-tight text-shadow-glow">How to Buy</h1>
+                        <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-text-secondary">Follow these simple steps to get the best products sourced and shipped directly to you.</p>
+                    </section>
+                `;
 
                 if (settings && settings.video_url) {
-                    const videoSection = document.getElementById('video-section');
-                    const videoPlayer = document.getElementById('video-player');
-                    videoPlayer.src = settings.video_url;
-                    videoSection.classList.remove('hidden');
+                    mainHTML += `
+                        <section id="video-section" class="my-12 md:my-16 fade-in-up">
+                            <div class="max-w-4xl mx-auto">
+                                <div class="aspect-video bg-black rounded-lg overflow-hidden border border-border-color shadow-[0_0_15px_#00FF00]">
+                                    <iframe id="video-player" class="w-full h-full" src="${settings.video_url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </section>
+                    `;
                 }
 
-                const stepsSection = document.getElementById('steps-section');
-                if (allSteps && allSteps.length > 0) {
+                if (allSteps.length > 0) {
                     const mainSteps = allSteps.filter(step => !step.section_title);
                     const subSteps = allSteps.filter(step => step.section_title);
                     
-                    stepsSection.innerHTML = mainSteps.map((mainStep, index) => {
+                    const stepsHTML = mainSteps.map((mainStep, index) => {
                         const childStepsHTML = subSteps
                             .filter(sub => sub.section_title === mainStep.title)
                             .map(subStep => {
@@ -238,7 +240,7 @@
                             }).join('<div class="my-8 border-b border-dashed border-border-color opacity-50"></div>');
 
                         return `
-                            <section class="py-16 md:py-20 fade-in-up">
+                            <section class="py-16 md:py-20 fade-in-up" id="${slugify(mainStep.title)}">
                                 <div class="max-w-5xl mx-auto">
                                     <div class="flex items-center gap-4 md:gap-6 mb-12">
                                         <div class="step-number flex items-center justify-center rounded-full font-bold text-2xl">${index + 1}</div>
@@ -251,13 +253,29 @@
                             </section>
                         `;
                     }).join('');
+                    mainHTML += `<div id="steps-section">${stepsHTML}</div>`;
+                } else {
+                    mainHTML += '<p class="text-center text-text-secondary py-16">Tutorial steps are being configured. Please check back later.</p>';
+                }
+
+                mainContainer.innerHTML = mainHTML;
+
+                // --- Build Footer ---
+                const socialFooter = document.getElementById('social-footer-container');
+                if (socialLinks.length > 0) {
+                    socialFooter.innerHTML = socialLinks.map(link => {
+                        const finalUrl = link.link_url.startsWith('http') ? link.link_url : `https://${link.link_url}`;
+                        return `<a href="${finalUrl}" target="_blank" class="text-gray-400 hover:text-white transition-colors"><div class="w-8 h-8"><img src="${link.icon_url}" alt="${link.platform_name}" class="w-full h-full object-cover rounded-full border-2 border-transparent hover:border-accent-color transition-all"></div></a>`;
+                    }).join('');
                 }
 
             } catch (error) {
                 console.error('Error initializing page:', error);
+                mainContainer.innerHTML = `<div class="text-center py-20"><h2 class="text-2xl font-bold text-red-500">Error Loading Page</h2><p class="mt-4 text-text-secondary">Could not fetch page content. Please try again later.</p><p class="mt-2 text-xs text-gray-500 font-mono">${error.message}</p></div>`;
             } finally {
                 lucide.createIcons();
                 setupEventListeners();
+                setupAnimations();
             }
         }
 
@@ -274,6 +292,18 @@
             });
         }
 
+        function setupAnimations() {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+        }
+        
         function initMatrixRain() {
             const canvas = document.querySelector('.matrix-rain');
             if (!canvas) return;
