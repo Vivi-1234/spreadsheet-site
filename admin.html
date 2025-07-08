@@ -119,6 +119,8 @@
         .dropdown-item:hover { background-color: #FDF4FF; color: var(--text-primary); }
         .dropdown-item input[type="checkbox"] { margin-right: 0.5rem; border-radius: 0.25rem; border-color: #FBCFE8; color: var(--accent-pink); }
         .dropdown-item input[type="checkbox"]:checked { background-color: var(--accent-pink); }
+        .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.5rem; }
+        .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #FAF5FF; border: 2px dashed #E9D5FF; border-radius: 0.75rem; }
         /* How-to-buy specific styles */
         .main-step-card { background-color: #FDF4FF; border: 1px solid var(--border-color); border-radius: 1rem; }
         .sub-step-row { background-color: #FFFFFF; border: 1px solid #FBCFE8; border-radius: 0.75rem; }
@@ -1278,7 +1280,7 @@
 
         let discountTag = '';
         if (product.discount_is_active && product.discount_factor) {
-            const discountText = `${product.discount_factor * 10}折`;
+            const discountText = `${(product.discount_factor * 10).toFixed(1)}折`;
             discountTag = `<span class="ml-2 text-xs font-bold text-white bg-pink-500 px-2 py-0.5 rounded-full">${discountText} 💖</span>`;
         }
 
