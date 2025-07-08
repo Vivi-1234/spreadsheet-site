@@ -703,11 +703,15 @@
         lucide.createIcons();
     }
 
-    function renderSubStepRow(subStep = {}, container) {
+   function renderSubStepRow(subStep = {}, container) {
         const subStepId = subStep.id || `new_sub_${Date.now()}`;
         const div = document.createElement('div');
         div.className = 'sub-step-row p-4 space-y-4';
         div.dataset.id = subStepId;
+
+        // 对图片地址进行更严格的检查
+        const hasImage = subStep.image_url && subStep.image_url.trim() !== '';
+
         div.innerHTML = `
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2">
@@ -724,9 +728,11 @@
                 <div class="space-y-1">
                     <label class="label">图片</label>
                     <div class="step-image-upload-box relative p-4 h-full flex items-center justify-center">
-                        <p class="step-image-placeholder ${subStep.image_url ? 'hidden' : ''}">点击上传</p>
-                        <img src="${subStep.image_url || ''}" class="step-image-preview ${subStep.image_url ? '' : 'hidden'}">
-                        <button class="delete-step-image-btn ${subStep.image_url ? '' : 'hidden'} absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                        <p class="step-image-placeholder ${hasImage ? 'hidden' : ''}">点击上传</p>
+                        
+                        <img ${hasImage ? `src="${subStep.image_url}"` : ''} class="step-image-preview ${hasImage ? '' : 'hidden'}">
+                        
+                        <button class="delete-step-image-btn ${hasImage ? '' : 'hidden'} absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
                             <i data-lucide="trash-2" class="h-4 w-4"></i>
                         </button>
                     </div>
