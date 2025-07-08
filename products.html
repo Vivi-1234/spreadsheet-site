@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products - Matrix SpreadSheet</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N3QK8Z3H');</script>
+    <!-- End Google Tag Manager -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -18,6 +21,10 @@
     </style>
 </head>
 <body class="text-[#00FF00] antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N3QK8Z3H"height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <canvas class="matrix-rain"></canvas>
     <div id="social-icons-container" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center space-y-2 md:space-y-4 mr-2 md:mr-8"></div>
 
@@ -29,6 +36,7 @@
     </header>
 
     <main class="container mx-auto px-4 md:px-12">
+        
         <section id="flash-sale-section" class="hidden my-12 md:my-16 fade-in-up">
             <div class="relative w-full p-4 md:p-6 border-2 border-[#00FF00] shadow-[0_0_15px_#00FF00] bg-black bg-opacity-50">
                 <div class="flex flex-col items-center justify-center text-center">
@@ -40,15 +48,27 @@
             </div>
         </section>
 
-        <section id="product-section" class="pt-10 md:pt-16 fade-in-up">
+        <section id="info-section" class="my-12 md:my-20 fade-in-up" style="transition-delay: 100ms;">
+            <div class="text-center">
+                <h1 id="site-title" class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-[#00FF00] tracking-tighter leading-tight text-shadow-glow"></h1>
+                <p id="site-subtitle" class="mt-4 md:mt-6 text-base md:text-lg text-[#00FF00] max-w-xl mx-auto opacity-80"></p>
+            </div>
+        </section>
+
+        <section id="product-section" class="pt-10 md:pt-16 fade-in-up" style="transition-delay: 200ms;">
             <div id="category-filter-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 md:mb-12"></div>
             <div id="product-list-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-12 md:gap-y-14"></div>
         </section>
+        
     </main>
 
-    <footer class="bg-transparent mt-20 md:mt-28 border-t border-border-color">
+    <footer class="bg-transparent mt-20 md:mt-28">
         <div class="container mx-auto px-4 md:px-12 py-10 md:py-14 text-center">
             <p class="font-bold text-lg md:text-xl mb-4 text-[#00FF00]">Matrix SpreadSheet</p>
+            <p class="text-sm md:text-base text-[#00FF00] opacity-60 max-w-lg mx-auto">A community dedicated to discovering Mulebuy's finest goods. Join us to find your next perfect pair.</p>
+            <div class="mt-8 pt-8 md:mt-10 md:pt-10 border-t border-[#00FF00] opacity-40 text-xs md:text-sm">
+                <p>© 2025 Matrix SpreadSheet. All Rights Reserved.</p>
+            </div>
         </div>
     </footer>
 
@@ -70,7 +90,7 @@
                 if (error) console.error('Analytics event logging failed:', error);
             } catch (error) { console.error('Error in logEvent:', error); }
         }
-
+        
         function appendRefParam(url) {
             if (!refId || !url) return url;
             try {
@@ -79,7 +99,7 @@
                 return urlObj.toString();
             } catch(e) { return url; }
         }
-
+        
         function renderProducts(containerId, productArray) {
             const productContainer = document.getElementById(containerId);
             if (!productContainer) return;
@@ -104,7 +124,7 @@
                     productContainer.innerHTML += `<a href="${appendRefParam(p.target_url)}" target="_blank" data-product-name="${p.name}" class="group block product-card relative"><div class="img-wrapper"><img src="${p.image_url || 'https://placehold.co/400x300/000000/00FF00?text=NO+IMAGE'}" alt="${p.name}" class="w-full h-full object-cover"></div><div class="p-3 pt-2 pb-3 md:p-4 md:pt-3 md:pb-4"><h3 class="product-title font-semibold text-base md:text-lg text-[#00FF00] group-hover:text-[#00CC00] transition-colors">${p.name}</h3>${priceHTML}</div>${discountBadgeHTML}</a>`;
                 });
             } else {
-                productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products found for this filter.</p>`;
+                productContainer.innerHTML = `<p class="text-center text-[#00FF00] opacity-60 text-lg col-span-full">No products in this section.</p>`;
             }
         }
         
@@ -128,13 +148,13 @@
 
         async function loadAndRender() {
             try {
-                // Fetch exchange rate
                 try {
                     const rateResponse = await fetch('https://api.frankfurter.app/latest?from=CNY&to=USD');
                     if (rateResponse.ok) { cnyToUsdRate = (await rateResponse.json()).rates.USD; }
                 } catch (rateError) { console.error('Error fetching exchange rate:', rateError); }
 
-                const [navRes, socialRes, productsRes, brandsRes, flashSaleSettingsRes, flashSaleProductsRes] = await Promise.all([
+                const [settingsRes, navRes, socialRes, productsRes, brandsRes, flashSaleSettingsRes, flashSaleProductsRes] = await Promise.all([
+                    db.from('settings').select('*').limit(1).single(),
                     db.from('navigation').select('*').order('display_order'),
                     db.from('social_links').select('*').order('display_order'),
                     db.from('products').select(`*, brands (*)`).eq('is_active', true).order('display_order'),
@@ -144,20 +164,29 @@
                 ]);
 
                 allProducts = productsRes.data || [];
+                const settings = settingsRes.data;
                 const navItems = navRes.data || [];
                 const socialLinks = socialRes.data;
                 const brands = brandsRes.data || [];
                 const flashSaleSettings = flashSaleSettingsRes.data;
                 const flashSaleProducts = (flashSaleProductsRes.data || []).map(item => item.products).filter(Boolean);
+
+                if (settings) {
+                    document.title = "Products - " + (settings.site_title || 'Matrix SpreadSheet');
+                    const siteTitleEl = document.getElementById('site-title');
+                    const siteSubtitleEl = document.getElementById('site-subtitle');
+                    if (siteTitleEl) siteTitleEl.innerHTML = (settings.site_title || 'Matrix SpreadSheet').replace('Next', '<br>Next');
+                    if (siteSubtitleEl) siteSubtitleEl.textContent = settings.site_subtitle || 'Discover the Matrix';
+                }
                 
                 const mainNavContainer = document.getElementById('main-nav');
                 if (mainNavContainer) {
-                    const productsLink = `<a href="/products" class="nav-link text-lg font-medium active">Products</a>`;
-                    const howToBuyLink = `<a href="/" class="nav-link text-lg font-medium">How-to-buy</a>`;
+                    const howToBuyLink = `<a href="/" class="nav-link">How-to-buy</a>`;
+                    const productsLink = `<a href="/products" class="nav-link active">Products</a>`;
                     const brandDropdownHTML = `<div class="brand-dropdown"><button class="nav-trigger text-lg font-medium flex items-center gap-2 text-[#00FF00] hover:text-white transition-colors duration-300"><i data-lucide="list-filter" class="w-6 h-6 md:w-auto md:h-auto"></i><span class="nav-link text-base md:text-lg">Brands</span></button><div class="brand-dropdown-menu"><div class="brand-dropdown-item" data-brand="all">All Brands</div>${brands.map(brand => `<div class="brand-dropdown-item" data-brand="${brand.id}">${brand.name}</div>`).join('')}</div></div>`;
-                    mainNavContainer.innerHTML = productsLink + howToBuyLink + brandDropdownHTML;
+                    mainNavContainer.innerHTML = howToBuyLink + productsLink + brandDropdownHTML;
                 }
-                
+
                 const socialContainer = document.getElementById('social-icons-container');
                 if (socialContainer && socialLinks) {
                     socialContainer.innerHTML = ''; 
@@ -176,9 +205,9 @@
                     filterHTML += validNavItems.map(link => `<button class="filter-btn" data-category="${link.link_text}">${link.link_text}</button>`).join('');
                     categoryFilterContainer.innerHTML = filterHTML;
                 }
-
+                
                 const flashSaleSection = document.getElementById('flash-sale-section');
-                if (flashSaleSettings?.is_active && flashSaleSettings.end_time) {
+                if (flashSaleSettingsRes.error === null && flashSaleSettings?.is_active && flashSaleSettings.end_time) {
                     const endTime = new Date(flashSaleSettings.end_time);
                     if (endTime > new Date()) {
                         flashSaleSection.classList.remove('hidden');
@@ -190,10 +219,22 @@
                 applyFiltersAndRender();
             } catch (error) {
                 console.error('Error loading page data:', error);
-            } finally {
-                lucide.createIcons();
-                setupEventListeners();
+                document.querySelector('main').innerHTML = `<p class="text-center text-red-500 text-lg col-span-full">A critical error occurred. Could not load page content. Please check console for details.</p>`;
             }
+
+            lucide.createIcons();
+            
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+            
+            setupEventListeners();
         }
         
         function setupEventListeners() {
@@ -201,7 +242,7 @@
                 const card = e.target.closest('.product-card');
                 if (card?.dataset.productName) logEvent('product_click', card.dataset.productName);
             });
-
+            
             const categoryContainer = document.getElementById('category-filter-container');
             categoryContainer?.addEventListener('click', e => {
                 const button = e.target.closest('.filter-btn');
@@ -234,6 +275,7 @@
             }
 
             document.addEventListener('click', e => {
+                const brandDropdown = document.querySelector('.brand-dropdown');
                 if (brandDropdown && !brandDropdown.contains(e.target)) {
                     brandDropdown.classList.remove('active');
                 }
