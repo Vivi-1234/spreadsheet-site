@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Sweetie Shake Theme --- */
+        /* --- Sweetie Shake Theme (Existing) --- */
         :root {
             --bg-main: #FEF9FF; /* A very light lavender background */
             --bg-panel: #FFFFFF;
@@ -28,6 +29,7 @@
             --text-primary: #4B5563;
             --text-secondary: #9CA3AF;
             --danger-color: #F87171;
+            --success-color: #34D399;
         }
 
         @keyframes fall {
@@ -154,7 +156,6 @@
         
         .social-logo-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 0.5rem; }
         .social-logo-box { flex: 0 0 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: #FAF5FF; border: 2px dashed #E9D5FF; }
-        .nav-item-row .nav-url { pointer-events: none; background-color: #F3F4F6; }
         
         .text-gradient {
             background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
@@ -169,32 +170,26 @@
         table tbody tr:last-child { border-bottom: none; }
         table tbody tr:hover { background-color: #FAF5FF; }
         
-     .add-form-row { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.5rem; 
-    flex-wrap: nowrap; 
-    margin-bottom: 1rem; 
-    padding-bottom: 0.5rem;
-}
+        .add-form-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            flex-wrap: nowrap; 
+            margin-bottom: 1rem; 
+            padding-bottom: 0.5rem;
+        }
+        @media (max-width: 767px) {
+            .add-form-row { overflow-x: auto; }
+        }
+        .add-form-row .flex-1 { flex: 1 1 auto; min-width: 100px; }
+        .add-form-row .add-image-box { flex: 0 0 80px; height: 80px; }
 
-/* 在小屏幕上应用 overflow-x: auto */
-@media (max-width: 767px) {
-    .add-form-row {
-        overflow-x: auto;
-    }
-}
-
-.add-form-row .flex-1 { 
-    flex: 1 1 auto; 
-    min-width: 100px; 
-}
-
-.add-form-row .add-image-box { 
-    flex: 0 0 80px; 
-    height: 80px; 
-}
-        
+        /* How-to-buy specific styles */
+        .main-step-card { background-color: #FDF4FF; border: 1px solid var(--border-color); border-radius: 1rem; }
+        .sub-step-row { background-color: #FFFFFF; border: 1px solid #FBCFE8; border-radius: 0.75rem; }
+        .main-step-drag-handle, .sub-step-drag-handle { cursor: move; color: var(--text-secondary); }
+        .step-image-upload-box { background-color: #FAF5FF; border: 2px dashed #E9D5FF; border-radius: 0.75rem; }
+        .step-image-preview { max-height: 128px; border-radius: 0.5rem; }
     </style>
 </head>
 <body class="bg-main">
@@ -212,7 +207,6 @@
     </div>
 
     <div id="admin-panel" class="hidden">
-        <!-- Mobile Header -->
         <header class="md:hidden flex items-center justify-between px-4 py-2 bg-white/80 backdrop-blur-sm sticky top-0 z-20 border-b border-pink-100">
              <h1 class="text-xl font-bold text-gradient">Admin</h1>
              <button id="mobile-menu-btn" class="p-2">
@@ -221,10 +215,8 @@
         </header>
 
         <div class="relative flex h-screen">
-            <!-- Overlay for mobile menu -->
             <div id="mobile-menu-overlay" class="md:hidden fixed inset-0 bg-black/30 z-30 hidden"></div>
             
-            <!-- Sidebar -->
             <aside id="sidebar" class="w-64 p-4 flex-col fixed inset-y-0 left-0 z-40 transform -translate-x-full md:relative md:translate-x-0 md:flex">
                 <h1 class="text-2xl font-bold text-gradient px-2 pb-4 border-b border-pink-100">SpreadSheet</h1>
                 <nav id="sidebar-nav" class="mt-6 space-y-2 flex-grow"></nav>
@@ -235,7 +227,6 @@
                 </div>
             </aside>
             
-            <!-- Main Content -->
             <main class="flex-1 p-4 md:p-8 overflow-y-auto" id="main-content"></main>
         </div>
     </div>
@@ -303,19 +294,13 @@
     const BASE_URL = 'https://sigma-shoes.com/';
 
     const { createClient } = supabase;
-    let db; // This will be initialized after successful login
+    let db; 
 
     // --- Global State ---
-    let productsCache = [],
-        brandsCache = [],
-        navCache = [],
-        currentAnalyticsData = [];
-    let sortableInstance = null,
-        sortableFlashSaleInstance = null;
-    let newProductFiles = new Map(),
-        newSocialFiles = new Map();
-    let currentEditFile = null,
-        currentEditImageUrl = '';
+    let productsCache = [], brandsCache = [], navCache = [], currentAnalyticsData = [], socialLinksCache = [];
+    let sortableInstance = null, sortableFlashSaleInstance = null, mainStepsSortable = null;
+    let newProductFiles = new Map(), newSocialFiles = new Map(), newHowToBuyStepFiles = new Map();
+    let currentEditFile = null, currentEditImageUrl = '', howToBuySettingsCache = null;
 
     // --- DOM Elements ---
     const authScreen = document.getElementById('auth-screen');
@@ -331,10 +316,11 @@
         products: `<h2 class="text-2xl font-bold text-gradient mb-6">产品管理 🛍️</h2><div class="panel p-6"><div class="mb-6 border-b border-pink-100 pb-6"><h3 class="font-semibold mb-2 text-lg">添加新产品</h3><div id="add-product-forms-container" class="space-y-4"></div><div class="mt-4 flex justify-between"><button id="add-product-form-row-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>继续添加</button><button id="submit-all-new-products-btn" class="btn btn-primary"><i data-lucide="upload-cloud" class="mr-2 h-4 w-4"></i>确认添加全部</button></div></div><div id="bulk-actions-bar" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center justify-between"><div><span id="selected-count">0</span> 个产品已选中</div><div class="flex items-center gap-2"><button id="bulk-toggle-discount-btn" class="btn btn-secondary btn-xs"><i data-lucide="power" class="mr-1 h-4 w-4"></i>切换折扣状态</button><button id="bulk-delete-btn" class="btn btn-danger btn-xs"><i data-lucide="trash-2" class="mr-1 h-4 w-4"></i>删除选中</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-pink-50 text-pink-600"><tr><th class="p-3 w-8"><input type="checkbox" id="select-all-products" class="rounded border-pink-300 text-pink-500 focus:ring-pink-500"></th><th class="p-3 w-10">排序</th><th class="p-3">产品</th><th class="p-3" style="min-width: 150px;">分类</th><th class="p-3">品牌</th><th class="p-3">原价</th><th class="p-3">跳转链接</th><th class="p-3">折扣率</th><th class="p-3">折扣状态</th><th class="p-3">到期日</th><th class="p-3 text-right">操作</th></tr></thead><tbody id="product-list"></tbody></table></div></div>`,
         brands: `<h2 class="text-2xl font-bold text-gradient mb-6">品牌管理 🎀</h2><div class="panel p-6 max-w-2xl"><div class="flex items-center gap-2 mb-4"><input type="text" id="new-brand-input" class="input flex-grow" placeholder="输入新品牌名称 (例如 Nike)"><button id="add-brand-btn" class="btn btn-secondary"><i data-lucide="plus" class="h-4 w-4"></i></button></div><div id="brand-list" class="space-y-3 mb-4 border-t border-pink-100 pt-4"></div><div class="text-right mt-4"><button id="save-brands-btn" class="btn btn-primary">保存全部变更</button></div></div>`,
         navigation: `<h2 class="text-2xl font-bold text-gradient mb-6">导航栏管理 (分类) 📜</h2><div class="panel p-6 max-w-2xl"><p class="text-sm text-text-secondary mb-4">在这里管理前端页面产品区上方的分类筛选按钮。可以拖拽进行排序。</p><div id="navigation-list" class="space-y-3 mb-4"></div><div class="mt-4"><button id="add-nav-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加导航项</button></div><div class="text-right mt-4"><button id="save-nav-btn" class="btn btn-primary">保存全部变更</button></div></div>`,
-        settings: `<h2 class="text-2xl font-bold text-gradient mb-6">网站全局设置 ⚙️</h2><div class="panel p-6 space-y-4 max-w-2xl"><div><label for="siteTitle" class="label">主标题</label><input type="text" id="siteTitle" class="input mt-1"></div><div><label for="siteSubtitle" class="label">副标题</label><textarea id="siteSubtitle" class="input mt-1" rows="2"></textarea></div><div><label for="videoUrl" class="label">教程视频链接</label><input type="text" id="videoUrl" class="input mt-1"><p class="text-xs text-text-secondary mt-1">提示: 请使用 YouTube 的 "embed" 格式链接。</p></div><div class="text-right"><button id="save-settings-btn" class="btn btn-primary">保存设置</button></div></div>`,
+        settings: `<h2 class="text-2xl font-bold text-gradient mb-6">网站全局设置 ⚙️</h2><div class="panel p-6 space-y-4 max-w-2xl"><div><label for="siteTitle" class="label">主标题</label><input type="text" id="siteTitle" class="input mt-1"></div><div><label for="siteSubtitle" class="label">副标题</label><textarea id="siteSubtitle" class="input mt-1" rows="2"></textarea></div><div class="text-right"><button id="save-settings-btn" class="btn btn-primary">保存设置</button></div></div>`,
         social: `<h2 class="text-2xl font-bold text-gradient mb-6">社交媒体管理 💖</h2><div class="panel p-6 max-w-2xl"><div id="social-links-list" class="space-y-3 mb-4"></div><div class="mt-4"><button id="add-social-btn" class="btn btn-secondary text-sm"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加社交媒体</button></div><div class="text-right mt-4"><button id="save-social-btn" class="btn btn-primary">保存社媒链接</button></div></div>`,
         affiliate: `<h2 class="text-2xl font-bold text-gradient mb-6">联盟推广 🔗</h2><div class="space-y-8"><div class="panel p-6 max-w-2xl"><h3 class="text-lg font-semibold mb-4 text-text-primary">生成推广链接</h3><div class="flex items-center gap-2"><input type="text" id="ref-id-input" class="input" placeholder="输入Mulebuy ID"><button id="generate-ref-link-btn" class="btn btn-primary">生成</button></div><div id="ref-link-result" class="hidden mt-4"><input type="text" id="generated-ref-link" class="input bg-gray-100" readonly><button id="copy-ref-link-btn" class="btn btn-secondary mt-2">复制链接</button></div></div><div class="panel p-6 max-w-2xl"><h3 class="text-lg font-semibold mb-4 text-text-primary">查询推广效果</h3><div class="flex items-center gap-2"><input type="text" id="query-ref-id-input" class="input" placeholder="输入要查询的Mulebuy ID"><button id="query-ref-btn" class="btn btn-primary">查询</button></div><div id="query-ref-result" class="mt-4 hidden"><p>此ID带来的访问次数: <span id="ref-visit-count" class="font-bold text-lg text-pink-500">0</span></p></div></div></div>`,
-        flash_sale: `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gradient">秒杀管理 ⚡</h2><button id="save-flash-sale-btn" class="btn btn-primary"><i data-lucide="save" class="mr-2 h-4 w-4"></i>保存更改</button></div><div class="panel p-6 mb-8"><h3 class="text-lg font-semibold mb-4 text-text-primary">活动设置</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center"><div><label for="flash-sale-end-time" class="label">倒计时结束时间</label><input type="datetime-local" id="flash-sale-end-time" class="input mt-1 flatpickr-input"></div><div class="flex items-center"><label class="toggle-switch"><input type="checkbox" id="flash-sale-active-toggle"><span class="toggle-slider"></span></label><label for="flash-sale-active-toggle" class="ml-3">开启秒杀活动</label></div></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="panel p-6"><h3 class="text-lg font-semibold mb-4 text-text-primary">可选产品</h3><div id="all-products-list" class="space-y-2 h-96 overflow-y-auto border border-pink-100 p-2 rounded-lg bg-pink-50/50"></div></div><div class="panel p-6"><h3 class="text-lg font-semibold mb-4 text-text-primary">秒杀产品 (可拖拽排序)</h3><div id="flash-sale-products-list" class="space-y-2 h-96 overflow-y-auto border border-pink-100 p-2 rounded-lg bg-pink-50/50"></div></div></div>`
+        flash_sale: `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-gradient">秒杀管理 ⚡</h2><button id="save-flash-sale-btn" class="btn btn-primary"><i data-lucide="save" class="mr-2 h-4 w-4"></i>保存更改</button></div><div class="panel p-6 mb-8"><h3 class="text-lg font-semibold mb-4 text-text-primary">活动设置</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center"><div><label for="flash-sale-end-time" class="label">倒计时结束时间</label><input type="datetime-local" id="flash-sale-end-time" class="input mt-1 flatpickr-input"></div><div class="flex items-center"><label class="toggle-switch"><input type="checkbox" id="flash-sale-active-toggle"><span class="toggle-slider"></span></label><label for="flash-sale-active-toggle" class="ml-3">开启秒杀活动</label></div></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="panel p-6"><h3 class="text-lg font-semibold mb-4 text-text-primary">可选产品</h3><div id="all-products-list" class="space-y-2 h-96 overflow-y-auto border border-pink-100 p-2 rounded-lg bg-pink-50/50"></div></div><div class="panel p-6"><h3 class="text-lg font-semibold mb-4 text-text-primary">秒杀产品 (可拖拽排序)</h3><div id="flash-sale-products-list" class="space-y-2 h-96 overflow-y-auto border border-pink-100 p-2 rounded-lg bg-pink-50/50"></div></div></div>`,
+        how_to_buy: `<div class="space-y-8"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-gradient">"How-to-Buy" 页面管理 📖</h2><button id="save-how-to-buy-btn" class="btn btn-primary"><i data-lucide="save" class="mr-2 h-4 w-4"></i>保存全部更改</button></div><div class="panel p-6 space-y-6"><h3 class="text-lg font-semibold text-text-primary">通用设置</h3><div><label for="how-to-buy-video-url" class="label">教程视频链接</label><input type="text" id="how-to-buy-video-url" class="input mt-1" placeholder="输入 YouTube 的 'embed' 格式链接"></div><div><label for="how-to-buy-signup-url" class="label">注册按钮链接</label><input type="text" id="how-to-buy-signup-url" class="input mt-1" placeholder="输入点击注册按钮后跳转的链接"></div></div><div class="panel p-6"><h3 class="text-lg font-semibold mb-4 text-text-primary">教程步骤</h3><p class="text-sm text-text-secondary mb-4">添加、删除或拖拽排序主步骤。子步骤可以在每个主步骤内进行管理。</p><div id="how-to-buy-steps-container" class="space-y-4"></div><div class="mt-6"><button id="add-how-to-buy-main-step-btn" class="btn btn-secondary"><i data-lucide="plus" class="mr-2 h-4 w-4"></i>添加主步骤</button></div></div></div>`
     };
 
     // --- Core Logic ---
@@ -350,6 +336,7 @@
             case 'social': loadSocialLinks(); break;
             case 'affiliate': initAffiliatePanel(); break;
             case 'flash_sale': loadFlashSaleData(); break;
+            case 'how_to_buy': initHowToBuyPanel(); break;
         }
     }
     function showLoading(show) { loadingOverlay.classList.toggle('hidden', !show); }
@@ -361,41 +348,12 @@
         setTimeout(() => { alertBox.remove(); }, 3000);
     }
     
-    function setupDropdowns() {
-        document.body.addEventListener('click', (e) => {
-            const trigger = e.target.closest('.dropdown-trigger');
-            const activeMenus = document.querySelectorAll('.dropdown-menu.active');
-
-            if (trigger) {
-                const menuToToggle = trigger.nextElementSibling;
-                activeMenus.forEach(menu => {
-                    if (menu !== menuToToggle) menu.classList.remove('active', 'up');
-                });
-
-                if (menuToToggle) {
-                    const isActive = menuToToggle.classList.toggle('active');
-                    if (isActive) {
-                        const rect = trigger.getBoundingClientRect();
-                        const spaceBelow = window.innerHeight - rect.bottom;
-                        menuToToggle.classList.toggle('up', spaceBelow < menuToToggle.offsetHeight + 10);
-                    }
-                }
-                return;
-            }
-
-            if (!e.target.closest('.dropdown-menu.active')) {
-                activeMenus.forEach(menu => menu.classList.remove('active', 'up'));
-            }
-        });
-    }
-
-    // --- Data Loading Functions ---
+    // --- Panel Initializers & Data Loaders ---
     async function loadSettings() {
         const { data } = await db.from('settings').select('*').limit(1).single();
         if (data) {
             document.getElementById('siteTitle').value = data.site_title;
             document.getElementById('siteSubtitle').value = data.site_subtitle;
-            document.getElementById('videoUrl').value = data.video_url;
         }
         document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
     }
@@ -432,7 +390,10 @@
         if (!socialList) return;
         const { data } = await db.from('social_links').select('*').order('display_order');
         socialList.innerHTML = '';
-        if (data) data.forEach(item => addSocialRow(item));
+        if (data) {
+            socialLinksCache = data;
+            data.forEach(item => addSocialRow(item));
+        }
         document.getElementById('add-social-btn').addEventListener('click', () => addSocialRow());
         document.getElementById('save-social-btn').addEventListener('click', saveSocialLinks);
     }
@@ -496,6 +457,54 @@
         setupProductEventListeners();
     }
 
+    function initHowToBuyPanel() {
+        document.getElementById('save-how-to-buy-btn').addEventListener('click', saveHowToBuyData);
+        document.getElementById('add-how-to-buy-main-step-btn').addEventListener('click', () => renderMainStepCard());
+        loadHowToBuyData();
+    }
+
+    async function loadHowToBuyData() {
+        showLoading(true);
+        const [settingsRes, stepsRes] = await Promise.all([
+            db.from('how_to_buy_settings').select('*').limit(1).single(),
+            db.from('how_to_buy_steps').select('*').order('display_order')
+        ]);
+        showLoading(false);
+
+        if (settingsRes.error || stepsRes.error) {
+            return showAlert('加载 "How-to-Buy" 数据失败。', true);
+        }
+        
+        howToBuySettingsCache = settingsRes.data;
+        if (howToBuySettingsCache) {
+            document.getElementById('how-to-buy-video-url').value = howToBuySettingsCache.video_url || '';
+            document.getElementById('how-to-buy-signup-url').value = howToBuySettingsCache.signup_url || '';
+        }
+
+        const stepsContainer = document.getElementById('how-to-buy-steps-container');
+        stepsContainer.innerHTML = '';
+        const allSteps = stepsRes.data || [];
+        const mainSteps = allSteps.filter(s => !s.section_title);
+        const subStepsByParent = allSteps.reduce((acc, step) => {
+            if (step.section_title) {
+                if (!acc[step.section_title]) acc[step.section_title] = [];
+                acc[step.section_title].push(step);
+            }
+            return acc;
+        }, {});
+
+        mainSteps.forEach(mainStep => {
+            renderMainStepCard(mainStep, subStepsByParent[mainStep.title] || []);
+        });
+
+        if (mainStepsSortable) mainStepsSortable.destroy();
+        mainStepsSortable = new Sortable(stepsContainer, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            handle: '.main-step-drag-handle',
+        });
+    }
+
     // --- HTML Element Renderers ---
     function renderNavItem(item = {}, isNew = false) {
         const navList = document.getElementById('navigation-list');
@@ -539,56 +548,112 @@
         setupSocialRowListeners(div);
         lucide.createIcons();
     }
-
-    function setupSocialRowListeners(row) {
-        const logoBox = row.querySelector('.social-logo-box');
-        const logoInput = row.querySelector('.social-logo-input');
-        const previewImage = row.querySelector('.social-logo-preview');
-        const placeholder = row.querySelector('.social-logo-placeholder');
-        const rowId = row.dataset.id;
-        logoBox.addEventListener('click', () => logoInput.click());
-        logoInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                newSocialFiles.set(rowId, e.target.files[0]);
-                previewImage.src = URL.createObjectURL(e.target.files[0]);
-                previewImage.classList.remove('hidden');
-                placeholder.classList.add('hidden');
+    
+    function addProductFormRow() {
+        const container = document.getElementById('add-product-forms-container');
+        if (!container) return;
+        const formId = `new-form-${Date.now()}`;
+        const div = document.createElement('div');
+        div.className = 'add-form-row';
+        div.id = formId;
+        div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
+        
+        container.appendChild(div);
+        lucide.createIcons();
+        initFlatpickr(div.querySelector('input[type="datetime-local"]'));
+        const imageBox = div.querySelector('.add-image-box'), 
+              imageInput = div.querySelector('.add-image-input'), 
+              previewImage = div.querySelector('.add-preview-image');
+        imageBox.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files?.[0]) { 
+                newProductFiles.set(formId, e.target.files[0]); 
+                previewImage.src = URL.createObjectURL(e.target.files[0]); 
+                previewImage.classList.remove('hidden'); 
             }
         });
-        row.querySelector('.delete-social-btn').addEventListener('click', () => { newSocialFiles.delete(rowId); row.remove(); });
+        div.querySelector('.remove-form-row-btn').addEventListener('click', () => { 
+            newProductFiles.delete(formId); 
+            div.remove(); 
+        });
     }
-    
- function addProductFormRow() {
-    const container = document.getElementById('add-product-forms-container');
-    if (!container) return;
-    const formId = `new-form-${Date.now()}`;
-    const div = document.createElement('div');
-    div.className = 'add-form-row';
-    div.id = formId;
-    
-    // FIX: Reverted this HTML string to match the original working version EXACTLY.
-    // The placeholder was re-added to the datetime-local input to ensure the selector works.
-    div.innerHTML = `<div class="add-image-box relative p-2 rounded-lg text-center cursor-pointer border-2 border-dashed flex items-center justify-center bg-pink-50 border-pink-200"><p class="text-xs text-pink-400">添加图片</p><img src="" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg add-preview-image"></div><input type="file" class="hidden add-image-input" accept="image/*"><input type="text" placeholder="产品名称" class="input flex-1" style="max-width: 150px;"><input type="number" placeholder="原价" class="input flex-1" style="max-width: 100px;"><input type="text" placeholder="跳转链接" class="input flex-1" style="min-width: 150px;"><input type="number" placeholder="折扣率" class="input flex-1" step="0.01" min="0" max="1" style="max-width: 100px;"><input type="datetime-local" placeholder="折扣到期时间" class="input flex-1" title="折扣到期时间" style="min-width: 200px;"><button class="p-1 bg-red-400 text-white rounded-full remove-form-row-btn"><i data-lucide="x" class="h-3 w-3"></i></button>`;
-    
-    container.appendChild(div);
-    lucide.createIcons();
-    initFlatpickr(div.querySelector('input[type="datetime-local"]')); // Initialize flatpickr on the new element
-    const imageBox = div.querySelector('.add-image-box'), 
-          imageInput = div.querySelector('.add-image-input'), 
-          previewImage = div.querySelector('.add-preview-image');
-    imageBox.addEventListener('click', () => imageInput.click());
-    imageInput.addEventListener('change', (e) => {
-        if (e.target.files?.[0]) { 
-            newProductFiles.set(formId, e.target.files[0]); 
-            previewImage.src = URL.createObjectURL(e.target.files[0]); 
-            previewImage.classList.remove('hidden'); 
+
+    function renderMainStepCard(mainStep = {}, subSteps = []) {
+        const container = document.getElementById('how-to-buy-steps-container');
+        const mainStepId = mainStep.id || `new_main_${Date.now()}`;
+        const div = document.createElement('div');
+        div.className = 'main-step-card p-4 space-y-4';
+        div.dataset.id = mainStepId;
+        div.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2 flex-grow">
+                    <i data-lucide="grip-vertical" class="main-step-drag-handle text-gray-400"></i>
+                    <input type="text" class="input main-step-title flex-grow" value="${mainStep.title || ''}" placeholder="主步骤标题 (例如: 准备工作)">
+                </div>
+                <button class="delete-main-step-btn btn btn-danger btn-xs ml-4"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+            </div>
+            <div class="pl-8">
+                <h4 class="text-sm font-semibold text-text-secondary mb-2">子步骤:</h4>
+                <div class="sub-steps-container space-y-3"></div>
+                <button class="add-sub-step-btn btn btn-secondary btn-xs mt-3"><i data-lucide="plus" class="mr-2 h-3 w-3"></i>添加子步骤</button>
+            </div>
+        `;
+        container.appendChild(div);
+
+        const subStepsContainer = div.querySelector('.sub-steps-container');
+        if (subSteps.length > 0) {
+            subSteps.forEach(subStep => renderSubStepRow(subStep, subStepsContainer));
         }
-    });
-    div.querySelector('.remove-form-row-btn').addEventListener('click', () => { 
-        newProductFiles.delete(formId); 
-        div.remove(); 
-    });
-}
+
+        new Sortable(subStepsContainer, { animation: 150, ghostClass: 'sortable-ghost', handle: '.sub-step-drag-handle' });
+
+        div.querySelector('.delete-main-step-btn').addEventListener('click', () => {
+            if (confirm('您确定要删除这个主步骤及其所有子步骤吗？')) {
+                div.remove();
+            }
+        });
+        div.querySelector('.add-sub-step-btn').addEventListener('click', () => {
+            renderSubStepRow({}, subStepsContainer);
+        });
+        lucide.createIcons();
+    }
+
+    function renderSubStepRow(subStep = {}, container) {
+        const subStepId = subStep.id || `new_sub_${Date.now()}`;
+        const div = document.createElement('div');
+        div.className = 'sub-step-row p-4 space-y-4';
+        div.dataset.id = subStepId;
+        div.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="grip-vertical" class="sub-step-drag-handle"></i>
+                    <h5 class="font-semibold text-text-secondary">子步骤</h5>
+                </div>
+                <button class="delete-sub-step-btn btn btn-danger btn-xs"><i data-lucide="x" class="h-4 w-4"></i></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
+                    <div><label class="label">子步骤标题</label><input type="text" class="input mt-1 sub-step-title" value="${subStep.title || ''}"></div>
+                    <div><label class="label">描述</label><textarea class="input mt-1 sub-step-description" rows="4">${subStep.description || ''}</textarea></div>
+                </div>
+                <div class="space-y-1">
+                    <label class="label">图片</label>
+                    <div class="step-image-upload-box relative p-4 h-full flex items-center justify-center">
+                        <p class="step-image-placeholder ${subStep.image_url ? 'hidden' : ''}">点击上传</p>
+                        <img src="${subStep.image_url || ''}" class="step-image-preview ${subStep.image_url ? '' : 'hidden'}">
+                        <button class="delete-step-image-btn ${subStep.image_url ? '' : 'hidden'} absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <input type="file" class="hidden step-image-input" accept="image/*">
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+        setupStepRowListeners(div);
+        div.querySelector('.delete-sub-step-btn').addEventListener('click', () => div.remove());
+        lucide.createIcons();
+    }
 
     // --- Data Saving Functions ---
     async function saveSettings(e) { 
@@ -598,7 +663,6 @@
             id: 1,
             site_title: document.getElementById('siteTitle').value,
             site_subtitle: document.getElementById('siteSubtitle').value,
-            video_url: document.getElementById('videoUrl').value,
         };
         const { error } = await db.from('settings').upsert(updates);
         if (error) showAlert('保存失败: ' + error.message, true);
@@ -615,10 +679,9 @@
         const itemsToInsert = [];
         navRows.forEach((row, index) => {
             const linkText = row.querySelector('.nav-text').value.trim();
-            const linkUrl = row.querySelector('.nav-url').value.trim();
             const id = row.dataset.id;
             if (linkText) {
-                const record = { link_text: linkText, link_url: linkUrl || `${BASE_URL}${linkText}`, display_order: index + 1 };
+                const record = { link_text: linkText, link_url: `${BASE_URL}${linkText}`, display_order: index + 1 };
                 if (id.startsWith('new_')) itemsToInsert.push(record);
                 else { record.id = parseInt(id); itemsToUpsert.push(record); }
             }
@@ -751,44 +814,43 @@
             button.disabled = false;
         }
     }
-
+    
     async function submitAllNewProducts() {
-    const forms = document.querySelectorAll('.add-form-row');
-    if (forms.length === 0) return showAlert('没有要添加的产品。');
-    showLoading(true);
-    const { count } = await db.from('products').select('*', { count: 'exact', head: true });
-    let currentOrder = count || 0;
-    const productsToUpload = [];
-    for (const form of forms) {
-        const imageFile = newProductFiles.get(form.id);
-        const imageUrl = imageFile ? await uploadImage(imageFile) : null;
-        
-        // 使用与原始代码一致的选择器，确保能找到元素
-        const name = form.querySelector('input[placeholder="产品名称"]').value;
-        const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
-        const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
-        const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
-        const expires_at = form.querySelector('input[placeholder="折扣到期时间"]').value ? new Date(form.querySelector('input[placeholder="折扣到期时间"]').value).toISOString() : null;
-        
-        if (!name || isNaN(price) || !target_url) { 
-            showLoading(false); 
-            return showAlert(`请填写必填项 (名称, 原价, 跳转链接)。`, true); 
+        const forms = document.querySelectorAll('.add-form-row');
+        if (forms.length === 0) return showAlert('没有要添加的产品。');
+        showLoading(true);
+        const { count } = await db.from('products').select('*', { count: 'exact', head: true });
+        let currentOrder = count || 0;
+        const productsToUpload = [];
+        for (const form of forms) {
+            const imageFile = newProductFiles.get(form.id);
+            const imageUrl = imageFile ? await uploadImage(imageFile) : null;
+            
+            const name = form.querySelector('input[placeholder="产品名称"]').value;
+            const price = parseFloat(form.querySelector('input[placeholder="原价"]').value);
+            const target_url = form.querySelector('input[placeholder="跳转链接"]').value || null;
+            const discount_factor = form.querySelector('input[placeholder="折扣率"]').value || null;
+            const expires_at = form.querySelector('input[placeholder="折扣到期时间"]').value ? new Date(form.querySelector('input[placeholder="折扣到期时间"]').value).toISOString() : null;
+            
+            if (!name || isNaN(price) || !target_url) { 
+                showLoading(false); 
+                return showAlert(`请填写必填项 (名称, 原价, 跳转链接)。`, true); 
+            }
+            
+            const discountPrice = (discount_factor && !isNaN(price)) ? (price * parseFloat(discount_factor)).toFixed(2) : null;
+            productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: '' });
         }
-        
-        const discountPrice = (discount_factor && !isNaN(price)) ? (price * parseFloat(discount_factor)).toFixed(2) : null;
-        productsToUpload.push({ name, price, target_url, image_url: imageUrl, discount_price: discountPrice, discount_factor, display_order: currentOrder++, discount_expires_at: expires_at, discount_is_active: !!discount_factor, category: '' });
+        const { error } = await db.from('products').insert(productsToUpload);
+        showLoading(false);
+        if (error) showAlert("批量添加失败: " + error.message, true);
+        else { 
+            showAlert(`成功添加 ${productsToUpload.length} 个新产品！`); 
+            document.getElementById('add-product-forms-container').innerHTML = ''; 
+            newProductFiles.clear(); 
+            addProductFormRow(); 
+            await loadProducts(); 
+        }
     }
-    const { error } = await db.from('products').insert(productsToUpload);
-    showLoading(false);
-    if (error) showAlert("批量添加失败: " + error.message, true);
-    else { 
-        showAlert(`成功添加 ${productsToUpload.length} 个新产品！`); 
-        document.getElementById('add-product-forms-container').innerHTML = ''; 
-        newProductFiles.clear(); 
-        addProductFormRow(); 
-        await loadProducts(); 
-    }
-}
     
     async function saveProductChanges(e) {
         showLoading(true);
@@ -819,26 +881,21 @@
     }
 
     async function saveProductOrder(evt) {
-    const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
-    
-    // 创建一个更新操作的数组
-    const updates = reorderedIds.map((id, index) => {
-        // 对每个产品，我们都只更新它的 display_order 字段
-        return db.from('products').update({ display_order: index }).eq('id', id);
-    });
-
-    showLoading(true);
-    try {
-        // 使用 Promise.all 来同时执行所有独立的更新操作
-        await Promise.all(updates);
-    } catch (error) {
-        showAlert('排序失败: ' + error.message, true); 
-        // 如果出错，重新加载产品列表以恢复到之前的状态
-        await loadProducts();
-    } finally {
-        showLoading(false);
+        const reorderedIds = Array.from(evt.to.children).map(item => parseInt(item.dataset.id));
+        const updates = reorderedIds.map((id, index) => {
+            return db.from('products').update({ display_order: index }).eq('id', id);
+        });
+        showLoading(true);
+        try {
+            await Promise.all(updates);
+        } catch (error) {
+            showAlert('排序失败: ' + error.message, true); 
+            await loadProducts();
+        } finally {
+            showLoading(false);
+        }
     }
-}
+
     async function updateProductField(productId, field, value) {
         showLoading(true);
         const { error } = await db.from('products').update({ [field]: value }).eq('id', productId);
@@ -847,6 +904,113 @@
         else { const product = productsCache.find(p => p.id == productId); if(product) product[field] = value; }
     }
 
+    async function saveFlashSaleData() {
+        showLoading(true);
+        const endTimeValue = document.getElementById('flash-sale-end-time').value;
+        const settingsUpdate = {
+            id: 1,
+            is_active: document.getElementById('flash-sale-active-toggle').checked,
+            end_time: endTimeValue ? new Date(endTimeValue).toISOString() : null,
+            updated_at: new Date().toISOString()
+        };
+        const selectedProductIds = Array.from(document.getElementById('flash-sale-products-list').children)
+            .map((el, index) => ({
+                product_id: parseInt(el.dataset.id),
+                display_order: index
+            }));
+        try {
+            await db.from('flash_sale_settings').upsert(settingsUpdate);
+            await db.from('flash_sale_products').delete().neq('id', 0);
+            if(selectedProductIds.length > 0) {
+                const { error: insertError } = await db.from('flash_sale_products').insert(selectedProductIds);
+                if (insertError) throw insertError;
+            }
+            showAlert('秒杀设置已保存!');
+        } catch (error) {
+            showAlert('保存失败: ' + error.message, true);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function saveHowToBuyData() {
+        showLoading(true);
+        const button = document.getElementById('save-how-to-buy-btn');
+        button.disabled = true;
+
+        try {
+            const settingsUpdate = {
+                id: 1, // Assuming there's only one row for settings
+                video_url: document.getElementById('how-to-buy-video-url').value.trim() || null,
+                signup_url: document.getElementById('how-to-buy-signup-url').value.trim() || null,
+                updated_at: new Date().toISOString()
+            };
+            await db.from('how_to_buy_settings').upsert(settingsUpdate);
+
+            let displayOrderCounter = 0;
+            const allPayloads = [];
+            const mainStepCards = document.querySelectorAll('.main-step-card');
+
+            for (const mainCard of mainStepCards) {
+                const mainStepTitle = mainCard.querySelector('.main-step-title').value.trim();
+                if (!mainStepTitle) continue;
+
+                const mainStepId = mainCard.dataset.id;
+                allPayloads.push({
+                    id: mainStepId.startsWith('new_') ? undefined : parseInt(mainStepId),
+                    title: mainStepTitle,
+                    section_title: null,
+                    display_order: displayOrderCounter++
+                });
+
+                const subStepRows = mainCard.querySelectorAll('.sub-step-row');
+                for (const subRow of subStepRows) {
+                    const subStepId = subRow.dataset.id;
+                    const imageFile = newHowToBuyStepFiles.get(subStepId);
+                    let imageUrl = subRow.querySelector('.step-image-preview').src;
+                    if (imageFile) {
+                        imageUrl = await uploadImage(imageFile, 'how-to-buy-steps');
+                    } else if (imageUrl.startsWith('blob:')) {
+                        imageUrl = null;
+                    }
+                    
+                    allPayloads.push({
+                        id: subStepId.startsWith('new_') ? undefined : parseInt(subStepId),
+                        title: subRow.querySelector('.sub-step-title').value.trim(),
+                        description: subRow.querySelector('.sub-step-description').value.trim(),
+                        image_url: imageUrl,
+                        section_title: mainStepTitle,
+                        display_order: displayOrderCounter++
+                    });
+                }
+            }
+            
+            const { data: existingSteps } = await db.from('how_to_buy_steps').select('id');
+            const existingIds = (existingSteps || []).map(s => s.id);
+            const currentIds = allPayloads.filter(p => p.id).map(p => p.id);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+
+            if (idsToDelete.length > 0) {
+                await db.from('how_to_buy_steps').delete().in('id', idsToDelete);
+            }
+            
+            const recordsToUpsert = allPayloads.map(p => p.id ? p : { ...p, id: undefined });
+            const { error } = await db.from('how_to_buy_steps').upsert(recordsToUpsert, { onConflict: 'id' });
+            if (error) throw error;
+
+            showAlert('成功保存 "How-to-Buy" 页面！');
+            newHowToBuyStepFiles.clear();
+            await loadHowToBuyData();
+
+        } catch (error) {
+            showAlert('保存失败: ' + error.message, true);
+        } finally {
+            showLoading(false);
+            button.disabled = false;
+        }
+    }
+
+    // --- Utility Functions ---
     async function uploadImage(file, bucket = 'product-images') {
         if (!file) return null;
         const fileName = `public/${Date.now()}-${file.name}`;
@@ -893,7 +1057,7 @@
         modal.classList.remove('hidden');
     }
 
-    // --- Event Listeners ---
+    // --- Event Listeners Setup ---
     function setupProductEventListeners() {
         document.getElementById('add-product-form-row-btn')?.addEventListener('click', addProductFormRow);
         document.getElementById('submit-all-new-products-btn')?.addEventListener('click', submitAllNewProducts);
@@ -901,11 +1065,52 @@
         document.getElementById('bulk-delete-btn')?.addEventListener('click', bulkDelete);
         document.getElementById('bulk-toggle-discount-btn')?.addEventListener('click', bulkToggleDiscount);
         document.getElementById('product-list')?.addEventListener('click', handleProductListClicks);
-        if (document.getElementById('add-product-forms-container')?.children.length === 0) addProductFormRow();
     }
     
-    function setupSocialEventListeners() {
-        document.querySelectorAll('#social-links-list .social-row').forEach(row => setupSocialRowListeners(row));
+    function setupStepRowListeners(row) {
+        const imageBox = row.querySelector('.step-image-upload-box');
+        const imageInput = row.querySelector('.step-image-input');
+        const preview = row.querySelector('.step-image-preview');
+        const placeholder = row.querySelector('.step-image-placeholder');
+        const deleteImageBtn = row.querySelector('.delete-step-image-btn');
+
+        imageBox.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', e => {
+            const file = e.target.files?.[0];
+            if (file) {
+                newHowToBuyStepFiles.set(row.dataset.id, file);
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                deleteImageBtn.classList.remove('hidden');
+            }
+        });
+        deleteImageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            newHowToBuyStepFiles.delete(row.dataset.id);
+            preview.src = '';
+            imageInput.value = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            deleteImageBtn.classList.add('hidden');
+        });
+    }
+
+    function setupSocialRowListeners(row) {
+        const logoBox = row.querySelector('.social-logo-box');
+        const logoInput = row.querySelector('.social-logo-input');
+        const previewImage = row.querySelector('.social-logo-preview');
+        const placeholder = row.querySelector('.social-logo-placeholder');
+        logoBox.addEventListener('click', () => logoInput.click());
+        logoInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                newSocialFiles.set(row.dataset.id, e.target.files[0]);
+                previewImage.src = URL.createObjectURL(e.target.files[0]);
+                previewImage.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+        });
+        row.querySelector('.delete-social-btn').addEventListener('click', () => { newSocialFiles.delete(row.dataset.id); row.remove(); });
     }
 
     function handleProductListClicks(e) {
@@ -960,39 +1165,45 @@
         }
     }
     
-   async function bulkToggleDiscount() {
-    const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => parseInt(cb.dataset.id));
-    if (selectedIds.length === 0) return showAlert('请先选择要操作的产品。', true);
-    
-    const productsToUpdate = productsCache.filter(p => selectedIds.includes(p.id));
-    const turnOn = productsToUpdate.some(p => !p.discount_is_active);
+    async function bulkToggleDiscount() {
+        const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => parseInt(cb.dataset.id));
+        if (selectedIds.length === 0) return showAlert('请先选择要操作的产品。', true);
+        
+        const productsToUpdate = productsCache.filter(p => selectedIds.includes(p.id));
+        const turnOn = productsToUpdate.some(p => !p.discount_is_active);
 
-    if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
-        showLoading(true);
-        try {
-            // 为每个选中的产品创建一个独立的更新操作
-            const updatePromises = selectedIds.map(id => 
-                db.from('products').update({ discount_is_active: turnOn }).eq('id', id)
-            );
-            // 同时执行所有更新
-            await Promise.all(updatePromises);
-            
-            // 操作成功后重新加载产品列表
-            await loadProducts();
-        } catch (error) {
-            showAlert('批量更新折扣状态失败: ' + error.message, true);
-        } finally {
-            showLoading(false);
+        if (confirm(`您确定要将选中的 ${selectedIds.length} 个产品折扣状态统一设置为 "${turnOn ? '开启' : '关闭'}" 吗？`)) {
+            showLoading(true);
+            try {
+                const updatePromises = selectedIds.map(id => 
+                    db.from('products').update({ discount_is_active: turnOn }).eq('id', id)
+                );
+                await Promise.all(updatePromises);
+                await loadProducts();
+            } catch (error) {
+                showAlert('批量更新折扣状态失败: ' + error.message, true);
+            } finally {
+                showLoading(false);
+            }
         }
     }
-}
 
     async function toggleDiscount(id, isActive) {
         await db.from('products').update({ discount_is_active: isActive }).eq('id', id);
     }
 
     function setupSidebarNav() {
-        sidebarNav.innerHTML = `<button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button><button data-target="flash_sale" class="tab-button"><i data-lucide="zap" class="mr-3 h-5 w-5"></i>秒杀管理</button><button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button><button data-target="brands" class="tab-button"><i data-lucide="copyright" class="mr-3 h-5 w-5"></i>品牌管理</button><button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button><button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button><button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button><button data-target="affiliate" class="tab-button"><i data-lucide="link" class="mr-3 h-5 w-5"></i>联盟推广</button>`;
+        sidebarNav.innerHTML = `
+            <button data-target="dashboard" class="tab-button active"><i data-lucide="layout-dashboard" class="mr-3 h-5 w-5"></i>仪表盘</button>
+            <button data-target="flash_sale" class="tab-button"><i data-lucide="zap" class="mr-3 h-5 w-5"></i>秒杀管理</button>
+            <button data-target="products" class="tab-button"><i data-lucide="package" class="mr-3 h-5 w-5"></i>产品管理</button>
+            <button data-target="brands" class="tab-button"><i data-lucide="copyright" class="mr-3 h-5 w-5"></i>品牌管理</button>
+            <button data-target="navigation" class="tab-button"><i data-lucide="list" class="mr-3 h-5 w-5"></i>导航栏管理</button>
+            <button data-target="how_to_buy" class="tab-button"><i data-lucide="book-open" class="mr-3 h-5 w-5"></i>How-to-Buy页面</button>
+            <button data-target="settings" class="tab-button"><i data-lucide="sliders-horizontal" class="mr-3 h-5 w-5"></i>网站设置</button>
+            <button data-target="social" class="tab-button"><i data-lucide="share-2" class="mr-3 h-5 w-5"></i>社交媒体</button>
+            <button data-target="affiliate" class="tab-button"><i data-lucide="link" class="mr-3 h-5 w-5"></i>联盟推广</button>
+        `;
         sidebarNav.querySelectorAll('.tab-button').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const targetPanel = e.currentTarget.dataset.target;
@@ -1002,17 +1213,6 @@
             });
         });
         lucide.createIcons();
-    }
-
-    function initDashboard() {
-        const datePicker = document.getElementById('date-range-picker');
-        flatpickr(datePicker, {
-            mode: "range", dateFormat: "Y-m-d",
-            defaultDate: [new Date(new Date().setDate(new Date().getDate() - 29)), new Date()],
-            onChange: (selectedDates) => { if (selectedDates.length === 2) loadDashboardData(selectedDates[0], selectedDates[1]); },
-        });
-        document.getElementById('export-excel-btn').addEventListener('click', exportAnalyticsToExcel);
-        loadDashboardData(new Date(new Date().setDate(new Date().getDate() - 29)), new Date());
     }
     
     function initFlatpickr(element, defaultDateStr) {
@@ -1047,13 +1247,9 @@
 
         const siteVisits = data.filter(e => e.event_type === 'site_visit');
         const productClicks = data.filter(e => e.event_type === 'product_click');
-        
-        // --- 核心修复：创建一个干净的、已过滤的访问数据列表 ---
         const validVisits = siteVisits.filter(e => e.country_code && e.country_code !== 'API Error' && e.country_code !== 'Network Error' && e.country_code !== 'SG' && e.country_code !== 'CN');
 
-        // 1. 使用过滤后的数据更新“网站总访问”卡片
         document.getElementById('total-visits').textContent = validVisits.length;
-        
         document.getElementById('total-product-clicks').textContent = productClicks.length;
         document.getElementById('total-products').textContent = productCount || 0;
         document.getElementById('active-discounts').textContent = discountCount || 0;
@@ -1067,11 +1263,9 @@
             dateLabels.push(d.toLocaleDateString('en-CA'));
         }
         
-        // 2. 使用过滤后的数据来生成“网站访问趋势”折线图
         renderChart('visits-chart', 'line', dateLabels, processDataForChart(validVisits, dateLabels), '网站访问量');
         renderChart('product-clicks-chart', 'line', dateLabels, processDataForChart(productClicks, dateLabels), '产品点击量');
         
-        // 3. 使用过滤后的数据来生成“访问来源分布”饼图
         const totalValidVisits = validVisits.length;
         const countryCounts = validVisits.reduce((acc, curr) => {
             const country = curr.country_code || 'Unknown';
@@ -1133,8 +1327,7 @@
             chartData = { labels, datasets: [{ label, data, borderColor: lineColor, backgroundColor: bgColor, fill: true, tension: 0.4, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointHoverRadius: 6, pointHoverBorderWidth: 2 }] };
         } else if (type === 'pie') {
             chartData = { labels, datasets: [{ label, data, backgroundColor: pastelColors, hoverOffset: 8, borderColor: 'var(--bg-panel)', hoverBorderWidth: 4 }] };
-            delete chartOptions.scales; // 饼图不需要坐标轴
-            // --- 新增：将图例放在右边 ---
+            delete chartOptions.scales;
             chartOptions.plugins.legend.position = 'right';
         }
     
@@ -1224,74 +1417,38 @@
     }
 
     function renderProductSelectionItem(product, container, isInSale) {
-    const div = document.createElement('div');
-    div.className = 'flex items-center justify-between p-2 bg-purple-100/50 rounded-lg border border-purple-200';
-    div.dataset.id = product.id;
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-2 bg-purple-100/50 rounded-lg border border-purple-200';
+        div.dataset.id = product.id;
 
-    // 新增：判断是否有折扣，并生成对应的标签HTML
-    let discountTag = '';
-    if (product.discount_is_active && product.discount_factor) {
-        const discountText = `${product.discount_factor * 10}折`;
-        discountTag = `<span class="ml-2 text-xs font-bold text-white bg-pink-500 px-2 py-0.5 rounded-full">${discountText} 💖</span>`;
-    }
-
-    div.innerHTML = `
-        <div class="flex items-center gap-2 overflow-hidden">
-            ${isInSale ? '<i data-lucide="grip-vertical" class="cursor-move text-gray-400 mr-2"></i>' : ''}
-            <img src="${product.image_url || 'https://placehold.co/32x32/F3F4F6/9CA3AF?text=??'}" class="w-8 h-8 object-cover rounded">
-            <span class="text-sm font-medium truncate">${product.name}</span>
-            ${discountTag}
-        </div>
-        <button class="flash-sale-product-btn p-1 rounded-full hover:bg-gray-200">
-            ${isInSale ? '<i data-lucide="minus-circle" class="h-5 w-5 text-red-400"></i>' : '<i data-lucide="plus-circle" class="h-5 w-5 text-green-500"></i>'}
-        </button>`;
-        
-    container.appendChild(div);
-    div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
-        const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
-        div.remove();
-        renderProductSelectionItem(product, targetList, !isInSale);
-        lucide.createIcons();
-    });
-}
-
-    async function saveFlashSaleData() {
-        showLoading(true);
-        const endTimeValue = document.getElementById('flash-sale-end-time').value;
-        const settingsUpdate = {
-            id: 1,
-            is_active: document.getElementById('flash-sale-active-toggle').checked,
-            end_time: endTimeValue ? new Date(endTimeValue).toISOString() : null,
-            updated_at: new Date().toISOString()
-        };
-
-        const selectedProductIds = Array.from(document.getElementById('flash-sale-products-list').children)
-            .map((el, index) => ({
-                product_id: parseInt(el.dataset.id),
-                display_order: index
-            }));
-
-        try {
-            await db.from('flash_sale_settings').upsert(settingsUpdate);
-            await db.from('flash_sale_products').delete().neq('id', 0);
-            if(selectedProductIds.length > 0) {
-                const { error: insertError } = await db.from('flash_sale_products').insert(selectedProductIds);
-                if (insertError) throw insertError;
-            }
-            showAlert('秒杀设置已保存!');
-        } catch (error) {
-            showAlert('保存失败: ' + error.message, true);
-        } finally {
-            showLoading(false);
+        let discountTag = '';
+        if (product.discount_is_active && product.discount_factor) {
+            const discountText = `${product.discount_factor * 10}折`;
+            discountTag = `<span class="ml-2 text-xs font-bold text-white bg-pink-500 px-2 py-0.5 rounded-full">${discountText} 💖</span>`;
         }
+
+        div.innerHTML = `
+            <div class="flex items-center gap-2 overflow-hidden">
+                ${isInSale ? '<i data-lucide="grip-vertical" class="cursor-move text-gray-400 mr-2"></i>' : ''}
+                <img src="${product.image_url || 'https://placehold.co/32x32/F3F4F6/9CA3AF?text=??'}" class="w-8 h-8 object-cover rounded">
+                <span class="text-sm font-medium truncate">${product.name}</span>
+                ${discountTag}
+            </div>
+            <button class="flash-sale-product-btn p-1 rounded-full hover:bg-gray-200">
+                ${isInSale ? '<i data-lucide="minus-circle" class="h-5 w-5 text-red-400"></i>' : '<i data-lucide="plus-circle" class="h-5 w-5 text-green-500"></i>'}
+            </button>`;
+            
+        container.appendChild(div);
+        div.querySelector('.flash-sale-product-btn').addEventListener('click', () => {
+            const targetList = isInSale ? document.getElementById('all-products-list') : document.getElementById('flash-sale-products-list');
+            div.remove();
+            renderProductSelectionItem(product, targetList, !isInSale);
+            lucide.createIcons();
+        });
     }
 
     // --- Authentication and Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('login-btn');
-        
-        // Dynamic background candy generation
         const candyContainer = document.getElementById('candy-background');
         const candies = ['💖', '✨', '🌸', '🍬', '🍭', '🎀'];
         for (let i = 0; i < 30; i++) {
@@ -1307,6 +1464,8 @@
         }
 
         const attemptLogin = async () => {
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('login-btn');
             const password = passwordInput.value;
             if (!password) {
                 document.getElementById('auth-error').textContent = '请输入密码。';
@@ -1356,11 +1515,10 @@
             adminPanel.classList.remove('hidden');
             setupSidebarNav();
             renderPanel('dashboard');
-            setupDropdowns();
         };
         
-        loginBtn.addEventListener('click', attemptLogin);
-        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
+        document.getElementById('login-btn').addEventListener('click', attemptLogin);
+        document.getElementById('password').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
         
         document.getElementById('logout-btn').addEventListener('click', () => {
             sessionStorage.removeItem('supabase_admin_token');
@@ -1397,17 +1555,15 @@
             imageInput.value = '';
         });
 
-        // Check for existing token on page load
         const existingToken = sessionStorage.getItem('supabase_admin_token');
         if (existingToken) {
             initializeApp(existingToken);
         }
-        // --- 新增：移动端菜单逻辑 ---
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const overlay = document.getElementById('mobile-menu-overlay');
 
-               const toggleMenu = () => {
+        const toggleMenu = () => {
             sidebar.classList.toggle('-translate-x-full');
             overlay.classList.toggle('hidden');
         };
@@ -1418,7 +1574,6 @@
         if (overlay) {
             overlay.addEventListener('click', toggleMenu);
         }
-        // 在手机端点击菜单项后自动关闭菜单
         sidebarNav.addEventListener('click', (e) => {
             if (e.target.closest('.tab-button') && window.innerWidth < 768) {
                 toggleMenu();
