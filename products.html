@@ -50,7 +50,7 @@
             </div>
         </section>
 
-        <section id="product-section" class="pt-10 md:pt-16 fade-in-up" style="transition-delay: 200ms;">
+        <section id="product-section" class="pt-10 md:pt-16">
             <div id="category-filter-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 md:mb-12"></div>
             <div id="product-list-container" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-x-12 md:gap-y-14"></div>
         </section>
@@ -89,19 +89,17 @@
         function prepareUrl(url) {
             if (!refId || !url) return url;
             try {
-                // Use a base URL to correctly parse relative URLs like "/" or absolute ones
                 const urlObj = new URL(url, window.location.origin);
                 if (!urlObj.searchParams.has('ref')) {
                     urlObj.searchParams.append('ref', refId);
                 }
-                // If original URL was relative, return relative path. Otherwise, return full URL.
                 if (url.startsWith('/')) {
                     return urlObj.pathname + urlObj.search + urlObj.hash;
                 }
                 return urlObj.toString();
             } catch(e) {
                 console.error('Error preparing URL:', e);
-                return url; // return original on error
+                return url;
             }
         }
         
@@ -269,11 +267,8 @@
                     if(item) {
                         currentBrandFilter = item.dataset.brand;
                         
-                        // When a brand is selected, we need to update the URL to reflect the new state, including the refId
                         const newUrl = new URL(window.location);
                         newUrl.searchParams.set('brand', currentBrandFilter);
-                        // The refId is already in the URL, so this preserves it.
-                        // We use history.pushState to change the URL without a full page reload for a smoother experience.
                         history.pushState({}, '', newUrl);
 
                         const selectedText = item.textContent;
