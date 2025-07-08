@@ -1029,6 +1029,7 @@
         button.disabled = true;
 
         try {
+            // Step 1: Save the general settings (video and signup URLs)
             const settingsUpdate = {
                 id: 1,
                 video_url: document.getElementById('how-to-buy-video-url').value.trim() || null,
@@ -1037,13 +1038,14 @@
             };
             await db.from('how_to_buy_settings').upsert(settingsUpdate);
 
+            // Step 2: Prepare all step data from the UI
             let displayOrderCounter = 0;
             const allPayloads = [];
             const mainStepCards = document.querySelectorAll('.main-step-card');
 
             for (const mainCard of mainStepCards) {
                 const mainStepTitle = mainCard.querySelector('.main-step-title').value.trim();
-                if (!mainStepTitle) continue;
+                if (!mainStepTitle) continue; // Skip empty main steps
 
                 const mainStepId = mainCard.dataset.id;
                 const mainStepPayload = {
@@ -1080,19 +1082,30 @@
                 }
             }
             
+            // Step 3: Determine which steps to delete, update, and insert
             const { data: existingSteps } = await db.from('how_to_buy_steps').select('id');
             const existingIds = (existingSteps || []).map(s => s.id);
             const currentIds = allPayloads.filter(p => p.id).map(p => p.id);
             const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+            
+            const stepsToUpdate = allPayloads.filter(p => p.id);
+            const stepsToInsert = allPayloads.filter(p => !p.id);
 
+            // Step 4: Execute all database operations
+            const dbPromises = [];
             if (idsToDelete.length > 0) {
-                await db.from('how_to_buy_steps').delete().in('id', idsToDelete);
+                dbPromises.push(db.from('how_to_buy_steps').delete().in('id', idsToDelete));
+            }
+            if (stepsToUpdate.length > 0) {
+                dbPromises.push(db.from('how_to_buy_steps').upsert(stepsToUpdate));
+            }
+            if (stepsToInsert.length > 0) {
+                dbPromises.push(db.from('how_to_buy_steps').insert(stepsToInsert));
             }
             
-            if (allPayloads.length > 0) {
-                const { error } = await db.from('how_to_buy_steps').upsert(allPayloads, { onConflict: 'id' });
-                if (error) throw error;
-            }
+            const results = await Promise.all(dbPromises);
+            const anyError = results.find(res => res.error);
+            if (anyError) throw anyError.error;
 
             showAlert('成功保存 "How-to-Buy" 页面！');
             newHowToBuyStepFiles.clear();
